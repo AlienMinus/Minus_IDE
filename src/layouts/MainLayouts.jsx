@@ -12,7 +12,7 @@ import Explorer from "../components/Explorer";
 import Tabs from "../components/Tabs";
 import Editor from "../components/Editor";
 import BottomPanel from "../components/BottomPanel";
-import StatusBar from "../components/StatusBar";
+import StatusBar from "../components/StatusBar/StatusBar.jsx";
 import Breadcrumb from "../components/Breadcrumb";
 
 function MainLayout() {
