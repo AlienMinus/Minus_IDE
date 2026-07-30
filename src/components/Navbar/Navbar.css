@@ -1,0 +1,159 @@
+.navbar {
+
+    height: 55px;
+
+    background: #252526;
+
+    color: white;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 0 18px;
+
+    border-bottom: 1px solid #3c3c3c;
+
+    user-select: none;
+
+}
+
+/* Left */
+
+.navbar-left {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+}
+
+.logo {
+
+    font-size: 22px;
+
+    font-weight: 600;
+
+    color: #ffffff;
+
+}
+
+/* Center */
+
+.navbar-center {
+
+    display: flex;
+
+    gap: 10px;
+
+}
+
+.menu-btn {
+
+    border: none;
+
+    background: transparent;
+
+    color: #d4d4d4;
+
+    font-size: 15px;
+
+    cursor: pointer;
+
+    padding: 8px 12px;
+
+    border-radius: 4px;
+
+    transition: 0.25s;
+
+}
+
+.menu-btn:hover, .menu-btn.active {
+
+    background: #3c3c3c;
+
+}
+
+/* Right */
+
+.navbar-right {
+
+    display: flex;
+
+    gap: 10px;
+
+    align-items: center;
+
+}
+
+.icon-btn {
+
+    border: none;
+
+    background: transparent;
+
+    color: #d4d4d4;
+
+    cursor: pointer;
+
+    width: 36px;
+
+    height: 36px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    font-size: 17px;
+
+    border-radius: 6px;
+
+    transition: 0.25s;
+
+}
+
+.icon-btn:hover {
+
+    background: #3c3c3c;
+
+    color: white;
+
+}
+
+.run-btn {
+
+    background: #007acc;
+
+    color: white;
+
+}
+
+.run-btn:hover {
+
+    background: #0e639c;
+
+}
+
+.profile {
+
+    font-size: 22px;
+
+}
+
+/* Responsive */
+
+@media(max-width:900px){
+
+    .navbar-center{
+
+        display:none;
+
+    }
+
+}

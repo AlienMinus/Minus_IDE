@@ -1,0 +1,52 @@
+.statusbar{
+
+    height:26px;
+
+    background:#007acc;
+
+    color:white;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    font-size:12px;
+
+    user-select:none;
+
+}
+
+.statusbar-left,
+.statusbar-right{
+
+    display:flex;
+
+    align-items:center;
+
+}
+
+.status-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:0 10px;
+
+    height:100%;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.status-item:hover{
+
+    background:rgba(255,255,255,.15);
+
+}

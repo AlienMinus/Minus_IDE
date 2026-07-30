@@ -1,0 +1,119 @@
+.explorer{
+
+    width:260px;
+
+    background:#252526;
+
+    color:#d4d4d4;
+
+    display:flex;
+
+    flex-direction:column;
+
+    border-right:1px solid #333;
+
+    overflow:hidden;
+
+}
+
+.explorer-header{
+
+    padding:12px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    border-bottom:1px solid #333;
+
+    letter-spacing:1px;
+
+}
+
+.explorer-body{
+
+    overflow-y:auto;
+
+    flex:1;
+
+}
+
+.folder,
+.file{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    height:34px;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+    font-size:14px;
+
+}
+
+.folder:hover,
+.file:hover{
+
+    background:#2d2d30;
+
+}
+
+.selected{
+
+    background:#094771;
+
+}
+
+.folder-icon{
+
+    color:#dcb67a;
+
+}
+
+.react-file{
+
+    color:#61dafb;
+
+}
+
+.js-file{
+
+    color:#f7df1e;
+
+}
+
+.css-file{
+
+    color:#3794ff;
+
+}
+
+.html-file{
+
+    color:#ff5722;
+
+}
+
+.explorer-body::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+.explorer-body::-webkit-scrollbar-thumb{
+
+    background:#555;
+
+}
+
+.explorer-body::-webkit-scrollbar-track{
+
+    background:#252526;
+
+}

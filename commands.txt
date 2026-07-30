@@ -1,0 +1,68 @@
+> npm create vite@latest dummy
+
+select: React
+select: JavaScript
+select: No (for rolldown-vite)
+select: Yes (for Install with npm and start now?)
+
+> cd dummy (To get inside the project folder)
+> npm install (To install the dependencies)
+> npm install <package_name> (To install new dependency)
+
+> npm run dev (To start the development frontend server)
+
+delete: App.jsx content between <> and </>
+delete: Contents in App.css & index.css
+
+create: components & pages folders in src directory havive admin folders within (Future Use)
+create: In public directory, create a manifest.json file & add a favicon
+
+Create: server directory in the root directory
+create: server.js in server directory:
+
+import express from 'express';
+const app = express();
+const port = 3000;
+
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
+
+then update package.json:
+"scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "server": "node server/server.js",
+    "start": "concurrently \"npm run server\" \"npm run dev\""
+  }
+
+
+> npm install express (To install express)
+> npm install concurrently (To install concurrently)
+> npm run start (To start both the server and frontend)
+
+
+reconfigure vite.config.js:
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+})

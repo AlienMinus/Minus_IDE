@@ -1,0 +1,63 @@
+.breadcrumb{
+
+    height:32px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:4px;
+
+    background:#252526;
+
+    border-bottom:1px solid #333;
+
+    color:#cccccc;
+
+    padding:0 12px;
+
+    overflow-x:auto;
+
+}
+
+.breadcrumb::-webkit-scrollbar{
+
+    display:none;
+
+}
+
+.crumb{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    font-size:13px;
+
+    cursor:pointer;
+
+    white-space:nowrap;
+
+}
+
+.crumb:hover{
+
+    color:#ffffff;
+
+}
+
+.separator{
+
+    font-size:10px;
+
+    opacity:.6;
+
+}
+
+.file{
+
+    color:#61dafb;
+
+}

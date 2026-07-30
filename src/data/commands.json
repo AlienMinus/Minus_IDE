@@ -1,0 +1,36 @@
+[
+  {
+    "command": "help",
+    "description": "Show available commands"
+  },
+  {
+    "command": "clear",
+    "description": "Clear terminal"
+  },
+  {
+    "command": "echo",
+    "description": "Print text",
+    "usage": "echo [text]"
+  },
+  {
+    "command": "time",
+    "description": "Show current time"
+  },
+  {
+    "command": "date",
+    "description": "Show current date"
+  },
+  {
+    "command": "history",
+    "description": "Show command history"
+  },
+  {
+    "command": "color",
+    "description": "Change text color",
+    "usage": "color [color]"
+  },
+  {
+    "command": "resetcolor",
+    "description": "Reset text color to default"
+  }
+]
