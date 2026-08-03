@@ -1,6 +1,7 @@
 import "./Explorer.css";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import useFile from "../../hooks/useFile";
 import useEditor from "../../hooks/useEditor";
 
 import {
@@ -12,7 +13,12 @@ import {
   FaJsSquare,
   FaCss3Alt,
   FaHtml5,
-  FaFileAlt
+  FaFileAlt,
+  FaFilePdf,
+  FaFileWord,
+  FaFileExcel,
+  FaFilePowerpoint,
+  FaFileCode
 } from "react-icons/fa";
 
 const projectTree = [
@@ -48,24 +54,52 @@ const projectTree = [
 ];
 
 function Explorer() {
-  const { files, openFile } = useEditor();
-  const [openFolders, setOpenFolders] = useState({ src: true, components: true, pages: true });
+  const { workspaceTree } = useFile();
+  const { openFile } = useEditor();
+  const [openFolders, setOpenFolders] = useState({});
   const [selectedFile, setSelectedFile] = useState("");
+
+  useEffect(() => {
+    const defaultOpen = {};
+    workspaceTree.forEach((item) => {
+      if (item.type === "folder") {
+        defaultOpen[item.id] = true;
+      }
+    });
+    setOpenFolders(defaultOpen);
+  }, [workspaceTree]);
 
   function toggleFolder(folderName) {
     setOpenFolders({ ...openFolders, [folderName]: !openFolders[folderName] });
   }
 
-  function getIcon(type) {
-    switch (type) {
+  function getIcon(fileType) {
+    switch (fileType) {
       case "jsx":
         return <FaReact className="react-file" />;
       case "js":
-        return <FaJsSquare className="js-file" />;
+      case "ts":
+      case "tsx":
+      case "py":
+      case "json":
+      case "md":
+      case "txt":
+        return <FaFileCode className="code-file" />;
       case "css":
         return <FaCss3Alt className="css-file" />;
       case "html":
         return <FaHtml5 className="html-file" />;
+      case "pdf":
+        return <FaFilePdf className="pdf-file" />;
+      case "doc":
+      case "docx":
+        return <FaFileWord className="word-file" />;
+      case "xls":
+      case "xlsx":
+        return <FaFileExcel className="excel-file" />;
+      case "ppt":
+      case "pptx":
+        return <FaFilePowerpoint className="ppt-file" />;
       default:
         return <FaFileAlt />;
     }
@@ -74,33 +108,32 @@ function Explorer() {
   function renderTree(items, level = 0) {
     return items.map((item) => {
       if (item.type === "folder") {
+        const isOpen = openFolders[item.id] ?? level === 0;
+
         return (
-          <div key={item.name}>
-            <div className="folder" style={{ paddingLeft: `${level * 18}px` }} onClick={() => toggleFolder(item.name)}>
-              {openFolders[item.name] ? <FaChevronDown /> : <FaChevronRight />}
-              {openFolders[item.name] ? <FaFolderOpen className="folder-icon" /> : <FaFolder className="folder-icon" />}
+          <div key={item.id}>
+            <div className="folder" style={{ paddingLeft: `${level * 18}px` }} onClick={() => toggleFolder(item.id)}>
+              {isOpen ? <FaChevronDown /> : <FaChevronRight />}
+              {isOpen ? <FaFolderOpen className="folder-icon" /> : <FaFolder className="folder-icon" />}
               <span>{item.name}</span>
             </div>
-            {openFolders[item.name] && renderTree(item.children, level + 1)}
+            {isOpen && item.children && renderTree(item.children, level + 1)}
           </div>
         );
       }
 
-      const editorFile = files.find((file) => file.name === item.name);
-
+      const fileType = item.language || item.name.split('.').pop().toLowerCase();
       return (
         <div
-          key={item.name}
-          className={`file ${selectedFile === item.name ? "selected" : ""}`}
+          key={item.id}
+          className={`file ${selectedFile === item.id ? "selected" : ""}`}
           style={{ paddingLeft: `${(level + 1) * 18}px` }}
           onClick={() => {
-            setSelectedFile(item.name);
-            if (editorFile) {
-              openFile(editorFile);
-            }
+            setSelectedFile(item.id);
+            openFile(item);
           }}
         >
-          {getIcon(item.type)}
+          {getIcon(fileType)}
           <span>{item.name}</span>
         </div>
       );
@@ -110,7 +143,12 @@ function Explorer() {
   return (
     <aside className="explorer">
       <div className="explorer-header">EXPLORER</div>
-      <div className="explorer-body">{renderTree(projectTree)}</div>
+      <div className="explorer-body">
+        {workspaceTree && workspaceTree.length > 0
+          ? renderTree(workspaceTree)
+          : <div className="empty-state">Open a folder from File &gt; Open Folder to begin.</div>
+        }
+      </div>
     </aside>
   );
 }

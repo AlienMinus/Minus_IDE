@@ -1,19 +1,12 @@
 .explorer{
-
-    width:260px;
-
+    width:100%;
     background:#252526;
-
     color:#d4d4d4;
-
     display:flex;
-
     flex-direction:column;
-
     border-right:1px solid #333;
-
     overflow:hidden;
-
+    min-width:0;
 }
 
 .explorer-header{
@@ -40,21 +33,28 @@
 
 .folder,
 .file{
-
     display:flex;
-
     align-items:center;
-
     gap:8px;
-
     height:34px;
-
     cursor:pointer;
-
     transition:.2s;
-
     font-size:14px;
+    min-width:0;
+}
 
+.file span {
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    min-width:0;
+}
+
+.folder span {
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    min-width:0;
 }
 
 .folder:hover,

@@ -45,31 +45,27 @@
 /* Center */
 
 .navbar-center {
-
+    flex: 1;
     display: flex;
+    justify-content: center;
+}
 
-    gap: 10px;
-
+.navbar-menu {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 20px;
 }
 
 .menu-btn {
-
     border: none;
-
     background: transparent;
-
     color: #d4d4d4;
-
     font-size: 15px;
-
     cursor: pointer;
-
     padding: 8px 12px;
-
     border-radius: 4px;
-
     transition: 0.25s;
-
 }
 
 .menu-btn:hover, .menu-btn.active {
@@ -78,44 +74,63 @@
 
 }
 
-/* Right */
+/* Center */
+
+.navbar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.search-bar {
+    position: relative;
+    width: 420px;
+    max-width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 42px 10px 14px;
+    border-radius: 999px;
+    border: 1px solid #3c3c3c;
+    background: #1e1e1e;
+    color: #f3f3f3;
+    outline: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.search-input:focus {
+    border-color: #007acc;
+    background: #2a2d2e;
+}
+
+.search-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7f8fa4;
+}
 
 .navbar-right {
-
     display: flex;
-
     gap: 10px;
-
     align-items: center;
-
 }
 
 .icon-btn {
-
     border: none;
-
     background: transparent;
-
     color: #d4d4d4;
-
     cursor: pointer;
-
     width: 36px;
-
     height: 36px;
-
     display: flex;
-
     justify-content: center;
-
     align-items: center;
-
     font-size: 17px;
-
     border-radius: 6px;
-
     transition: 0.25s;
-
 }
 
 .icon-btn:hover {
@@ -126,18 +141,22 @@
 
 }
 
-.run-btn {
-
+.icon-btn.active {
     background: #007acc;
-
     color: white;
+}
 
+.run-btn {
+    background: #22c55e;
+    color: white;
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.25);
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .run-btn:hover {
-
-    background: #0e639c;
-
+    background: #16a34a;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
 }
 
 .profile {

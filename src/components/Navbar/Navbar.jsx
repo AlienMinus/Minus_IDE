@@ -1,41 +1,127 @@
 import { useState, useRef, useEffect } from "react";
 import "./Navbar.css";
 import DropdownMenu from "../DropdownMenu";
+import useFile from "../../hooks/useFile";
+import useEditor from "../../hooks/useEditor";
 
 import {
     FaBars,
     FaFolderOpen,
     FaSave,
     FaPlay,
-    FaCog,
     FaSearch,
     FaBell,
-    FaUserCircle
+    FaCommentDots
 } from "react-icons/fa";
 
 import { fileMenu, editMenu, viewMenu, terminalMenu, helpMenu } from "../../data/menu.jsx";
 
-function Navbar() {
+function Navbar({ isChatOpen, toggleChat }) {
     const fileRef = useRef(null);
     const editRef = useRef(null);
     const viewRef = useRef(null);
     const terminalRef = useRef(null);
     const helpRef = useRef(null);
+    const dropdownRef = useRef(null);
 
+    const { openFolder } = useFile();
+    const { saveActiveFile } = useEditor();
     const [openMenu, setOpenMenu] = useState(null);
+    const [selectedMenu, setSelectedMenu] = useState(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const [searchQuery, setSearchQuery] = useState("");
+    const closeTimer = useRef(null);
 
-    const handleMenuClick = (menu, ref) => {
-        if (openMenu !== menu) {
-            setOpenMenu(menu);
-            const rect = ref.current.getBoundingClientRect();
-            setMenuPosition({ top: rect.bottom + 5, left: rect.left });
+    const clearCloseTimer = () => {
+        if (closeTimer.current) {
+            window.clearTimeout(closeTimer.current);
+            closeTimer.current = null;
         }
+    };
+
+    const menuButtons = [
+        { key: "file", label: "File", ref: fileRef },
+        { key: "edit", label: "Edit", ref: editRef },
+        { key: "view", label: "View", ref: viewRef },
+        { key: "terminal", label: "Terminal", ref: terminalRef },
+        { key: "help", label: "Help", ref: helpRef }
+    ];
+
+    const allowedMenuKeys = new Set(menuButtons.map((item) => item.key));
+
+    const fileMenuItems = fileMenu.map((item) => {
+        if (item.id === "openFolder") {
+            return {
+                ...item,
+                onClick: async () => {
+                    await openFolder();
+                    setOpenMenu(null);
+                }
+            };
+        }
+
+        if (item.id === "save") {
+            return {
+                ...item,
+                onClick: async () => {
+                    await saveActiveFile();
+                    setOpenMenu(null);
+                }
+            };
+        }
+
+        return item;
+    });
+
+    const handleMenuHover = (menu, ref) => {
+        if (!allowedMenuKeys.has(menu)) {
+            return;
+        }
+
+        clearCloseTimer();
+        setSelectedMenu(menu);
+        setOpenMenu(menu);
+        const rect = ref.current.getBoundingClientRect();
+        setMenuPosition({ top: rect.bottom + 5, left: rect.left });
+    };
+
+    const handleMenuLeave = () => {
+        clearCloseTimer();
+        closeTimer.current = window.setTimeout(() => {
+            if (selectedMenu) {
+                const selectedButton = menuButtons.find((button) => button.key === selectedMenu);
+                if (selectedButton?.ref?.current) {
+                    const rect = selectedButton.ref.current.getBoundingClientRect();
+                    setMenuPosition({ top: rect.bottom + 5, left: rect.left });
+                }
+                setOpenMenu(selectedMenu);
+            } else {
+                setOpenMenu(null);
+            }
+        }, 250);
+    };
+
+    const handleMenuSelect = (menu, ref) => {
+        if (!allowedMenuKeys.has(menu)) {
+            return;
+        }
+
+        clearCloseTimer();
+        if (selectedMenu === menu) {
+            setSelectedMenu(null);
+            setOpenMenu(null);
+            return;
+        }
+
+        setSelectedMenu(menu);
+        setOpenMenu(menu);
+        const rect = ref.current.getBoundingClientRect();
+        setMenuPosition({ top: rect.bottom + 5, left: rect.left });
     };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            const menuRefs = [fileRef, editRef, viewRef, terminalRef, helpRef].filter(Boolean);
+            const menuRefs = [fileRef, editRef, viewRef, terminalRef, helpRef, dropdownRef].filter(Boolean);
             if (menuRefs.every(ref => ref.current && !ref.current.contains(event.target))) {
                 setOpenMenu(null);
             }
@@ -44,6 +130,7 @@ function Navbar() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
+            clearCloseTimer();
         };
     }, [openMenu]);
 
@@ -63,61 +150,41 @@ function Navbar() {
                     WebIDE
                 </h2>
 
+                <div className="navbar-menu">
+                    {menuButtons.map((button) => (
+                        <button
+                            key={button.key}
+                            ref={button.ref}
+                            className={`menu-btn ${selectedMenu === button.key ? 'active' : ''}`}
+                            onMouseEnter={() => handleMenuHover(button.key, button.ref)}
+                            onMouseLeave={() => handleMenuLeave()}
+                            onClick={() => handleMenuSelect(button.key, button.ref)}
+                        >
+                            {button.label}
+                        </button>
+                    ))}
+                </div>
+
             </div>
 
             {/* Center */}
 
             <div className="navbar-center">
-
-                <button
-                    ref={fileRef}
-                    className={`menu-btn ${openMenu === 'file' ? 'active' : ''}`}
-                    onClick={() => handleMenuClick('file', fileRef)}
-                >
-                    File
-                </button>
-
-                <button
-                    ref={editRef}
-                    className={`menu-btn ${openMenu === 'edit' ? 'active' : ''}`}
-                    onClick={() => handleMenuClick('edit', editRef)}
-                >
-                    Edit
-                </button>
-
-                <button
-                    ref={viewRef}
-                    className={`menu-btn ${openMenu === 'view' ? 'active' : ''}`}
-                    onClick={() => handleMenuClick('view', viewRef)}
-                >
-                    View
-                </button>
-
-                <button
-                    ref={terminalRef}
-                    className={`menu-btn ${openMenu === 'terminal' ? 'active' : ''}`}
-                    onClick={() => handleMenuClick('terminal', terminalRef)}
-                >
-                    Terminal
-                </button>
-
-                <button
-                    ref={helpRef}
-                    className={`menu-btn ${openMenu === 'help' ? 'active' : ''}`}
-                    onClick={() => handleMenuClick('help', helpRef)}
-                >
-                    Help
-                </button>
-
+                <div className="search-bar">
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        placeholder="Search files, symbols, commands..."
+                        className="search-input"
+                    />
+                    <FaSearch className="search-icon" />
+                </div>
             </div>
 
             {/* Right */}
 
             <div className="navbar-right">
-
-                <button className="icon-btn">
-                    <FaFolderOpen />
-                </button>
 
                 <button className="icon-btn">
                     <FaSave />
@@ -128,28 +195,24 @@ function Navbar() {
                 </button>
 
                 <button className="icon-btn">
-                    <FaSearch />
-                </button>
-
-                <button className="icon-btn">
                     <FaBell />
                 </button>
 
-                <button className="icon-btn">
-                    <FaCog />
-                </button>
-
-                <button className="icon-btn profile">
-                    <FaUserCircle />
+                <button
+                    className={`icon-btn ${isChatOpen ? "active" : ""}`}
+                    onClick={toggleChat}
+                    title="Toggle Chat"
+                >
+                    <FaCommentDots />
                 </button>
 
             </div>
             
-            {openMenu === 'file' && <DropdownMenu menu={fileMenu} position={menuPosition} />}
-            {openMenu === 'edit' && <DropdownMenu menu={editMenu} position={menuPosition} />}
-            {openMenu === 'view' && <DropdownMenu menu={viewMenu} position={menuPosition} />}
-            {openMenu === 'terminal' && <DropdownMenu menu={terminalMenu} position={menuPosition} />}
-            {openMenu === 'help' && <DropdownMenu menu={helpMenu} position={menuPosition} />}
+            {openMenu === 'file' && <DropdownMenu ref={dropdownRef} menu={fileMenuItems} position={menuPosition} />}
+            {openMenu === 'edit' && <DropdownMenu ref={dropdownRef} menu={editMenu} position={menuPosition} />}
+            {openMenu === 'view' && <DropdownMenu ref={dropdownRef} menu={viewMenu} position={menuPosition} />}
+            {openMenu === 'terminal' && <DropdownMenu ref={dropdownRef} menu={terminalMenu} position={menuPosition} />}
+            {openMenu === 'help' && <DropdownMenu ref={dropdownRef} menu={helpMenu} position={menuPosition} />}
 
 
         </header>

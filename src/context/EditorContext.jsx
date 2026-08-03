@@ -1,39 +1,81 @@
 import { createContext, useState } from "react";
 import fileTree from "../data/fileTree";
-
-function flattenFiles(tree) {
-  let files = [];
-
-  tree.forEach((item) => {
-    if (item.type === "file") {
-      files.push(item);
-    }
-
-    if (item.children) {
-      files = [...files, ...flattenFiles(item.children)];
-    }
-  });
-
-  return files;
-}
+import { traverseDirectory, flattenFiles } from "../services/fileService";
+import { loadEditorFile, saveEditorFile, refreshEditorContent } from "../services/editorService";
 
 const initialFiles = flattenFiles(fileTree);
 
 export const EditorContext = createContext(null);
 
 export function EditorProvider({ children }) {
+  const [workspaceTree, setWorkspaceTree] = useState(fileTree);
+  const [workspaceHandle, setWorkspaceHandle] = useState(null);
   const [files, setFiles] = useState(initialFiles);
   const [openFiles, setOpenFiles] = useState(initialFiles.slice(0, 1));
   const [activeFile, setActiveFile] = useState(initialFiles[0] ?? null);
 
-  function openFile(file) {
-    const exists = openFiles.some((f) => f.id === file.id);
-
-    if (!exists) {
-      setOpenFiles([...openFiles, file]);
+  async function openFolder() {
+    if (!window.showDirectoryPicker) {
+      alert("Your browser does not support the File System Access API.");
+      return;
     }
 
-    setActiveFile(file);
+    try {
+      const dirHandle = await window.showDirectoryPicker();
+      const tree = [
+        {
+          id: dirHandle.name,
+          name: dirHandle.name,
+          type: "folder",
+          path: dirHandle.name,
+          handle: dirHandle,
+          children: await traverseDirectory(dirHandle, dirHandle.name)
+        }
+      ];
+
+      const flatFiles = flattenFiles(tree);
+      setWorkspaceHandle(dirHandle);
+      setWorkspaceTree(tree);
+      setFiles(flatFiles);
+      setOpenFiles([]);
+      setActiveFile(null);
+    } catch (error) {
+      console.error("Failed to open folder:", error);
+    }
+  }
+
+  async function openFile(file) {
+    const existingFile = files.find((f) => f.id === file.id) ?? file;
+    let loadedFile = existingFile;
+
+    if (loadedFile.handle && loadedFile.content == null) {
+      loadedFile = await loadEditorFile(loadedFile);
+      setFiles((prev) => prev.map((f) => (f.id === loadedFile.id ? loadedFile : f)));
+      setOpenFiles((prev) => prev.map((f) => (f.id === loadedFile.id ? loadedFile : f)));
+    }
+
+    const alreadyOpen = openFiles.some((f) => f.id === loadedFile.id);
+    if (!alreadyOpen) {
+      setOpenFiles((prev) => [...prev, loadedFile]);
+    }
+
+    setActiveFile(loadedFile);
+  }
+
+  async function saveActiveFile() {
+    if (!activeFile) return;
+    if (!activeFile.handle) {
+      alert("Unable to save this file. Open a folder first.");
+      return;
+    }
+
+    try {
+      await saveEditorFile(activeFile);
+      alert(`Saved ${activeFile.name}`);
+    } catch (error) {
+      console.error("Save failed:", error);
+      alert("Failed to save file.");
+    }
   }
 
   function closeFile(id) {
@@ -49,24 +91,32 @@ export function EditorProvider({ children }) {
   function updateContent(value) {
     if (!activeFile) return;
 
-    const updatedFiles = files.map((file) =>
-      file.id === activeFile.id ? { ...file, content: value } : file,
+    const { updatedFiles, updatedOpenFiles, updatedActiveFile } = refreshEditorContent(
+      activeFile.id,
+      files,
+      openFiles,
+      activeFile,
+      value
     );
 
     setFiles(updatedFiles);
-    setOpenFiles(openFiles.map((file) => (file.id === activeFile.id ? { ...file, content: value } : file)));
-    setActiveFile({ ...activeFile, content: value });
+    setOpenFiles(updatedOpenFiles);
+    setActiveFile(updatedActiveFile);
   }
 
   return (
     <EditorContext.Provider
       value={{
+        workspaceTree,
+        workspaceHandle,
         files,
         openFiles,
         activeFile,
+        openFolder,
         openFile,
         closeFile,
         updateContent,
+        saveActiveFile,
         setActiveFile,
       }}
     >

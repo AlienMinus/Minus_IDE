@@ -1,10 +1,19 @@
 import "./Tabs.css";
 
-import { FaReact, FaCss3Alt, FaJsSquare, FaTimes } from "react-icons/fa";
+import { FaReact, FaCss3Alt, FaJsSquare, FaTimes, FaFilePdf, FaFileWord, FaFileExcel, FaFilePowerpoint, FaFileAlt } from "react-icons/fa";
 import useEditor from "../../hooks/useEditor";
 
 function Tabs() {
   const { openFiles, activeFile, closeFile, setActiveFile } = useEditor();
+
+  function getFileType(tab) {
+    if (tab.language) {
+      return tab.language;
+    }
+
+    const extension = tab.name?.split(".").pop()?.toLowerCase();
+    return extension || "file";
+  }
 
   function getIcon(type) {
     switch (type) {
@@ -14,33 +23,53 @@ function Tabs() {
       case "css":
         return <FaCss3Alt className="tab-css" />;
       case "js":
+      case "ts":
+      case "tsx":
+      case "py":
+      case "json":
+      case "md":
+      case "txt":
         return <FaJsSquare className="tab-js" />;
+      case "pdf":
+        return <FaFilePdf className="tab-pdf" />;
+      case "doc":
+      case "docx":
+        return <FaFileWord className="tab-word" />;
+      case "xls":
+      case "xlsx":
+        return <FaFileExcel className="tab-excel" />;
+      case "ppt":
+      case "pptx":
+        return <FaFilePowerpoint className="tab-ppt" />;
       default:
-        return <FaJsSquare />;
+        return <FaFileAlt className="tab-file" />;
     }
   }
 
   return (
     <div className="tabs">
-      {openFiles.map((tab) => (
-        <div
-          key={tab.id}
-          className={`tab ${activeFile?.id === tab.id ? "active-tab" : ""}`}
-          onClick={() => setActiveFile(tab)}
-        >
-          {getIcon(tab.language || "jsx")}
-          <span>{tab.name}</span>
-          <button
-            className="close-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              closeFile(tab.id);
-            }}
+      {openFiles.map((tab) => {
+        const type = getFileType(tab);
+        return (
+          <div
+            key={tab.id}
+            className={`tab ${activeFile?.id === tab.id ? "active-tab" : ""}`}
+            onClick={() => setActiveFile(tab)}
           >
-            <FaTimes />
-          </button>
-        </div>
-      ))}
+            {getIcon(type)}
+            <span>{tab.name}</span>
+            <button
+              className="close-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeFile(tab.id);
+              }}
+            >
+              <FaTimes />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

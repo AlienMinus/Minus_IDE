@@ -26,6 +26,21 @@
     height: 100%;
 }
 
+.explorer-panel {
+    height: 100%;
+}
+
+.editor-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-panel {
+    height: 100%;
+    overflow: hidden;
+}
+
 .editor-section {
     display: flex;
     flex-direction: column;

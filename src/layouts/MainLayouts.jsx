@@ -1,4 +1,5 @@
 import "./MainLayouts.css";
+import { useState } from "react";
 
 import {
   Panel,
@@ -11,14 +12,20 @@ import Sidebar from "../components/Sidebar";
 import Explorer from "../components/Explorer";
 import Tabs from "../components/Tabs";
 import Editor from "../components/Editor";
+import Chat from "../components/Chat";
 import BottomPanel from "../components/BottomPanel";
 import StatusBar from "../components/Statusbar";
 import Breadcrumb from "../components/Breadcrumb";
 
 function MainLayout() {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   return (
     <div className="layout">
-      <Navbar />
+      <Navbar
+        isChatOpen={isChatOpen}
+        toggleChat={() => setIsChatOpen((prev) => !prev)}
+      />
 
       {/* Main Content */}
       <PanelGroup direction="horizontal" className="layout-body">
@@ -37,6 +44,7 @@ function MainLayout() {
 
         {/* Explorer */}
         <Panel
+          className="explorer-panel"
           defaultSize={18}
           minSize={15}
           maxSize={30}
@@ -47,7 +55,7 @@ function MainLayout() {
         <PanelResizeHandle className="resize-handle" />
 
         {/* Editor + Bottom Panel */}
-        <Panel defaultSize={77} minSize={40}>
+        <Panel className="editor-panel" defaultSize={77} minSize={40}>
 
           <PanelGroup direction="vertical">
 
@@ -80,6 +88,15 @@ function MainLayout() {
           </PanelGroup>
 
         </Panel>
+
+        {isChatOpen && (
+          <>
+            <PanelResizeHandle className="resize-handle" />
+            <Panel className="chat-panel" defaultSize={20} minSize={15} maxSize={35}>
+              <Chat />
+            </Panel>
+          </>
+        )}
 
       </PanelGroup>
 
