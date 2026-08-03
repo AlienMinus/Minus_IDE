@@ -10,6 +10,7 @@ import {
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import Explorer from "../components/Explorer";
+import Extensions from "../components/Extensions";
 import Tabs from "../components/Tabs";
 import Editor from "../components/Editor";
 import Chat from "../components/Chat";
@@ -19,6 +20,7 @@ import Breadcrumb from "../components/Breadcrumb";
 
 function MainLayout() {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [sidebarActive, setSidebarActive] = useState("explorer");
 
   return (
     <div className="layout">
@@ -37,19 +39,19 @@ function MainLayout() {
           minSize={5}
           maxSize={6}
         >
-          <Sidebar />
+          <Sidebar active={sidebarActive} onSetActive={setSidebarActive} />
         </Panel>
 
         <PanelResizeHandle className="resize-handle" />
 
-        {/* Explorer */}
+        {/* Explorer / Extensions */}
         <Panel
           className="explorer-panel"
           defaultSize={18}
           minSize={15}
           maxSize={30}
         >
-          <Explorer />
+          {sidebarActive === "extensions" ? <Extensions /> : <Explorer />}
         </Panel>
 
         <PanelResizeHandle className="resize-handle" />

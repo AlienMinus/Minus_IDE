@@ -1,0 +1,106 @@
+.extensions-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #252526;
+  color: #f5f5f5;
+  overflow: hidden;
+}
+
+.extensions-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid #3a3d41;
+  flex-shrink: 0;
+}
+
+.extensions-header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.extensions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px;
+  flex-shrink: 0;
+}
+
+.extension-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #1e1e1e;
+  border: 1px solid #3a3d41;
+  cursor: context-menu;
+  transition: 0.2s;
+}
+
+.extension-item:hover {
+  border-color: #007acc;
+  background: #252526;
+}
+
+.extension-item-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #2f2f2f;
+  color: #60a5fa;
+  font-size: 16px;
+}
+
+.extension-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.extension-item-body strong {
+  font-size: 12px;
+}
+
+.extension-item-body span {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.extension-item-body code {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #ce9178;
+  background: #1e1e1e;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.extension-item button {
+  align-self: flex-start;
+  border: none;
+  border-radius: 6px;
+  background: #007acc;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.extension-item button:hover {
+  background: #1084d7;
+}
+
+.extensions-section {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import MonacoEditor from "@monaco-editor/react";
 import JSZip from "jszip";
 import useEditor from "../../hooks/useEditor";
+import Preview from "../Preview";
 
 function extractTextFromXml(xmlString) {
   const parser = new DOMParser();
@@ -197,7 +198,11 @@ function Editor() {
   return (
     <div className="editor-container">
       {activeFile ? (
-        activeFile.isBinary ? (
+        activeFile.isPreview ? (
+          <div className="editor-preview-container">
+            <Preview sourceFile={activeFile.sourceFile} />
+          </div>
+        ) : activeFile.isBinary ? (
           renderBinaryPreview()
         ) : (
           <MonacoEditor

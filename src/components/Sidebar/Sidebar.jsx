@@ -12,9 +12,7 @@ import {
     FaCog
 } from "react-icons/fa";
 
-function Sidebar() {
-
-    const [active, setActive] = useState("explorer");
+function Sidebar({ active = "explorer", onSetActive = () => {} }) {
 
     const menuItems = [
         {
@@ -57,7 +55,7 @@ function Sidebar() {
                             key={item.id}
                             className={`sidebar-btn ${active === item.id ? "active" : ""}`}
                             title={item.title}
-                            onClick={() => setActive(item.id)}
+                            onClick={() => onSetActive(item.id)}
                         >
                             {item.icon}
                         </button>

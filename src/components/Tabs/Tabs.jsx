@@ -1,6 +1,6 @@
 import "./Tabs.css";
 
-import { FaReact, FaCss3Alt, FaJsSquare, FaTimes, FaFilePdf, FaFileWord, FaFileExcel, FaFilePowerpoint, FaFileAlt } from "react-icons/fa";
+import { FaReact, FaCss3Alt, FaJsSquare, FaTimes, FaFilePdf, FaFileWord, FaFileExcel, FaFilePowerpoint, FaFileAlt, FaGlobe } from "react-icons/fa";
 import useEditor from "../../hooks/useEditor";
 
 function Tabs() {
@@ -41,6 +41,8 @@ function Tabs() {
       case "ppt":
       case "pptx":
         return <FaFilePowerpoint className="tab-ppt" />;
+      case "preview":
+        return <FaGlobe className="tab-preview" />;
       default:
         return <FaFileAlt className="tab-file" />;
     }

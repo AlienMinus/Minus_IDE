@@ -1,6 +1,6 @@
 import "./Chat.css";
 import { useEffect, useRef, useState } from "react";
-import { MarkdownTypewriter } from "react-markdown-typewriter";
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   FaRobot,
@@ -18,7 +18,7 @@ function Chat() {
     {
       id: 1,
       sender: "assistant",
-      text: "Hello! How can I help you today?",
+      text: "**Hello User!** How can I help you today?",
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     }
   ]);
@@ -164,18 +164,9 @@ function Chat() {
               <div className="chat-message-body">
                 <div className="chat-message-text">
                   {item.sender === "assistant" ? (
-                    <MarkdownTypewriter
-                      remarkPlugins={[remarkGfm]}
-                      delay={18}
-                      specialCharacters={{
-                        ".": { delayAfter: 250 },
-                        ",": { delayAfter: 120 },
-                        "!": { delayAfter: 320 },
-                        "?": { delayAfter: 320 }
-                      }}
-                    >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {typedText[item.id] ?? item.text}
-                    </MarkdownTypewriter>
+                    </ReactMarkdown>
                   ) : (
                     item.text
                   )}

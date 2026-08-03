@@ -3,6 +3,7 @@ import "./Explorer.css";
 import { useEffect, useState } from "react";
 import useFile from "../../hooks/useFile";
 import useEditor from "../../hooks/useEditor";
+import ContextMenu from "../ContextMenu";
 
 import {
   FaChevronRight,
@@ -55,9 +56,10 @@ const projectTree = [
 
 function Explorer() {
   const { workspaceTree } = useFile();
-  const { openFile } = useEditor();
+  const { openFile, openPreviewTab } = useEditor();
   const [openFolders, setOpenFolders] = useState({});
   const [selectedFile, setSelectedFile] = useState("");
+  const [contextMenu, setContextMenu] = useState({ isOpen: false, position: null, file: null });
 
   useEffect(() => {
     const defaultOpen = {};
@@ -71,6 +73,30 @@ function Explorer() {
 
   function toggleFolder(folderName) {
     setOpenFolders({ ...openFolders, [folderName]: !openFolders[folderName] });
+  }
+
+  function handleFileContextMenu(e, file) {
+    const fileType = file.language || file.name.split('.').pop().toLowerCase();
+    if (fileType === "html") {
+      e.preventDefault();
+      setContextMenu({
+        isOpen: true,
+        position: { x: e.clientX, y: e.clientY },
+        file: file
+      });
+    }
+  }
+
+  function handleOpenLiveServer() {
+    if (contextMenu.file) {
+      openPreviewTab(contextMenu.file);
+    }
+  }
+
+  function handleRunCode() {
+    if (contextMenu.file) {
+      openFile(contextMenu.file);
+    }
   }
 
   function getIcon(fileType) {
@@ -132,6 +158,7 @@ function Explorer() {
             setSelectedFile(item.id);
             openFile(item);
           }}
+          onContextMenu={(e) => handleFileContextMenu(e, item)}
         >
           {getIcon(fileType)}
           <span>{item.name}</span>
@@ -149,6 +176,14 @@ function Explorer() {
           : <div className="empty-state">Open a folder from File &gt; Open Folder to begin.</div>
         }
       </div>
+
+      <ContextMenu
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        onClose={() => setContextMenu({ isOpen: false, position: null, file: null })}
+        onOpenLiveServer={handleOpenLiveServer}
+        onRunCode={handleRunCode}
+      />
     </aside>
   );
 }

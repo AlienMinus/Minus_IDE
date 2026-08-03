@@ -5,6 +5,12 @@ import { loadEditorFile, saveEditorFile, refreshEditorContent } from "../service
 
 const initialFiles = flattenFiles(fileTree);
 
+function extractTitleFromHtml(htmlContent) {
+  if (!htmlContent) return null;
+  const titleMatch = htmlContent.match(/<title[^>]*>([^<]+)<\/title>/i);
+  return titleMatch ? titleMatch[1].trim() : null;
+}
+
 export const EditorContext = createContext(null);
 
 export function EditorProvider({ children }) {
@@ -104,6 +110,27 @@ export function EditorProvider({ children }) {
     setActiveFile(updatedActiveFile);
   }
 
+  function openPreviewTab(file) {
+    const htmlTitle = extractTitleFromHtml(file.content);
+    const tabName = htmlTitle || file.name;
+
+    const previewTab = {
+      id: `preview-${file.id}`,
+      name: tabName,
+      type: "preview",
+      sourceFile: file,
+      isPreview: true,
+      htmlTitle: htmlTitle
+    };
+
+    const alreadyOpen = openFiles.some((f) => f.id === previewTab.id);
+    if (!alreadyOpen) {
+      setOpenFiles((prev) => [...prev, previewTab]);
+    }
+
+    setActiveFile(previewTab);
+  }
+
   return (
     <EditorContext.Provider
       value={{
@@ -114,6 +141,7 @@ export function EditorProvider({ children }) {
         activeFile,
         openFolder,
         openFile,
+        openPreviewTab,
         closeFile,
         updateContent,
         saveActiveFile,
