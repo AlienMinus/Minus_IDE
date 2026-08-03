@@ -25,6 +25,7 @@ function MainLayout() {
 
         {/* Activity Bar */}
         <Panel
+          className="sidebar-panel"
           defaultSize={5}
           minSize={5}
           maxSize={6}

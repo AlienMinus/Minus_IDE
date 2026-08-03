@@ -1,6 +1,6 @@
 .sidebar{
     width:60px;
-    height: 100vh;
+    height: 100%;
     background:#1e1e1e;
     border-right:1px solid #333;
     display:flex;
@@ -10,28 +10,18 @@
 }
 
 .sidebar-top{
-
     display:flex;
-
     flex-direction:column;
-
     gap:8px;
-
     width:100%;
-
 }
 
 .sidebar-bottom{
-
-    margin-top: auto;
+    margin-top:auto;
     display:flex;
-
     flex-direction:column;
-
     gap:8px;
-
     width:100%;
-
 }
 
 .sidebar-btn{

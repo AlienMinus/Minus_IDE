@@ -22,6 +22,10 @@
     overflow: hidden;
 }
 
+.sidebar-panel {
+    height: 100%;
+}
+
 .editor-section {
     display: flex;
     flex-direction: column;
