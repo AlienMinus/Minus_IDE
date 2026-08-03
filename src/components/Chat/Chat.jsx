@@ -1,5 +1,7 @@
 import "./Chat.css";
 import { useEffect, useRef, useState } from "react";
+import { MarkdownTypewriter } from "react-markdown-typewriter";
+import remarkGfm from "remark-gfm";
 import {
   FaRobot,
   FaPaperPlane,
@@ -9,42 +11,6 @@ import {
   FaCopy,
   FaRedo
 } from "react-icons/fa";
-
-function parseMarkdown(text) {
-  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-  const boldRegex = /\*\*([^*]+)\*\*/g;
-  const italicRegex = /\*([^*]+)\*/g;
-  const codeRegex = /`([^`]+)`/g;
-
-  let result = [text];
-
-  const applyPattern = (pattern, wrapper) => {
-    result = result.flatMap((chunk) => {
-      if (typeof chunk !== "string") return [chunk];
-      const parts = [];
-      let lastIndex = 0;
-      let match;
-      while ((match = pattern.exec(chunk))) {
-        parts.push(chunk.slice(lastIndex, match.index));
-        parts.push(wrapper(match));
-        lastIndex = match.index + match[0].length;
-      }
-      parts.push(chunk.slice(lastIndex));
-      return parts;
-    });
-  };
-
-  applyPattern(linkRegex, (match) => (
-    <a key={`link-${match.index}-${match[2]}`} href={match[2]} target="_blank" rel="noreferrer">
-      {match[1]}
-    </a>
-  ));
-  applyPattern(boldRegex, (match) => <strong key={`bold-${match.index}-${match[1]}`}>{match[1]}</strong>);
-  applyPattern(italicRegex, (match) => <em key={`italic-${match.index}-${match[1]}`}>{match[1]}</em>);
-  applyPattern(codeRegex, (match) => <code key={`code-${match.index}-${match[1]}`}>{match[1]}</code>);
-
-  return result.map((item, index) => (typeof item === "string" ? item : item));
-}
 
 function Chat() {
   const [message, setMessage] = useState("");
@@ -197,9 +163,22 @@ function Chat() {
 
               <div className="chat-message-body">
                 <div className="chat-message-text">
-                  {item.sender === "assistant"
-                    ? parseMarkdown(typedText[item.id] ?? item.text)
-                    : item.text}
+                  {item.sender === "assistant" ? (
+                    <MarkdownTypewriter
+                      remarkPlugins={[remarkGfm]}
+                      delay={18}
+                      specialCharacters={{
+                        ".": { delayAfter: 250 },
+                        ",": { delayAfter: 120 },
+                        "!": { delayAfter: 320 },
+                        "?": { delayAfter: 320 }
+                      }}
+                    >
+                      {typedText[item.id] ?? item.text}
+                    </MarkdownTypewriter>
+                  ) : (
+                    item.text
+                  )}
                 </div>
                 <div className="chat-bubble-footer">
                   <div className="chat-message-actions">
