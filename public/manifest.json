@@ -1,7 +1,7 @@
 {
-  "short_name": "Dummy",
-  "name": "Dummy Project",
-  "description": "Project Template for Vite + React + Express",
+  "short_name": "WebIDE",
+  "name": "WebIDE",
+  "description": "",
   "icons": [
     {
       "src": "favico.png",

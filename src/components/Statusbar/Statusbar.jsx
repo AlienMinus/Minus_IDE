@@ -1,4 +1,4 @@
-import "./StatusBar.css";
+import "./Statusbar.css";
 
 import {
     FaCodeBranch,
