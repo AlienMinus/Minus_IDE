@@ -10,9 +10,10 @@ import {
     FaSave,
     FaPlay,
     FaSearch,
-    FaBell,
-    FaCommentDots
+    FaBell
 } from "react-icons/fa";
+
+import { TbMessageChatbot } from "react-icons/tb";
 
 import { fileMenu, editMenu, viewMenu, terminalMenu, helpMenu } from "../../data/menu.jsx";
 
@@ -187,16 +188,8 @@ function Navbar({ isChatOpen, toggleChat }) {
 
             <div className="navbar-right">
 
-                <button className="icon-btn">
-                    <FaSave />
-                </button>
-
                 <button className="icon-btn run-btn">
-                    <FaPlay />
-                </button>
-
-                <button className="icon-btn">
-                    <FaBell />
+                    <FaPlay className="run-icon" />
                 </button>
 
                 <button
@@ -204,7 +197,7 @@ function Navbar({ isChatOpen, toggleChat }) {
                     onClick={toggleChat}
                     title="Toggle Chat"
                 >
-                    <FaCommentDots />
+                    <TbMessageChatbot />
                 </button>
 
             </div>
