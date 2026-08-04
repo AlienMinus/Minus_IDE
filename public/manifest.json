@@ -4,17 +4,17 @@
   "description": "Observation and light",
   "icons": [
     {
-      "src": "favico.png",
+      "src": "favicon-nobg.png",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/png"
     },
     {
-      "src": "favico.png",
+      "src": "favicon-nobg.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "favico.png",
+      "src": "favico-nobg.png",
       "type": "image/png",
       "sizes": "512x512"
     }
