@@ -1,7 +1,7 @@
 {
-  "short_name": "WebIDE",
-  "name": "WebIDE",
-  "description": "",
+  "short_name": "Hyperion IDE",
+  "name": "Hyperion IDE",
+  "description": "Observation and light",
   "icons": [
     {
       "src": "favico.png",

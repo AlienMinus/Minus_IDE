@@ -147,7 +147,7 @@ function Navbar({ isChatOpen, toggleChat }) {
                 </button>
 
                 <h2 className="logo">
-                    WebIDE
+                    Hyperion IDE
                 </h2>
 
                 <div className="navbar-menu">

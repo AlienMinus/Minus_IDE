@@ -1,9 +1,15 @@
+import { useState } from "react";
 import MainLayout from "./layouts";
+import { SplashScreen } from "./components/SplashScreen/SplashScreen";
 
-function App(){
+function App() {
+  const [showSplash, setShowSplash] = useState(true);
 
-    return <MainLayout />;
-
+  return showSplash ? (
+    <SplashScreen onComplete={() => setShowSplash(false)} />
+  ) : (
+    <MainLayout />
+  );
 }
 
 export default App;
