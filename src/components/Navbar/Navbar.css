@@ -20,6 +20,15 @@
 
 }
 
+.logo-image {
+    width: 35px;
+    height: 35px;
+    margin-right: 5px;
+    border-radius: 50%; /* Make it round */
+    filter: drop-shadow(0 0 8px rgba(105, 197, 255, 0.821)); /* Full backdrop glow */
+    vertical-align: middle;
+}
+
 /* Left */
 
 .navbar-left {
@@ -28,8 +37,12 @@
 
     align-items: center;
 
-    gap: 15px;
 
+}
+
+/* Hide hamburger menu by default on large screens */
+.navbar-left .icon-btn:first-child {
+    display: none;
 }
 
 .logo {
@@ -39,6 +52,7 @@
     font-weight: 600;
 
     color: #ffffff;
+    background: transparent; /* Ensure no background on the logo text */
 
 }
 
@@ -173,6 +187,14 @@
 
         display:none;
 
+    }
+
+    .navbar-left .icon-btn:first-child {
+        display: flex; /* Show hamburger menu on small screens */
+    }
+
+    .navbar-menu {
+        display: none; /* Hide regular menu on small screens */
     }
 
 }

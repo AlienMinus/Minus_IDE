@@ -147,8 +147,9 @@ function Navbar({ isChatOpen, toggleChat }) {
                 </button>
 
                 <h2 className="logo">
-                    Hyperion IDE
+                    <img src="/favicon-nobg.png" alt="Favicon" className="logo-image" />yperion IDE
                 </h2>
+
 
                 <div className="navbar-menu">
                     {menuButtons.map((button) => (

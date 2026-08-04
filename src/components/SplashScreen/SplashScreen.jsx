@@ -1,92 +1,113 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import styles from './SplashScreen.module.css';
 
 export const SplashScreen = ({ onComplete }) => {
   const canvasRef = useRef(null);
-  const [phase, setPhase] = useState(0); // Sequence phase manager
+  const [phase, setPhase] = useState(0);
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
 
-  // 1. Timeline Sequence Manager (0.0s -> 4.0s)
+  // Timeline Sequence Manager (0.0s -> 6.3s)
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 500);  // Ring draw & particles
-    const t2 = setTimeout(() => setPhase(2), 1200); // Fragment matrix & code glyphs
-    const t3 = setTimeout(() => setPhase(3), 2000); // Lens flare sweep & glow
-    const t4 = setTimeout(() => setPhase(4), 2800); // Title fade up
-    const t5 = setTimeout(() => setPhase(5), 3300); // Tagline reveal
+    const t1 = setTimeout(() => setPhase(1), 750);  // Orbital ring draw
+    const t2 = setTimeout(() => setPhase(2), 1800); // Particle matrix assembly
+    const t3 = setTimeout(() => setPhase(3), 3000); // Lens flare & dynamic glow
+    const t4 = setTimeout(() => setPhase(4), 4200); // Title fade up
+    const t5 = setTimeout(() => setPhase(5), 4950); // Tagline reveal
     const t6 = setTimeout(() => {
       if (onComplete) onComplete();
-    }, 4200);                                       // Fade to IDE interface
+    }, 6300);
 
     return () => {
       [t1, t2, t3, t4, t5, t6].forEach(clearTimeout);
     };
   }, [onComplete]);
 
-  // 2. Particle Assembly Canvas (Phase 2 Canvas Renderer)
+  // Particle Assembly Canvas for smooth animation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let animationFrameId;
 
-    const width = (canvas.width = 300);
-    const height = (canvas.height = 300);
+    const size = canvas.parentElement.clientWidth;
+    // Lower resolution for better performance
+    canvas.width = size;
+    canvas.height = size;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    // No context scaling, we're using raw pixels now
 
-    // Particle targets forming the H metallic structure
-    const particleCount = 120;
-    const particles = Array.from({ length: particleCount }, () => {
-      const isLeftCol = Math.random() > 0.5;
-      const isCrossbar = Math.random() > 0.7;
-      let targetX, targetY;
-
-      if (isCrossbar) {
-        targetX = 110 + Math.random() * 80;
-        targetY = 140 + Math.random() * 20;
-      } else if (isLeftCol) {
-        targetX = 90 + Math.random() * 25;
-        targetY = 60 + Math.random() * 180;
-      } else {
-        targetX = 185 + Math.random() * 25;
-        targetY = 60 + Math.random() * 180;
+    const createParticles = (count, speed) => {
+      const particles = [];
+      for (let i = 0; i < count; i++) {
+        const radius = size * 0.38; // Slightly smaller radius
+        const angle = Math.random() * Math.PI * 2;
+        const orbit = radius + (Math.random() - 0.5) * 30;
+        
+        particles.push({
+          angle: angle,
+          radius: orbit,
+          size: Math.random() * 1.5 + 0.5, // Smaller particles
+          alpha: 0,
+          speed: speed * (0.02 + Math.random() * 0.03),
+        });
       }
+      return particles;
+    };
 
-      return {
-        x: targetX + (Math.random() - 0.5) * 200,
-        y: targetY + (Math.random() - 0.5) * 200,
-        targetX,
-        targetY,
-        size: Math.random() * 2 + 0.8,
-        alpha: 0,
-        speed: 0.04 + Math.random() * 0.04,
-      };
-    });
+    // Reduced particle count for performance
+    const particleCount = 75;
+    const particles1 = createParticles(particleCount, 1);
+    const particles2 = createParticles(particleCount, -1);
+    const allParticles = [...particles1, ...particles2];
+    
+    let time = 0;
 
     const render = () => {
-      ctx.clearRect(0, 0, width, height);
+      ctx.clearRect(0, 0, size, size);
+      time += 0.015;
 
-      if (phase >= 1) {
-        particles.forEach((p) => {
-          // Lerp position toward target
-          p.x += (p.targetX - p.x) * p.speed;
-          p.y += (p.targetY - p.y) * p.speed;
-          p.alpha = Math.min(p.alpha + 0.03, 0.85);
+      // Reduced complexity for background noise
+      if (phaseRef.current >= 1) {
+        for (let i = 0; i < 10; i++) {
+          const x = Math.random() * size;
+          const y = Math.random() * size;
+          const alpha = Math.random() * 0.03; // More subtle
+          ctx.fillStyle = `rgba(33, 150, 243, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
 
-          ctx.fillStyle = `rgba(33, 150, 243, ${p.alpha})`;
-          ctx.shadowBlur = 8;
-          ctx.shadowColor = '#00f3ff';
-          ctx.fillRect(p.x, p.y, p.size, p.size);
+      if (phaseRef.current >= 1) {
+        allParticles.forEach((p) => {
+          const distortion = Math.sin(p.angle * 4 + time) * 15; // Less distortion
+          const orbitRadius = p.radius + distortion;
+          
+          const currentAngle = p.angle + time * p.speed;
+          
+          const x = size / 2 + Math.cos(currentAngle) * orbitRadius;
+          const y = size / 2 + Math.sin(currentAngle) * orbitRadius;
+          p.alpha = Math.min(p.alpha + 0.035, 0.9);
+
+          ctx.fillStyle = `rgba(0, 243, 255, ${p.alpha})`;
+          // Removed shadowBlur for performance
+          ctx.beginPath();
+          ctx.arc(x, y, p.size, 0, Math.PI * 2);
+          ctx.fill();
         });
       }
 
-      if (phase < 4) {
-        animationFrameId = requestAnimationFrame(render);
-      }
+      animationFrameId = requestAnimationFrame(render);
     };
 
     render();
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [phase]);
+  }, []);
 
   return (
     <motion.div
@@ -95,8 +116,16 @@ export const SplashScreen = ({ onComplete }) => {
       animate={{ opacity: phase === 5 ? 0 : 1 }}
       transition={{ duration: 0.8, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className={styles.stage}>
-        {/* Central Core Star (0.0s - 0.5s) */}
+      <div
+    className={styles.stage}
+    style={{
+        "--stage-size": `${Math.min(
+            window.innerWidth,
+            window.innerHeight
+        ) * 0.55}px`
+    }}
+>
+        {/* Core Star */}
         <motion.div
           className={styles.coreStar}
           initial={{ scale: 0, opacity: 0 }}
@@ -108,85 +137,94 @@ export const SplashScreen = ({ onComplete }) => {
         <motion.div
           className={styles.pulseRing}
           initial={{ scale: 0.1, opacity: 0 }}
-          animate={{ scale: phase >= 0 ? 2.5 : 0.1, opacity: phase >= 0 ? [0, 0.6, 0] : 0 }}
+          animate={{ scale: phase >= 0 ? 2.8 : 0.1, opacity: phase >= 0 ? [0, 0.5, 0] : 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         />
 
-        {/* Orbital SVG Ring & Arc (0.5s - 1.2s) */}
-        <svg className={styles.orbitalSvg} viewBox="0 0 300 300">
-          <motion.circle
-            cx="150"
-            cy="150"
-            r="110"
-            stroke="url(#orbitalGradient)"
-            strokeWidth="1.5"
-            fill="none"
-            strokeDasharray="691"
-            initial={{ strokeDashoffset: 691 }}
-            animate={{ strokeDashoffset: phase >= 1 ? 0 : 691 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          />
-          <defs>
-            <linearGradient id="orbitalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#2196F3" stopOpacity="0.2" />
-              <stop offset="50%" stopColor="#00f3ff" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#2196F3" stopOpacity="0.1" />
-            </linearGradient>
-          </defs>
-        </svg>
-
-        {/* Particle Matrix Canvas */}
+        {/* Particle Canvas Matrix */}
         <canvas ref={canvasRef} className={styles.particleCanvas} />
 
-        {/* Code Glyphs < /> (1.2s) */}
-        <motion.div
-          className={styles.codeGlyphs}
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: phase >= 2 ? 0.7 : 0, x: phase >= 2 ? 0 : -10 }}
-          transition={{ duration: 0.5 }}
-        >
-          <span>&lt;</span>
-          <span>/&gt;</span>
-        </motion.div>
-
-        {/* Assembled Metallic H Logo Container (1.2s - 2.8s) */}
+        {/* Exact Geometry Logo Container */}
         <motion.div
           className={styles.logoWrapper}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: phase >= 2 ? 1 : 0, scale: phase >= 2 ? 1 : 0.95 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Base Vector Metallic H */}
-          <svg className={styles.logoSvg} viewBox="0 0 200 200" fill="none">
-            <path
-              d="M 45,25 L 75,25 L 75,85 L 125,85 L 125,25 L 155,25 L 155,175 L 125,175 L 125,115 L 75,115 L 75,175 L 45,175 Z"
-              fill="url(#metalGradient)"
+          <svg className={styles.logoSvg} viewBox="0 0 300 300" fill="none">
+            {/* Orbital Arc Wrapping the Right Side */}
+            <motion.path
+              d="M 120,40 A 110,110 0 0,1 185,260"
+              stroke="url(#orbitalGlow)"
+              strokeWidth="3"
+              strokeLinecap="round"
+              fill="none"
+              strokeDasharray="400"
+              initial={{ strokeDashoffset: 400 }}
+              animate={{ strokeDashoffset: phase >= 1 ? 0 : 400 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             />
+
+            {/* Left Brushed Silver Pillar with Angled Cut */}
+            <path
+              d="M 85,75 L 120,55 L 120,130 L 155,130 L 155,150 L 120,150 L 120,225 L 85,225 Z"
+              fill="url(#silverMetal)"
+            />
+
+            {/* Right Luminous Blue Glass Pillar */}
+            <path
+              d="M 175,80 L 205,80 L 205,200 L 175,200 Z"
+              fill="url(#blueGlass)"
+              filter="drop-shadow(0 0 12px rgba(0, 243, 255, 0.6))"
+            />
+
+            {/* Gradients & Flares Definition */}
             <defs>
-              <linearGradient id="metalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#E0E6ED" />
-                <stop offset="45%" stopColor="#8A99AD" />
-                <stop offset="55%" stopColor="#1E293B" />
-                <stop offset="100%" stopColor="#2196F3" />
+              <linearGradient id="orbitalGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#2196F3" stopOpacity="0.2" />
+                <stop offset="50%" stopColor="#00f3ff" stopOpacity="1" />
+                <stop offset="100%" stopColor="#2196F3" stopOpacity="0.4" />
+              </linearGradient>
+
+              <linearGradient id="silverMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="50%" stopColor="#B0BEC5" />
+                <stop offset="100%" stopColor="#455A64" />
+              </linearGradient>
+
+              <linearGradient id="blueGlass" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#00f3ff" stopOpacity="0.9" />
+                <stop offset="50%" stopColor="#2196F3" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#0d47a1" stopOpacity="0.95" />
               </linearGradient>
             </defs>
           </svg>
 
-          {/* Lens Flare Sweep (2.0s - 2.8s) */}
+          {/* Embedded Code Glyphs </ > on the Left Flank */}
+          <motion.div
+            className={styles.codeGlyphs}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: phase >= 2 ? 0.85 : 0, x: phase >= 2 ? 0 : -8 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span>&lt;</span>
+            <span>/&gt;</span>
+          </motion.div>
+
+          {/* Lens Flare Burst Positioned on Right Pillar */}
           {phase >= 3 && (
             <motion.div
-              className={styles.lensFlare}
-              initial={{ x: '-100%', opacity: 0 }}
-              animate={{ x: '200%', opacity: [0, 1, 0] }}
-              transition={{ duration: 0.8, ease: 'easeInOut' }}
+              className={styles.flareCore}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0.5, 1.2, 1], opacity: [0, 1, 0.8] }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
             />
           )}
         </motion.div>
       </div>
 
-      {/* Text Hierarchy (2.8s - 4.0s) */}
+      {/* Typography Hierarchy */}
       <div className={styles.textContainer}>
-        {/* Brand Title */}
         <motion.div
           initial={{ opacity: 0, y: 12, filter: 'blur(8px)' }}
           animate={{
@@ -200,10 +238,9 @@ export const SplashScreen = ({ onComplete }) => {
           HYPERION <span className={styles.ideBadge}>IDE</span>
         </motion.div>
 
-        {/* Tagline */}
         <motion.div
           initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: phase >= 5 ? 0.6 : 0, y: phase >= 5 ? 0 : 6 }}
+          animate={{ opacity: phase >= 5 ? 0.65 : 0, y: phase >= 5 ? 0 : 6 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
           className={styles.tagline}
         >

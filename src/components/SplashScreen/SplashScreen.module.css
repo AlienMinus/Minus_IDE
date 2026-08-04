@@ -12,20 +12,31 @@
   user-select: none;
 }
 
-.stage {
-  position: relative;
-  width: 300px;
-  height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.stage{
+
+    position:relative;
+
+    width:var(--stage-size);
+
+    height:var(--stage-size);
+
+    min-width:320px;
+    min-height:320px;
+
+    max-width:720px;
+    max-height:720px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
 }
 
 /* Core Star */
 .coreStar {
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #ffffff;
   box-shadow: 0 0 12px #00f3ff, 0 0 24px #2196f3;
@@ -35,23 +46,14 @@
 /* Pulse Ring */
 .pulseRing {
   position: absolute;
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   border: 1px solid #00f3ff;
   pointer-events: none;
 }
 
-/* SVG Orbital Arc */
-.orbitalSvg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-45deg);
-}
-
-/* Canvas Particle Layer */
+/* Particle Canvas */
 .particleCanvas {
   position: absolute;
   inset: 0;
@@ -59,27 +61,11 @@
   z-index: 2;
 }
 
-/* Left Code Glyphs */
-.codeGlyphs {
-  position: absolute;
-  left: 12px;
-  top: 42%;
-  display: flex;
-  flex-direction: column;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: #2196f3;
-  text-shadow: 0 0 8px rgba(33, 150, 243, 0.6);
-  line-height: 1.2;
-  z-index: 3;
-}
-
-/* Metallic H Wrapper & Flare */
+/* Logo Wrapper */
 .logoWrapper {
   position: relative;
-  width: 140px;
-  height: 140px;
+  width: 72%;
+  height: 72%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,33 +75,47 @@
 .logoSvg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 16px rgba(33, 150, 243, 0.35));
+  filter: drop-shadow(0 0 20px rgba(33, 150, 243, 0.4));
 }
 
-.lensFlare {
+/* Code Glyphs Placement */
+.codeGlyphs {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 30%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.8) 50%,
-    transparent 100%
-  );
-  transform: skewX(-25deg);
-  pointer-events: none;
-  filter: blur(2px);
+  left: 32px;
+  top: 41%;
+  display: flex;
+  flex-direction: column;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2196f3;
+  text-shadow: 0 0 8px rgba(0, 243, 255, 0.7);
+  line-height: 1.25;
+  z-index: 5;
 }
 
-/* Text Hierarchy */
+/* Lens Flare Core Overlay */
+.flareCore {
+  position: absolute;
+  right: 68px;
+  top: 48%;
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, #ffffff 0%, #00f3ff 40%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(1px);
+  pointer-events: none;
+  z-index: 6;
+  mix-blend-mode: screen;
+}
+
+/* Typography Styles */
 .textContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 .brandTitle {
@@ -126,20 +126,20 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-left: 0.35em; /* Optical centering */
+  padding-left: 0.35em;
 }
 
 .ideBadge {
   color: #2196f3;
   font-weight: 600;
-  text-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+  text-shadow: 0 0 10px rgba(33, 150, 243, 0.6);
 }
 
 .tagline {
   font-size: 9px;
   font-weight: 500;
-  letter-spacing: 0.4em;
+  letter-spacing: 0.42em;
   color: #94a3b8;
   text-transform: uppercase;
-  padding-left: 0.4em;
+  padding-left: 0.42em;
 }
