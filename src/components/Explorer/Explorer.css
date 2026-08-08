@@ -1,5 +1,5 @@
 .explorer{
-    width:100%;
+    width: 280px; /* Default width */
     background:#252526;
     color:#d4d4d4;
     display:flex;
@@ -7,20 +7,89 @@
     border-right:1px solid #333;
     overflow:hidden;
     min-width:0;
+    transition: width 0.3s ease;
 }
 
+.explorer.collapsed {
+    width: 50px; /* Width when collapsed */
+}
+
+.explorer.collapsed .explorer-title,
+.explorer.collapsed .explorer-actions button:not(:last-child) {
+    display: none; /* Hide title and all but the last action button */
+}
+
+.explorer.collapsed .explorer-header {
+    justify-content: center;
+}
+
+.explorer.collapsed .explorer-body {
+    display: none;
+}
+
+
 .explorer-header{
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid #333;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-    padding:12px;
+.explorer-title {
+    flex-grow: 1;
+}
 
-    font-size:13px;
+.explorer-actions {
+    display: flex;
+    gap: 4px;
+}
 
-    font-weight:600;
+.action-btn {
+    background: none;
+    border: none;
+    color: #d4d4d4;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
 
-    border-bottom:1px solid #333;
+.action-btn:hover {
+    background-color: #3c3c3c;
+}
 
-    letter-spacing:1px;
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 20px;
+}
 
+.open-folder-btn {
+    background: #007acc;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.open-folder-btn:hover {
+    background: #005f9e;
 }
 
 .explorer-body{

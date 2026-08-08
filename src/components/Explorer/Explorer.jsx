@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import useFile from "../../hooks/useFile";
 import useEditor from "../../hooks/useEditor";
 import ContextMenu from "../ContextMenu";
+import { Button } from "../Button";
+import Modal from "../Modal/Modal";
 
 import {
   FaChevronRight,
@@ -21,45 +23,20 @@ import {
   FaFilePowerpoint,
   FaFileCode
 } from "react-icons/fa";
-
-const projectTree = [
-  {
-    name: "src",
-    type: "folder",
-    children: [
-      {
-        name: "components",
-        type: "folder",
-        children: [
-          { name: "Navbar.jsx", type: "jsx" },
-          { name: "Sidebar.jsx", type: "jsx" },
-          { name: "Editor.jsx", type: "jsx" }
-        ]
-      },
-      {
-        name: "pages",
-        type: "folder",
-        children: [
-          { name: "HomePage.jsx", type: "jsx" },
-          { name: "SettingsPage.jsx", type: "jsx" }
-        ]
-      },
-      { name: "App.jsx", type: "jsx" },
-      { name: "App.css", type: "css" },
-      { name: "main.jsx", type: "jsx" },
-      { name: "index.css", type: "css" }
-    ]
-  },
-  { name: "package.json", type: "json" },
-  { name: "vite.config.js", type: "js" }
-];
+import { FiFilePlus, FiFolderPlus, FiRefreshCw } from "react-icons/fi";
+import { VscCollapseAll } from "react-icons/vsc";
 
 function Explorer() {
-  const { workspaceTree } = useFile();
+  const { workspaceTree, openFolder, refreshWorkspace, createFile, createFolder } = useFile();
   const { openFile, openPreviewTab } = useEditor();
   const [openFolders, setOpenFolders] = useState({});
   const [selectedFile, setSelectedFile] = useState("");
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [contextMenu, setContextMenu] = useState({ isOpen: false, position: null, file: null });
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState(null); // 'file' or 'folder'
+  const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
     const defaultOpen = {};
@@ -73,6 +50,32 @@ function Explorer() {
 
   function toggleFolder(folderName) {
     setOpenFolders({ ...openFolders, [folderName]: !openFolders[folderName] });
+  }
+
+  function openModal(type) {
+    setModalType(type);
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    setIsModalOpen(false);
+    setModalType(null);
+    setInputValue('');
+  }
+
+  function handleInputChange(e) {
+    setInputValue(e.target.value);
+  }
+
+  function handleSubmit() {
+    if (inputValue) {
+      if (modalType === 'file') {
+        createFile(inputValue);
+      } else if (modalType === 'folder') {
+        createFolder(inputValue);
+      }
+      closeModal();
+    }
   }
 
   function handleFileContextMenu(e, file) {
@@ -169,12 +172,49 @@ function Explorer() {
 
   return (
     <aside className="explorer">
-      <div className="explorer-header">EXPLORER</div>
+      <div className="explorer-header">
+        <span className="explorer-title">EXPLORER</span>
+        <div className="explorer-actions">
+          <button className="action-btn" onClick={() => openModal('file')}><FiFilePlus /></button>
+          <button className="action-btn" onClick={() => openModal('folder')}><FiFolderPlus /></button>
+          <button className="action-btn" onClick={refreshWorkspace}><FiRefreshCw /></button>
+          <button className="action-btn" onClick={() => {
+            const newState = !isCollapsed;
+            setIsCollapsed(newState);
+            if (newState) {
+              // Collapse all folders
+              const allClosed = {};
+              workspaceTree.forEach(item => {
+                if (item.type === 'folder') {
+                  allClosed[item.id] = false;
+                }
+              });
+              setOpenFolders(allClosed);
+            } else {
+              // Expand all root folders
+              const rootOpen = {};
+              workspaceTree.forEach(item => {
+                if (item.type === 'folder') {
+                  rootOpen[item.id] = true;
+                }
+              });
+              setOpenFolders(rootOpen);
+            }
+          }}>
+            <VscCollapseAll style={{ transform: isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+          </button>
+        </div>
+      </div>
       <div className="explorer-body">
         {workspaceTree && workspaceTree.length > 0
           ? renderTree(workspaceTree)
-          : <div className="empty-state">Open a folder from File &gt; Open Folder to begin.</div>
-        }
+          : <div className="empty-state">
+              <button className="open-folder-btn" onClick={openFolder}>
+                <FaFolder />
+                <span>Open Folder</span>
+              </button>
+            </div>
+          }
       </div>
 
       <ContextMenu
@@ -184,6 +224,23 @@ function Explorer() {
         onOpenLiveServer={handleOpenLiveServer}
         onRunCode={handleRunCode}
       />
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={modalType === 'file' ? 'Create New File' : 'Create New Folder'}
+      >
+        <div className="modal-content">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            placeholder={modalType === 'file' ? 'Enter file name...' : 'Enter folder name...'}
+            autoFocus
+          />
+          <Button onClick={handleSubmit} text={modalType === 'file' ? 'Create File' : 'Create Folder'} />
+        </div>
+      </Modal>
     </aside>
   );
 }

@@ -7,10 +7,8 @@ import useEditor from "../../hooks/useEditor";
 import {
     FaBars,
     FaFolderOpen,
-    FaSave,
     FaPlay,
-    FaSearch,
-    FaBell
+    FaSearch
 } from "react-icons/fa";
 
 import { TbMessageChatbot } from "react-icons/tb";
