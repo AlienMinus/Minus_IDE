@@ -6,18 +6,37 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { SearchAddon } from "@xterm/addon-search";
 import "@xterm/xterm/css/xterm.css";
 import useTerminal from "../../hooks/useTerminal";
-import { FaPlay, FaTrash, FaPlus, FaCheckCircle, FaSpinner } from "react-icons/fa";
+import {
+  FaPlay,
+  FaTrash,
+  FaPlus,
+  FaCheckCircle,
+  FaSpinner,
+  FaTimes,
+  FaColumns,
+  FaStop,
+  FaTrashAlt
+} from "react-icons/fa";
 
 function TerminalComponent() {
   const terminalRef = useRef(null);
   const xtermRef = useRef(null);
   const fitAddonRef = useRef(null);
+
+  const splitTerminalRef = useRef(null);
+  const splitXtermRef = useRef(null);
+  const splitFitAddonRef = useRef(null);
+
   const {
     activeTerminal,
     terminals,
     createTerminal,
     executeCommand,
     runActiveFile,
+    killTerminal,
+    terminateTask,
+    splitTerminal,
+    isSplit,
     isRunning,
     setActiveTerminal
   } = useTerminal();
@@ -26,7 +45,7 @@ function TerminalComponent() {
   const outputLines = useRef(0);
   const historyIndex = useRef(0);
 
-  // Initialize xterm
+  // Initialize main xterm
   useEffect(() => {
     if (!terminalRef.current) return;
 
@@ -75,9 +94,7 @@ function TerminalComponent() {
       const resizeObserver = new ResizeObserver(() => {
         try {
           fitAddon.fit();
-        } catch {
-          // Ignore resize errors when unmounted
-        }
+        } catch {}
       });
       resizeObserver.observe(terminalRef.current);
 
@@ -91,6 +108,7 @@ function TerminalComponent() {
           domEvent.preventDefault();
           term.write('^C\r\n$ ');
           currentCommand.current = "";
+          terminateTask();
           return;
         }
 
@@ -102,7 +120,7 @@ function TerminalComponent() {
           return;
         }
 
-        // Arrow Up (History backward)
+        // Arrow Up
         if (domEvent.key === 'ArrowUp') {
           domEvent.preventDefault();
           if (activeTerminal.history && historyIndex.current > 0) {
@@ -112,7 +130,7 @@ function TerminalComponent() {
             currentCommand.current = command;
           }
         }
-        // Arrow Down (History forward)
+        // Arrow Down
         else if (domEvent.key === 'ArrowDown') {
           domEvent.preventDefault();
           if (activeTerminal.history && historyIndex.current < activeTerminal.history.length - 1) {
@@ -128,13 +146,12 @@ function TerminalComponent() {
         }
       });
 
-      // Data handler (Typing, Paste, Enter, Backspace)
+      // Data handler
       terminal.onData((data) => {
         const term = xtermRef.current;
         if (!term) return;
 
         if (data === "\r") {
-          // Enter key
           term.write('\r\n');
           const toExecute = currentCommand.current;
           currentCommand.current = "";
@@ -143,15 +160,13 @@ function TerminalComponent() {
             historyIndex.current = activeTerminal.history.length + 1;
           }
         } else if (data === "\x7f" || data === "\b") {
-          // Backspace key
           if (currentCommand.current.length > 0) {
             term.write("\b \b");
             currentCommand.current = currentCommand.current.slice(0, -1);
           }
         } else if (data === "\t") {
-          // Tab autocompletion for common commands
           const partial = currentCommand.current.toLowerCase();
-          const suggestions = ['run', 'runtimes', 'c', 'python', 'node', 'bash', 'react', 'gcc', 'ls', 'cat', 'clear', 'help'];
+          const suggestions = ['run', 'runtimes', 'c', 'python', 'node', 'bash', 'react', 'gcc', 'ls', 'cat', 'clear', 'help', 'kill'];
           const match = suggestions.find(s => s.startsWith(partial) && s !== partial);
           if (match) {
             const added = match.slice(partial.length);
@@ -159,28 +174,20 @@ function TerminalComponent() {
             term.write(added);
           }
         } else if (data.length > 0 && !data.includes('\x1b')) {
-          // Printable characters or pasted text
           currentCommand.current += data;
           term.write(data);
         }
       });
     }
-  }, [executeCommand, activeTerminal]);
+  }, [executeCommand, activeTerminal, terminateTask]);
 
-  useEffect(() => {
-    if (activeTerminal?.history) {
-      historyIndex.current = activeTerminal.history.length;
-    }
-  }, [activeTerminal]);
-
-  // Synchronize terminal output buffer with active terminal state
+  // Synchronize terminal output buffer
   useEffect(() => {
     const term = xtermRef.current;
     if (!term || !activeTerminal) return;
 
     const writeOutput = (lines) => {
       lines.forEach((line, index) => {
-        // Ensure \r\n line endings for smooth xterm rendering
         const formatted = String(line).replace(/\r?\n/g, '\r\n');
         if (index === lines.length - 1 && formatted.endsWith('$ ')) {
           term.write(formatted);
@@ -195,12 +202,38 @@ function TerminalComponent() {
       writeOutput(newLines);
       outputLines.current = activeTerminal.output.length;
     } else if (activeTerminal.output.length < outputLines.current) {
-      // Clear screen reset
       term.clear();
       writeOutput(activeTerminal.output);
       outputLines.current = activeTerminal.output.length;
     }
   }, [activeTerminal, activeTerminal?.output]);
+
+  // Secondary split terminal initialization
+  useEffect(() => {
+    if (!isSplit || !splitTerminalRef.current) return;
+
+    if (!splitXtermRef.current) {
+      const splitTerm = new XtermTerminal({
+        cursorBlink: true,
+        fontSize: 13,
+        fontFamily: "'Cascadia Code', Consolas, monospace",
+        theme: {
+          background: "#161616",
+          foreground: "#cccccc",
+          cursor: "#ffffff"
+        }
+      });
+      const splitFit = new FitAddon();
+      splitTerm.loadAddon(splitFit);
+      splitTerm.open(splitTerminalRef.current);
+      splitFit.fit();
+      splitXtermRef.current = splitTerm;
+      splitFitAddonRef.current = splitFit;
+
+      splitTerm.writeln("\x1b[36m[Split Pane Active]\x1b[0m");
+      splitTerm.write("$ ");
+    }
+  }, [isSplit]);
 
   return (
     <div className="terminal-container">
@@ -208,15 +241,25 @@ function TerminalComponent() {
         <div className="terminal-toolbar-left">
           <div className="terminal-tabs-header">
             {terminals.map(t => (
-              <button
+              <div
                 key={t.id}
                 className={`terminal-tab-item ${activeTerminal?.id === t.id ? 'active' : ''}`}
                 onClick={() => setActiveTerminal(t)}
               >
-                {t.title}
-              </button>
+                <span>{t.title}</span>
+                <span
+                  className="terminal-tab-kill"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    killTerminal(t.id);
+                  }}
+                  title="Kill Terminal"
+                >
+                  <FaTimes />
+                </span>
+              </div>
             ))}
-            <button className="terminal-add-btn" onClick={createTerminal} title="New Terminal">
+            <button className="terminal-add-btn" onClick={createTerminal} title="New Terminal (Ctrl+Shift+`)">
               <FaPlus />
             </button>
           </div>
@@ -237,21 +280,55 @@ function TerminalComponent() {
             className="term-action-btn run-action-btn"
             onClick={() => runActiveFile()}
             disabled={isRunning}
-            title="Execute Active File in Sandbox"
+            title="Execute Active File in Sandbox (F5)"
           >
             <FaPlay className="action-icon" /> Run Active File
+          </button>
+
+          {isRunning && (
+            <button
+              className="term-action-btn stop-action-btn"
+              onClick={terminateTask}
+              title="Terminate Running Process (Ctrl+C)"
+            >
+              <FaStop className="action-icon" /> Stop
+            </button>
+          )}
+
+          <button
+            className="term-action-btn"
+            onClick={splitTerminal}
+            title="Split Terminal Side by Side (Ctrl+Shift+5)"
+          >
+            <FaColumns className="action-icon" /> Split
+          </button>
+
+          <button
+            className="term-action-btn kill-btn"
+            onClick={() => killTerminal(activeTerminal?.id)}
+            title="Kill Terminal Session"
+          >
+            <FaTrashAlt className="action-icon" /> Kill Terminal
           </button>
 
           <button
             className="term-action-btn"
             onClick={() => executeCommand('clear')}
-            title="Clear Terminal Screen"
+            title="Clear Terminal Screen (Ctrl+L)"
           >
             <FaTrash className="action-icon" /> Clear
           </button>
         </div>
       </div>
-      <div ref={terminalRef} className="terminal" />
+
+      <div className={`terminal-body-split-wrapper ${isSplit ? 'split' : ''}`}>
+        <div ref={terminalRef} className="terminal main-pane" />
+        {isSplit && (
+          <div className="split-pane-container">
+            <div ref={splitTerminalRef} className="terminal split-pane" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

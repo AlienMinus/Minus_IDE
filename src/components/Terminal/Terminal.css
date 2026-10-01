@@ -35,6 +35,9 @@
 }
 
 .terminal-tab-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: transparent;
     border: none;
     color: #888;
@@ -54,6 +57,23 @@
     background: #37373d;
     color: #fff;
     font-weight: 600;
+}
+
+.terminal-tab-kill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    color: #888;
+    font-size: 10px;
+    transition: all 0.15s ease;
+}
+
+.terminal-tab-kill:hover {
+    background: rgba(248, 81, 73, 0.25);
+    color: #f85149;
 }
 
 .terminal-add-btn {
@@ -77,7 +97,7 @@
 .terminal-toolbar-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .sandbox-status-badge {
@@ -147,13 +167,55 @@
     background: #1177bb;
 }
 
+.term-action-btn.kill-btn {
+    background: rgba(248, 81, 73, 0.12);
+    border-color: rgba(248, 81, 73, 0.3);
+    color: #fca5a5;
+}
+
+.term-action-btn.kill-btn:hover {
+    background: rgba(248, 81, 73, 0.25);
+    color: #fff;
+}
+
+.term-action-btn.stop-action-btn {
+    background: rgba(210, 153, 34, 0.15);
+    border-color: rgba(210, 153, 34, 0.35);
+    color: #facc15;
+}
+
+.term-action-btn.stop-action-btn:hover {
+    background: rgba(210, 153, 34, 0.3);
+    color: #fff;
+}
+
 .action-icon {
     font-size: 10px;
+}
+
+.terminal-body-split-wrapper {
+    flex: 1;
+    width: 100%;
+    height: calc(100% - 36px);
+    display: flex;
+    overflow: hidden;
+}
+
+.terminal-body-split-wrapper.split .main-pane {
+    width: 50%;
+    border-right: 1px solid #333;
+}
+
+.split-pane-container {
+    width: 50%;
+    height: 100%;
+    background: #161616;
 }
 
 .terminal {
     flex: 1;
     width: 100%;
+    height: 100%;
     padding: 6px 10px;
     box-sizing: border-box;
     overflow: hidden;

@@ -1,15 +1,59 @@
-import { createContext, useState, useContext, useCallback } from "react";
+import { createContext, useState, useContext, useCallback, useRef } from "react";
 import commandsData from "../data/commands.json";
 import { executeCode, executeCommand as executeShellCommand, getSandboxStatus, detectLanguage } from "../services/sandboxService";
 import { EditorContext } from "./EditorContext";
 
 export const TerminalContext = createContext();
 
+const DEFAULT_TASKS_JSON = JSON.stringify({
+  version: "2.0.0",
+  tasks: [
+    {
+      label: "Build Project",
+      type: "shell",
+      command: "npm run build",
+      group: {
+        kind: "build",
+        isDefault: true
+      },
+      problemMatcher: []
+    },
+    {
+      label: "Compile & Run C (GCC)",
+      type: "shell",
+      command: "gcc -O2 src/main.c -o main.exe && ./main.exe",
+      group: "build"
+    },
+    {
+      label: "Run Python Script",
+      type: "shell",
+      command: "python src/script.py"
+    },
+    {
+      label: "Run Node.js",
+      type: "shell",
+      command: "node src/index.js"
+    },
+    {
+      label: "Run Bash Script",
+      type: "shell",
+      command: "bash src/script.sh"
+    },
+    {
+      label: "Run Tests",
+      type: "shell",
+      command: "npm test"
+    }
+  ]
+}, null, 2);
+
 export function TerminalProvider({ children }) {
     const editorCtx = useContext(EditorContext);
     const activeFile = editorCtx?.activeFile;
     const files = editorCtx?.files || [];
     const openPreviewTab = editorCtx?.openPreviewTab;
+    const getSelectedText = editorCtx?.getSelectedText;
+    const createOrOpenFile = editorCtx?.createOrOpenFile;
 
     const [terminals, setTerminals] = useState([
         {
@@ -33,6 +77,11 @@ export function TerminalProvider({ children }) {
     const [commands] = useState(commandsData);
     const [isRunning, setIsRunning] = useState(false);
     const [latestExecution, setLatestExecution] = useState(null);
+    const [isSplit, setIsSplit] = useState(false);
+    const [isMaximized, setIsMaximized] = useState(false);
+    const [isTaskPickerOpen, setIsTaskPickerOpen] = useState(false);
+
+    const lastActionRef = useRef(null);
 
     const activeTerminal = terminals.find(t => t.id === activeTerminalId) || terminals[0];
 
@@ -54,12 +103,75 @@ export function TerminalProvider({ children }) {
         setActiveTerminalId(newId);
     }
 
-    function closeTerminal(id) {
-        const updated = terminals.filter(t => t.id !== id);
-        setTerminals(updated);
-        if (activeTerminalId === id) {
-            setActiveTerminalId(updated.length > 0 ? updated[0].id : null);
+    /**
+     * Kill Terminal (terminate terminal session and reset if all killed)
+     */
+    function killTerminal(idToKill) {
+        const targetId = idToKill || activeTerminalId;
+        setIsRunning(false);
+
+        setTerminals(prev => {
+            const updated = prev.filter(t => t.id !== targetId);
+            if (updated.length === 0) {
+                const freshId = Date.now();
+                const freshTerm = {
+                    id: freshId,
+                    title: "Terminal 1",
+                    cwd: "~/HyperionIDE",
+                    history: [],
+                    output: [
+                        "\x1b[33m[Hyperion] Terminal reset.\x1b[0m",
+                        "$ "
+                    ]
+                };
+                setActiveTerminalId(freshId);
+                return [freshTerm];
+            }
+
+            if (activeTerminalId === targetId) {
+                setActiveTerminalId(updated[0].id);
+            }
+            return updated;
+        });
+
+        if (isSplit && terminals.length <= 2) {
+            setIsSplit(false);
         }
+    }
+
+    /**
+     * Terminate currently running task / process
+     */
+    function terminateTask() {
+        setIsRunning(false);
+        appendToTerminal([
+            "\x1b[31m[Terminated] Running task was terminated by user.\x1b[0m",
+            "$ "
+        ]);
+    }
+
+    /**
+     * Split terminal side by side
+     */
+    function splitTerminal() {
+        const newId = Date.now();
+        const newTerm = {
+            id: newId,
+            title: `Terminal ${terminals.length + 1} (Split)`,
+            cwd: "~/HyperionIDE",
+            history: [],
+            output: [
+                "\x1b[36m[Split Terminal Pane]\x1b[0m",
+                "$ "
+            ]
+        };
+
+        setTerminals(prev => [...prev, newTerm]);
+        setIsSplit(true);
+    }
+
+    function toggleMaximizeTerminal() {
+        setIsMaximized(prev => !prev);
     }
 
     const appendToTerminal = useCallback((textOrLines) => {
@@ -93,6 +205,7 @@ export function TerminalProvider({ children }) {
         }
 
         setIsRunning(true);
+        lastActionRef.current = { type: 'code', language, code, filename, targetFile };
         const startTime = Date.now();
 
         appendToTerminal([
@@ -109,7 +222,6 @@ export function TerminalProvider({ children }) {
 
             const duration = res.executionTimeMs || (Date.now() - startTime);
 
-            // Record execution metadata for Output panel
             setLatestExecution({
                 filename: filename || `${language}-script`,
                 language,
@@ -124,27 +236,23 @@ export function TerminalProvider({ children }) {
 
             const outputLines = [];
 
-            // Stdout
             if (res.stdout) {
                 const formatted = res.stdout.replace(/\r\n/g, '\n').split('\n');
                 outputLines.push(...formatted);
             }
 
-            // Stderr
             if (res.stderr) {
                 const formattedErr = res.stderr.replace(/\r\n/g, '\n').split('\n')
                     .map(line => `\x1b[31m${line}\x1b[0m`);
                 outputLines.push(...formattedErr);
             }
 
-            // Status message
             if (res.success) {
                 outputLines.push(`\x1b[32m✔ [Process exited with code ${res.exitCode ?? 0} in ${duration}ms]\x1b[0m`);
             } else {
                 outputLines.push(`\x1b[31m✘ [Process failed with exit code ${res.exitCode ?? 1} in ${duration}ms]\x1b[0m`);
             }
 
-            // If React, trigger live preview if available
             if ((language === 'react' || language === 'jsx') && openPreviewTab && targetFile) {
                 openPreviewTab(targetFile);
                 outputLines.push(`\x1b[36mℹ Opened live interactive React preview in Preview tab.\x1b[0m`);
@@ -187,6 +295,180 @@ export function TerminalProvider({ children }) {
     }, [activeFile, appendToTerminal, runCodeSnippet]);
 
     /**
+     * Run Selected Text in Monaco Editor
+     */
+    const runSelectedText = useCallback(async () => {
+        const selected = getSelectedText ? getSelectedText() : "";
+        if (!selected || !selected.trim()) {
+            appendToTerminal([
+                "\x1b[33m[Hyperion] No text selected in editor.\x1b[0m",
+                "\x1b[90mHighlight code in the editor and click 'Run Selected Text' to execute it.\x1b[0m",
+                "$ "
+            ]);
+            return;
+        }
+
+        const lang = activeFile ? detectLanguage(activeFile.name) : "javascript";
+        appendToTerminal([
+            `\x1b[34m[Sandbox]\x1b[0m Executing selected ${lang.toUpperCase()} text...`
+        ]);
+
+        await runCodeSnippet({
+            language: lang,
+            code: selected,
+            filename: `selection.${lang === 'c' ? 'c' : lang === 'python' ? 'py' : 'js'}`
+        });
+    }, [getSelectedText, activeFile, appendToTerminal, runCodeSnippet]);
+
+    /**
+     * Run Build Task (Ctrl+Shift+B)
+     */
+    const runBuildTask = useCallback(async () => {
+        appendToTerminal([
+            "\x1b[34m[Build Task]\x1b[0m Executing project build task...",
+            "$ npm run build"
+        ]);
+
+        setIsRunning(true);
+        lastActionRef.current = { type: 'command', command: 'npm run build' };
+
+        try {
+            const res = await executeShellCommand('npm run build', { virtualFiles: files });
+            const outLines = [];
+            if (res.stdout) {
+                outLines.push(...res.stdout.replace(/\r\n/g, '\n').split('\n'));
+            }
+            if (res.stderr) {
+                outLines.push(...res.stderr.replace(/\r\n/g, '\n').split('\n').map(l => `\x1b[31m${l}\x1b[0m`));
+            }
+            outLines.push(res.success ? "\x1b[32m✔ Build completed successfully.\x1b[0m" : "\x1b[31m✘ Build failed.\x1b[0m");
+            outLines.push("$ ");
+            appendToTerminal(outLines);
+        } catch (err) {
+            appendToTerminal([`\x1b[31mBuild error: ${err.message}\x1b[0m`, "$ "]);
+        } finally {
+            setIsRunning(false);
+        }
+    }, [files, appendToTerminal]);
+
+    /**
+     * Show Running Tasks & Status
+     */
+    const showRunningTasks = useCallback(async () => {
+        appendToTerminal([
+            "\x1b[1;36m=== Running Tasks & Sandbox Environment ===\x1b[0m",
+            `  Active Terminal: ${activeTerminal?.title || 'Terminal 1'}`,
+            `  Running Process Status: ${isRunning ? '\x1b[33mACTIVE (Running)\x1b[0m' : '\x1b[32mIDLE\x1b[0m'}`,
+            `  Total Terminals: ${terminals.length}`,
+            "--------------------------------------------------"
+        ]);
+
+        try {
+            const status = await getSandboxStatus();
+            const runtimes = status.data?.runtimes || {};
+            const lines = [
+                `  C (GCC):      ${runtimes.c?.available ? '✔ ' + runtimes.c.version : '✘ Not detected'}`,
+                `  Python:       ${runtimes.python?.available ? '✔ ' + runtimes.python.version : '✘ Not detected'}`,
+                `  Node.js:      ${runtimes.node?.available ? '✔ ' + runtimes.node.version : '✘ Not detected'}`,
+                `  Bash:         ${runtimes.bash?.available ? '✔ ' + runtimes.bash.version : '✘ Not detected'}`,
+                `  React:        ${runtimes.react?.available ? '✔ ' + runtimes.react.version : '✘ Not detected'}`,
+                "--------------------------------------------------",
+                "$ "
+            ];
+            appendToTerminal(lines);
+        } catch (err) {
+            appendToTerminal([`\x1b[31mFailed to fetch tasks: ${err.message}\x1b[0m`, "$ "]);
+        }
+    }, [activeTerminal, isRunning, terminals.length, appendToTerminal]);
+
+    /**
+     * Restart Running Task / Re-run Last Action
+     */
+    const restartRunningTask = useCallback(async () => {
+        if (!lastActionRef.current) {
+            if (activeFile) {
+                await runActiveFile();
+            } else {
+                appendToTerminal([
+                    "\x1b[33m[Hyperion] No previous task to restart. Run a file or task first.\x1b[0m",
+                    "$ "
+                ]);
+            }
+            return;
+        }
+
+        const last = lastActionRef.current;
+        if (last.type === 'code') {
+            await runCodeSnippet(last);
+        } else if (last.type === 'command') {
+            appendToTerminal([`\x1b[34m[Restarting Task]\x1b[0m ${last.command}`]);
+            setIsRunning(true);
+            try {
+                const res = await executeShellCommand(last.command, { virtualFiles: files });
+                appendToTerminal([res.stdout || '', res.stderr ? `\x1b[31m${res.stderr}\x1b[0m` : '', "$ "].filter(Boolean));
+            } catch (err) {
+                appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, "$ "]);
+            } finally {
+                setIsRunning(false);
+            }
+        }
+    }, [activeFile, files, appendToTerminal, runActiveFile, runCodeSnippet]);
+
+    /**
+     * Configure Tasks... (Opens .vscode/tasks.json)
+     */
+    const configureTasks = useCallback(() => {
+        if (createOrOpenFile) {
+            createOrOpenFile(".vscode/tasks.json", DEFAULT_TASKS_JSON);
+            appendToTerminal([
+                "\x1b[36m[Hyperion] Opened .vscode/tasks.json in the editor.\x1b[0m",
+                "$ "
+            ]);
+        }
+    }, [createOrOpenFile, appendToTerminal]);
+
+    /**
+     * Configure Default Build Task...
+     */
+    const configureDefaultBuildTask = useCallback(() => {
+        if (createOrOpenFile) {
+            createOrOpenFile(".vscode/tasks.json", DEFAULT_TASKS_JSON);
+            appendToTerminal([
+                "\x1b[36m[Hyperion] Configured default build task in .vscode/tasks.json\x1b[0m",
+                "$ "
+            ]);
+        }
+    }, [createOrOpenFile, appendToTerminal]);
+
+    /**
+     * Execute a named or predefined task
+     */
+    const runTask = useCallback(async (taskCmd) => {
+        setIsTaskPickerOpen(false);
+        appendToTerminal([`\x1b[34m[Task Runner]\x1b[0m $ ${taskCmd}`]);
+        setIsRunning(true);
+        lastActionRef.current = { type: 'command', command: taskCmd };
+
+        try {
+            const res = await executeShellCommand(taskCmd, { virtualFiles: files });
+            const outLines = [];
+            if (res.stdout) {
+                outLines.push(...res.stdout.replace(/\r\n/g, '\n').split('\n'));
+            }
+            if (res.stderr) {
+                outLines.push(...res.stderr.replace(/\r\n/g, '\n').split('\n').map(l => `\x1b[31m${l}\x1b[0m`));
+            }
+            outLines.push(res.success ? "\x1b[32m✔ Task completed.\x1b[0m" : "\x1b[31m✘ Task failed.\x1b[0m");
+            outLines.push("$ ");
+            appendToTerminal(outLines);
+        } catch (err) {
+            appendToTerminal([`\x1b[31mTask error: ${err.message}\x1b[0m`, "$ "]);
+        } finally {
+            setIsRunning(false);
+        }
+    }, [files, appendToTerminal]);
+
+    /**
      * Execute Terminal Command
      */
     const executeCommand = useCallback(async (command) => {
@@ -196,7 +478,6 @@ export function TerminalProvider({ children }) {
         const commandWithPrompt = `$ ${command}`;
         const newHistory = [...activeTerminal.history, command];
 
-        // Empty command (Enter on blank line)
         if (!trimmed) {
             setTerminals(prev => prev.map(t => {
                 if (t.id !== activeTerminalId) return t;
@@ -208,7 +489,6 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        // Add command with prompt to history and output immediately
         setTerminals(prev => prev.map(t => {
             if (t.id !== activeTerminalId) return t;
             return {
@@ -222,13 +502,16 @@ export function TerminalProvider({ children }) {
         const cmd = parts[0].toLowerCase();
         const argsStr = parts.slice(1).join(" ");
 
-        // 1. CLEAR
         if (cmd === "clear") {
             setTerminalOutput(["$ "]);
             return;
         }
 
-        // 2. HELP
+        if (cmd === "kill" || cmd === "exit") {
+            killTerminal(activeTerminalId);
+            return;
+        }
+
         if (cmd === "help") {
             const helpLines = [
                 "\x1b[1;36m=== Hyperion IDE Sandbox Commands & Runtimes ===\x1b[0m",
@@ -248,6 +531,7 @@ export function TerminalProvider({ children }) {
                 "  \x1b[32mcat <file>\x1b[0m       - Display file content",
                 "  \x1b[32mpwd\x1b[0m              - Print working directory",
                 "  \x1b[32mecho <text>\x1b[0m      - Output text",
+                "  \x1b[32mkill, exit\x1b[0m       - Kill current terminal session",
                 "  \x1b[32mclear\x1b[0m            - Clear terminal (shortcut: Ctrl+L)",
                 "  \x1b[32mhistory\x1b[0m          - Show command history",
                 "  \x1b[32mdate, time\x1b[0m       - Show date and time",
@@ -259,7 +543,6 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        // 3. RUNTIMES / STATUS
         if (cmd === "runtimes" || cmd === "sandboxes" || cmd === "status") {
             appendToTerminal(["\x1b[34m[Hyperion]\x1b[0m Checking sandbox compilers and runtimes..."]);
             try {
@@ -286,10 +569,8 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        // 4. SMART RUN: run OR run <filename>
         if (cmd === "run") {
             if (!argsStr) {
-                // Run currently active file
                 await runActiveFile();
                 return;
             }
@@ -321,8 +602,6 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        // 5. DIRECT LANGUAGE RUNNERS
-        // c <filename> or c <code>
         if (cmd === "c" && argsStr) {
             const foundFile = files.find(f => f.name === argsStr);
             const codeToRun = foundFile ? foundFile.content : argsStr;
@@ -331,7 +610,6 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        // react <filename>
         if (cmd === "react" && argsStr) {
             const foundFile = files.find(f => f.name === argsStr);
             if (foundFile) {
@@ -342,7 +620,6 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        // 6. BUILT-IN UTILITY COMMANDS (date, time, history, echo)
         if (cmd === "date") {
             appendToTerminal([new Date().toLocaleDateString(), "$ "]);
             return;
@@ -370,8 +647,9 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        // 7. GENERAL SHELL & TERMINAL COMMANDS (ls, dir, cat, python, node, bash, gcc, echo, pipes, etc.)
         setIsRunning(true);
+        lastActionRef.current = { type: 'command', command: trimmed };
+
         try {
             const res = await executeShellCommand(trimmed, {
                 virtualFiles: files
@@ -409,8 +687,24 @@ export function TerminalProvider({ children }) {
         commands,
         isRunning,
         latestExecution,
+        isSplit,
+        isMaximized,
+        isTaskPickerOpen,
         createTerminal,
-        closeTerminal,
+        closeTerminal: killTerminal,
+        killTerminal,
+        terminateTask,
+        splitTerminal,
+        toggleMaximizeTerminal,
+        runBuildTask,
+        runSelectedText,
+        showRunningTasks,
+        restartRunningTask,
+        configureTasks,
+        configureDefaultBuildTask,
+        runTask,
+        openTaskPicker: () => setIsTaskPickerOpen(true),
+        closeTaskPicker: () => setIsTaskPickerOpen(false),
         setActiveTerminal: (terminalOrId) => {
             const id = typeof terminalOrId === 'object' ? terminalOrId.id : terminalOrId;
             setActiveTerminalId(id);

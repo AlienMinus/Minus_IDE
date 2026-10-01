@@ -57,23 +57,86 @@ export function FileProvider({ children }) {
     }
   }
 
-  async function createFile(name) {
-    if (!workspaceHandle) return;
-    try {
-      await workspaceHandle.getFileHandle(name, { create: true });
-      await refreshWorkspace();
-    } catch (error) {
-      console.error("Failed to create file:", error);
+  async function createFile(name, targetFolder = null) {
+    if (workspaceHandle) {
+      try {
+        const parentHandle = targetFolder?.handle || workspaceHandle;
+        const newFileHandle = await parentHandle.getFileHandle(name, { create: true });
+        await refreshWorkspace();
+        return {
+          id: name,
+          name,
+          type: "file",
+          path: targetFolder ? `${targetFolder.path}/${name}` : name,
+          handle: newFileHandle,
+          content: ""
+        };
+      } catch (error) {
+        console.error("Failed to create file:", error);
+        return null;
+      }
+    } else {
+      const newFile = {
+        id: `file_${Date.now()}`,
+        name,
+        type: "file",
+        path: targetFolder ? `${targetFolder.path}/${name}` : name,
+        content: ""
+      };
+      setWorkspaceTree((prev) => {
+        const addNode = (nodes) => {
+          if (!targetFolder) return [...nodes, newFile];
+          return nodes.map((n) => {
+            if (n.id === targetFolder.id && n.type === "folder") {
+              return { ...n, children: [...(n.children || []), newFile] };
+            }
+            if (n.children) {
+              return { ...n, children: addNode(n.children) };
+            }
+            return n;
+          });
+        };
+        const updated = addNode(prev);
+        setFiles(flattenFiles(updated));
+        return updated;
+      });
+      return newFile;
     }
   }
 
-  async function createFolder(name) {
-    if (!workspaceHandle) return;
-    try {
-      await workspaceHandle.getDirectoryHandle(name, { create: true });
-      await refreshWorkspace();
-    } catch (error) {
-      console.error("Failed to create folder:", error);
+  async function createFolder(name, targetFolder = null) {
+    if (workspaceHandle) {
+      try {
+        const parentHandle = targetFolder?.handle || workspaceHandle;
+        await parentHandle.getDirectoryHandle(name, { create: true });
+        await refreshWorkspace();
+      } catch (error) {
+        console.error("Failed to create folder:", error);
+      }
+    } else {
+      const newFolder = {
+        id: `folder_${Date.now()}`,
+        name,
+        type: "folder",
+        path: targetFolder ? `${targetFolder.path}/${name}` : name,
+        isOpen: true,
+        children: []
+      };
+      setWorkspaceTree((prev) => {
+        const addNode = (nodes) => {
+          if (!targetFolder) return [...nodes, newFolder];
+          return nodes.map((n) => {
+            if (n.id === targetFolder.id && n.type === "folder") {
+              return { ...n, children: [...(n.children || []), newFolder] };
+            }
+            if (n.children) {
+              return { ...n, children: addNode(n.children) };
+            }
+            return n;
+          });
+        };
+        return addNode(prev);
+      });
     }
   }
 

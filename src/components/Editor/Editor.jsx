@@ -61,7 +61,7 @@ async function createOfficePreview(fileHandle, extension) {
 }
 
 function Editor() {
-  const { activeFile, updateContent } = useEditor();
+  const { activeFile, updateContent, setEditorInstance } = useEditor();
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewContent, setPreviewContent] = useState(null);
 
@@ -180,6 +180,9 @@ function Editor() {
 
   function handleEditorDidMount(editor, monaco) {
     editor.focus();
+    if (setEditorInstance) {
+      setEditorInstance(editor);
+    }
 
     monaco.editor.defineTheme("webide-dark", {
       base: "vs-dark",

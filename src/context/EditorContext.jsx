@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useRef } from "react";
 import fileTree from "../data/fileTree";
 import { traverseDirectory, flattenFiles } from "../services/fileService";
 import { loadEditorFile, saveEditorFile, refreshEditorContent } from "../services/editorService";
@@ -131,6 +131,38 @@ export function EditorProvider({ children }) {
     setActiveFile(previewTab);
   }
 
+  const editorRef = useRef(null);
+
+  function setEditorInstance(editor) {
+    editorRef.current = editor;
+  }
+
+  function getSelectedText() {
+    if (!editorRef.current) return "";
+    const model = editorRef.current.getModel();
+    const selection = editorRef.current.getSelection();
+    return model && selection ? model.getValueInRange(selection) : "";
+  }
+
+  function createOrOpenFile(filename, content = "") {
+    const existing = files.find((f) => f.name === filename || f.path === filename);
+    if (existing) {
+      openFile(existing);
+      return existing;
+    }
+    const newFile = {
+      id: filename,
+      name: filename.split("/").pop(),
+      path: filename,
+      language: filename.endsWith(".json") ? "json" : "javascript",
+      content
+    };
+    setFiles((prev) => [...prev, newFile]);
+    setOpenFiles((prev) => [...prev, newFile]);
+    setActiveFile(newFile);
+    return newFile;
+  }
+
   return (
     <EditorContext.Provider
       value={{
@@ -146,6 +178,10 @@ export function EditorProvider({ children }) {
         updateContent,
         saveActiveFile,
         setActiveFile,
+        editorRef,
+        setEditorInstance,
+        getSelectedText,
+        createOrOpenFile
       }}
     >
       {children}
