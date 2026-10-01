@@ -17,6 +17,7 @@ import Chat from "../components/Chat";
 import BottomPanel from "../components/BottomPanel";
 import StatusBar from "../components/Statusbar";
 import Breadcrumb from "../components/Breadcrumb";
+import TaskPicker from "../components/TaskPicker/TaskPicker";
 
 function MainLayout() {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -103,6 +104,7 @@ function MainLayout() {
       </PanelGroup>
 
       <StatusBar />
+      <TaskPicker />
     </div>
   );
 }

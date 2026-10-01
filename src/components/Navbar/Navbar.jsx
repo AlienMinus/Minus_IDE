@@ -27,7 +27,21 @@ function Navbar({ isChatOpen, toggleChat }) {
 
     const { openFolder } = useFile();
     const { activeFile, saveActiveFile } = useEditor();
-    const { runActiveFile, isRunning, createTerminal } = useTerminal();
+    const {
+        runActiveFile,
+        isRunning,
+        createTerminal,
+        splitTerminal,
+        toggleMaximizeTerminal,
+        openTaskPicker,
+        runBuildTask,
+        runSelectedText,
+        showRunningTasks,
+        restartRunningTask,
+        terminateTask,
+        configureTasks,
+        configureDefaultBuildTask
+    } = useTerminal();
     const [openMenu, setOpenMenu] = useState(null);
     const [selectedMenu, setSelectedMenu] = useState(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -41,17 +55,23 @@ function Navbar({ isChatOpen, toggleChat }) {
         }
     };
 
-    // Keyboard shortcut for running active file (Ctrl+F5 or F5)
+    // Keyboard shortcuts for terminal actions (F5, Ctrl+Shift+B, Ctrl+Shift+`)
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === "F5") {
                 e.preventDefault();
                 runActiveFile();
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "B" || e.key === "b")) {
+                e.preventDefault();
+                runBuildTask();
+            } else if (e.ctrlKey && e.shiftKey && e.key === "`") {
+                e.preventDefault();
+                createTerminal();
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [runActiveFile]);
+    }, [runActiveFile, runBuildTask, createTerminal]);
 
     const menuButtons = [
         { key: "file", label: "File", ref: fileRef },
@@ -88,25 +108,109 @@ function Navbar({ isChatOpen, toggleChat }) {
     });
 
     const terminalMenuItems = terminalMenu.map((item) => {
-        if (item.id === "runActiveFile") {
-            return {
-                ...item,
-                onClick: async () => {
-                    await runActiveFile();
-                    setOpenMenu(null);
-                }
-            };
+        switch (item.id) {
+            case "newTerminal":
+                return {
+                    ...item,
+                    onClick: () => {
+                        createTerminal();
+                        setOpenMenu(null);
+                    }
+                };
+            case "splitTerminal":
+                return {
+                    ...item,
+                    onClick: () => {
+                        splitTerminal();
+                        setOpenMenu(null);
+                    }
+                };
+            case "newTerminalWindow":
+                return {
+                    ...item,
+                    onClick: () => {
+                        toggleMaximizeTerminal();
+                        setOpenMenu(null);
+                    }
+                };
+            case "runTask":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openTaskPicker();
+                        setOpenMenu(null);
+                    }
+                };
+            case "runBuildTask":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        setOpenMenu(null);
+                        await runBuildTask();
+                    }
+                };
+            case "runActiveFile":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        setOpenMenu(null);
+                        await runActiveFile();
+                    }
+                };
+            case "runSelectedText":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        setOpenMenu(null);
+                        await runSelectedText();
+                    }
+                };
+            case "showRunningTasks":
+                return {
+                    ...item,
+                    disabled: false,
+                    onClick: async () => {
+                        setOpenMenu(null);
+                        await showRunningTasks();
+                    }
+                };
+            case "restartRunningTask":
+                return {
+                    ...item,
+                    disabled: false,
+                    onClick: async () => {
+                        setOpenMenu(null);
+                        await restartRunningTask();
+                    }
+                };
+            case "terminateTask":
+                return {
+                    ...item,
+                    disabled: false,
+                    onClick: () => {
+                        setOpenMenu(null);
+                        terminateTask();
+                    }
+                };
+            case "configureTasks":
+                return {
+                    ...item,
+                    onClick: () => {
+                        configureTasks();
+                        setOpenMenu(null);
+                    }
+                };
+            case "configureDefaultBuildTask":
+                return {
+                    ...item,
+                    onClick: () => {
+                        configureDefaultBuildTask();
+                        setOpenMenu(null);
+                    }
+                };
+            default:
+                return item;
         }
-        if (item.id === "newTerminal") {
-            return {
-                ...item,
-                onClick: () => {
-                    createTerminal();
-                    setOpenMenu(null);
-                }
-            };
-        }
-        return item;
     });
 
     const handleMenuHover = (menu, ref) => {
