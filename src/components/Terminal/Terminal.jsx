@@ -82,7 +82,7 @@ function TerminalComponent() {
       resizeObserver.observe(terminalRef.current);
 
       // Keyboard navigation and shortcuts
-      terminal.onKey(({ key, domEvent }) => {
+      terminal.onKey(({ domEvent }) => {
         const term = xtermRef.current;
         if (!term || !activeTerminal) return;
 

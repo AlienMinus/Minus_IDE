@@ -298,10 +298,9 @@ export function TerminalProvider({ children }) {
             const foundFile = files.find(f => f.name.toLowerCase() === targetFilename.toLowerCase() || (f.path && f.path.toLowerCase().endsWith(targetFilename.toLowerCase())));
 
             if (!foundFile) {
-                // If not found in workspace files, check if it's runnable directly
-                const lang = detectLanguage(targetFilename);
+                const targetLang = detectLanguage(targetFilename);
                 appendToTerminal([
-                    `\x1b[34m[Sandbox]\x1b[0m Attempting to execute '${targetFilename}' via shell...`
+                    `\x1b[34m[Sandbox]\x1b[0m Executing '${targetFilename}' (${targetLang.toUpperCase()}) via shell...`
                 ]);
                 const shellRes = await executeShellCommand(`run ${targetFilename}`, { virtualFiles: files });
                 appendToTerminal([
