@@ -6,44 +6,73 @@ import { execSync, spawn } from 'child_process';
 // Cache discovered binary paths
 let cachedPaths = null;
 
+/**
+ * Resolve an executable binary path directly using system environment variables:
+ * - process.env.PATH
+ * - process.env.PATHEXT
+ * - process.env.SHELL
+ * - process.execPath
+ * Accesses system environment variables directly without hardcoded path guesses.
+ */
+export function resolveBinaryFromEnv(binaryName) {
+  // If resolving node, use the currently running node process path directly
+  if (binaryName === 'node' && process.execPath) {
+    return process.execPath;
+  }
+
+  const pathEnv = process.env.PATH || '';
+  const pathExts = (process.env.PATHEXT || (process.platform === 'win32' ? '.EXE;.CMD;.BAT;.COM' : '')).split(';').filter(Boolean);
+  const dirs = pathEnv.split(path.delimiter).filter(Boolean);
+
+  for (const dir of dirs) {
+    // 1. Direct match with binaryName
+    const directPath = path.join(dir, binaryName);
+    if (fs.existsSync(directPath)) {
+      try {
+        if (!fs.statSync(directPath).isDirectory()) return directPath;
+      } catch {}
+    }
+
+    // 2. Windows executable extensions from PATHEXT
+    for (const ext of pathExts) {
+      const withExt = path.join(dir, binaryName + ext);
+      if (fs.existsSync(withExt)) {
+        try {
+          if (!fs.statSync(withExt).isDirectory()) return withExt;
+        } catch {}
+      }
+    }
+  }
+
+  // 3. For bash: check SHELL environment variable or git directory located in PATH
+  if (binaryName === 'bash') {
+    if (process.env.SHELL && fs.existsSync(process.env.SHELL)) {
+      return process.env.SHELL;
+    }
+    const gitExe = resolveBinaryFromEnv('git');
+    if (gitExe && gitExe !== 'git') {
+      const gitDir = path.resolve(path.dirname(gitExe), '..');
+      const gitBash = path.join(gitDir, 'bin', 'bash.exe');
+      if (fs.existsSync(gitBash)) return gitBash;
+      const gitUsrBash = path.join(gitDir, 'usr', 'bin', 'bash.exe');
+      if (fs.existsSync(gitUsrBash)) return gitUsrBash;
+    }
+  }
+
+  // Return binaryName so the OS / shell can resolve it directly via PATH
+  return binaryName;
+}
+
 export function getRuntimePaths() {
   if (cachedPaths) return cachedPaths;
 
-  function findBinary(candidates, fallback) {
-    for (const c of candidates) {
-      if (c && fs.existsSync(c)) return c;
-    }
-    try {
-      const res = execSync(`where.exe ${fallback}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim().split('\n')[0].trim();
-      if (res && fs.existsSync(res)) return res;
-    } catch {
-      // Ignore error if binary is not found in PATH
-    }
-    return fallback;
-  }
+  cachedPaths = {
+    gcc: resolveBinaryFromEnv('gcc'),
+    python: resolveBinaryFromEnv('python'),
+    node: resolveBinaryFromEnv('node'),
+    bash: resolveBinaryFromEnv('bash')
+  };
 
-  const gcc = findBinary([
-    'C:\\MinGW\\bin\\gcc.exe',
-    'C:\\msys64\\mingw64\\bin\\gcc.exe',
-    'C:\\Program Files\\mingw-w64\\x86_64-8.1.0-posix-seh-rt_v6-rev0\\mingw64\\bin\\gcc.exe'
-  ], 'gcc');
-
-  const python = findBinary([
-    'C:\\Users\\minus\\AppData\\Local\\Programs\\Python\\Python312\\python.exe',
-    'C:\\Python312\\python.exe',
-    'C:\\Python311\\python.exe',
-    'C:\\Program Files\\Python312\\python.exe'
-  ], 'python');
-
-  const node = process.execPath || findBinary(['C:\\Program Files\\nodejs\\node.exe'], 'node');
-
-  const bash = findBinary([
-    'C:\\Program Files\\Git\\bin\\bash.exe',
-    'C:\\Program Files\\Git\\usr\\bin\\bash.exe',
-    'C:\\WINDOWS\\system32\\bash.exe'
-  ], 'bash');
-
-  cachedPaths = { gcc, python, node, bash };
   return cachedPaths;
 }
 
@@ -264,10 +293,7 @@ export async function executeCode({
         cwd: tempDir,
         stdin,
         timeoutMs,
-        env: {
-          ...process.env,
-          PATH: `/c/MinGW/bin:${process.env.PATH || ''}`
-        }
+        env: process.env
       });
 
       return {
