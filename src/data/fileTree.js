@@ -219,6 +219,51 @@ export default Sidebar;`
     margin: 0;
     font-family: sans-serif;
 }`
+            },
+            {
+                id: "readme_md",
+                name: "README.md",
+                type: "file",
+                language: "markdown",
+                path: "src/README.md",
+                content: `# ⚡ HyperionIDE - Cloud & Local Hybrid Workspace
+
+Welcome to **HyperionIDE**, a modern web-based development environment equipped with direct sandbox execution and rich file previews.
+
+## ✨ Supported Document Previews
+| Format | Extension | Engine | Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Word Document** | \`.docx\`, \`.doc\` | Mammoth.js | Full document paper layout, Unicode/Odia text, zoom, print |
+| **PowerPoint** | \`.pptx\`, \`.ppt\` | JSZip OpenXML | 16:9 Slide canvas, thumbnails, keyboard navigation, embedded images |
+| **Excel Spreadsheet**| \`.xlsx\`, \`.xls\` | SheetJS (XLSX) | Sticky headers, cell search, sheet switcher tabs, CSV export |
+| **Delimited Data** | \`.csv\`, \`.tsv\` | PapaParse | Sortable columns, live search filter, grid/raw toggle |
+| **Markdown** | \`.md\`, \`.markdown\` | React-Markdown + GFM | Split view, live preview, syntax highlighting, task lists |
+
+## 🚀 Sandbox Execution Runtimes
+- [x] **C (GCC)**: MinGW GCC compiler with \`-O2\` optimization
+- [x] **Python 3.12**: Fast isolated Python script execution
+- [x] **Node.js**: JavaScript V8 runtime with table formatting
+- [x] **GNU Bash**: Shell execution with full parameter parsing
+- [x] **React 19**: Live JSX transpilation and DOM component mounting
+
+> **Tip**: Press **F5** to run the active file in the Hyperion Sandbox Terminal, or **Ctrl+Shift+B** to trigger a build task!
+`
+            },
+            {
+                id: "analytics_csv",
+                name: "analytics.csv",
+                type: "file",
+                language: "csv",
+                path: "src/analytics.csv",
+                content: `id,metric,value,target,status,category
+101,Active Users,24850,20000,Passed,Traffic
+102,Avg Session Time (s),318.5,300.0,Passed,Engagement
+103,Conversion Rate (%),4.28,3.50,Passed,Revenue
+104,Server Latency (ms),42.1,50.0,Passed,Infrastructure
+105,Build Duration (s),15.2,20.0,Passed,DevOps
+106,Error Rate (%),0.08,0.50,Passed,Reliability
+107,Task Completion (%),98.4,95.0,Passed,Usability
+`
             }
         ]
     }
