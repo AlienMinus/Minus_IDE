@@ -10,21 +10,11 @@ import {
   FaChevronRight,
   FaChevronDown,
   FaFolder,
-  FaFolderOpen,
-  FaReact,
-  FaCss3Alt,
-  FaHtml5,
-  FaFileAlt,
-  FaFilePdf,
-  FaFileWord,
-  FaFileExcel,
-  FaFilePowerpoint,
-  FaFileCode,
-  FaPython,
-  FaTerminal
+  FaFolderOpen
 } from "react-icons/fa";
 import { FiFilePlus, FiFolderPlus, FiRefreshCw } from "react-icons/fi";
 import { VscCollapseAll } from "react-icons/vsc";
+import { getFileIcon } from "../../utils/fileIcons";
 
 function Explorer() {
   const { workspaceTree, openFolder, refreshWorkspace, createFile, createFolder } = useFile();
@@ -156,55 +146,13 @@ function Explorer() {
     }
   }
 
-  function getIcon(fileType) {
-    switch (fileType) {
-      case "jsx":
-      case "tsx":
-      case "react":
-        return <FaReact className="react-file" />;
-      case "py":
-      case "python":
-        return <FaPython style={{ color: "#387eb8" }} />;
-      case "sh":
-      case "bash":
-        return <FaTerminal style={{ color: "#4eaa25" }} />;
-      case "c":
-      case "cpp":
-        return <FaFileCode style={{ color: "#a8b9cc" }} />;
-      case "js":
-      case "ts":
-      case "json":
-      case "md":
-      case "txt":
-        return <FaFileCode className="code-file" />;
-      case "css":
-        return <FaCss3Alt className="css-file" />;
-      case "html":
-        return <FaHtml5 className="html-file" />;
-      case "pdf":
-        return <FaFilePdf className="pdf-file" />;
-      case "doc":
-      case "docx":
-        return <FaFileWord className="word-file" />;
-      case "xls":
-      case "xlsx":
-        return <FaFileExcel className="excel-file" />;
-      case "ppt":
-      case "pptx":
-        return <FaFilePowerpoint className="ppt-file" />;
-      default:
-        return <FaFileAlt />;
-    }
-  }
-
   function renderInlineInput(level) {
-    const dynamicLang = detectLanguage(inlineName);
     return (
       <div key="inline-create-input-row" className="inline-create-row" style={{ paddingLeft: `${(level + 1) * 18}px` }}>
         {inlineCreation.type === "folder" ? (
           <FaFolder className="folder-icon" />
         ) : (
-          getIcon(dynamicLang)
+          getFileIcon(inlineName || "file")
         )}
         <input
           ref={inlineInputRef}
@@ -252,7 +200,6 @@ function Explorer() {
         );
       }
 
-      const fileType = item.language || item.name.split('.').pop().toLowerCase();
       return (
         <div
           key={item.id}
@@ -264,7 +211,7 @@ function Explorer() {
           }}
           onContextMenu={(e) => handleFileContextMenu(e, item)}
         >
-          {getIcon(fileType)}
+          {getFileIcon(item.name)}
           <span>{item.name}</span>
         </div>
       );

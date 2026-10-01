@@ -1,26 +1,48 @@
 const languageMap = {
   js: "javascript",
+  mjs: "javascript",
+  cjs: "javascript",
   jsx: "javascript",
   ts: "typescript",
   tsx: "typescript",
   css: "css",
+  scss: "scss",
   html: "html",
+  htm: "html",
   json: "json",
   md: "markdown",
+  markdown: "markdown",
   txt: "plaintext",
   py: "python",
-  pdf: "plaintext",
-  ppt: "plaintext",
-  pptx: "plaintext",
-  doc: "plaintext",
-  docx: "plaintext",
-  xls: "plaintext",
-  xlsx: "plaintext",
-  mp3: "plaintext",
-  mp4: "plaintext"
+  c: "c",
+  cpp: "cpp",
+  h: "c",
+  hpp: "cpp",
+  sh: "shell",
+  bash: "shell",
+  csv: "csv",
+  tsv: "csv",
+  xml: "xml",
+  yaml: "yaml",
+  yml: "yaml",
+  sql: "sql",
+  pdf: "pdf",
+  ppt: "pptx",
+  pptx: "pptx",
+  doc: "docx",
+  docx: "docx",
+  xls: "xlsx",
+  xlsx: "xlsx",
+  mp3: "audio",
+  mp4: "video"
 };
 
-const textExtensions = new Set(["js", "jsx", "ts", "tsx", "css", "html", "json", "md", "txt", "py"]);
+const textExtensions = new Set([
+  "js", "mjs", "cjs", "jsx", "ts", "tsx", "css", "scss", "html", "htm",
+  "json", "md", "markdown", "txt", "py", "c", "cpp", "h", "hpp", "sh",
+  "bash", "csv", "tsv", "yaml", "yml", "xml", "sql", "env", "gitignore"
+]);
+
 const binaryExtensions = new Set([
   "pdf",
   "ppt",
@@ -35,8 +57,13 @@ const binaryExtensions = new Set([
   "gif",
   "svg",
   "webp",
+  "ico",
   "mp3",
-  "mp4"
+  "wav",
+  "mp4",
+  "webm",
+  "zip",
+  "rar"
 ]);
 
 export function getFileExtension(fileName) {
