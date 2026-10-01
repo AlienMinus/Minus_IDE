@@ -15,36 +15,12 @@ let cachedPaths = null;
  * Accesses system environment variables directly without hardcoded path guesses.
  */
 export function resolveBinaryFromEnv(binaryName) {
-  // If resolving node, use the currently running node process path directly
+  // 1. If resolving node, use the currently running node process path directly
   if (binaryName === 'node' && process.execPath) {
     return process.execPath;
   }
 
-  const pathEnv = process.env.PATH || '';
-  const pathExts = (process.env.PATHEXT || (process.platform === 'win32' ? '.EXE;.CMD;.BAT;.COM' : '')).split(';').filter(Boolean);
-  const dirs = pathEnv.split(path.delimiter).filter(Boolean);
-
-  for (const dir of dirs) {
-    // 1. Direct match with binaryName
-    const directPath = path.join(dir, binaryName);
-    if (fs.existsSync(directPath)) {
-      try {
-        if (!fs.statSync(directPath).isDirectory()) return directPath;
-      } catch {}
-    }
-
-    // 2. Windows executable extensions from PATHEXT
-    for (const ext of pathExts) {
-      const withExt = path.join(dir, binaryName + ext);
-      if (fs.existsSync(withExt)) {
-        try {
-          if (!fs.statSync(withExt).isDirectory()) return withExt;
-        } catch {}
-      }
-    }
-  }
-
-  // 3. For bash: check SHELL environment variable or git directory located in PATH
+  // 2. For bash: resolve from SHELL environment variable or Git installation discovered in PATH
   if (binaryName === 'bash') {
     if (process.env.SHELL && fs.existsSync(process.env.SHELL)) {
       return process.env.SHELL;
@@ -56,6 +32,33 @@ export function resolveBinaryFromEnv(binaryName) {
       if (fs.existsSync(gitBash)) return gitBash;
       const gitUsrBash = path.join(gitDir, 'usr', 'bin', 'bash.exe');
       if (fs.existsSync(gitUsrBash)) return gitUsrBash;
+    }
+  }
+
+  const pathEnv = process.env.PATH || '';
+  const pathExts = (process.env.PATHEXT || (process.platform === 'win32' ? '.EXE;.CMD;.BAT;.COM' : '')).split(';').filter(Boolean);
+  const dirs = pathEnv.split(path.delimiter).filter(Boolean);
+
+  for (const dir of dirs) {
+    // Avoid Windows system32 bash launcher which hangs if WSL is unconfigured
+    if (binaryName === 'bash' && dir.toLowerCase().includes('system32')) continue;
+
+    // Direct match with binaryName
+    const directPath = path.join(dir, binaryName);
+    if (fs.existsSync(directPath)) {
+      try {
+        if (!fs.statSync(directPath).isDirectory()) return directPath;
+      } catch {}
+    }
+
+    // Executable extensions from PATHEXT
+    for (const ext of pathExts) {
+      const withExt = path.join(dir, binaryName + ext);
+      if (fs.existsSync(withExt)) {
+        try {
+          if (!fs.statSync(withExt).isDirectory()) return withExt;
+        } catch {}
+      }
     }
   }
 
