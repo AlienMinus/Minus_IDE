@@ -189,3 +189,22 @@
 .explorer-body::-webkit-scrollbar-track{
     background:#252526;
 }
+
+.explorer-permission-banner {
+    background: rgba(14, 165, 233, 0.12);
+    border: 1px solid rgba(14, 165, 233, 0.35);
+    color: #38bdf8;
+    padding: 6px 12px;
+    margin: 8px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.explorer-permission-banner:hover {
+    background: rgba(14, 165, 233, 0.22);
+    border-color: #38bdf8;
+    color: #ffffff;
+}

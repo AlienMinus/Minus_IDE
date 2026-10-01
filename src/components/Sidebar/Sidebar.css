@@ -1,95 +1,92 @@
-.sidebar{
-    width:60px;
+.sidebar {
+    width: 48px;
     height: 100%;
-    background:#1e1e1e;
-    border-right:1px solid #333;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    padding:10px 0;
+    background: #18181b;
+    border-right: 1px solid #27272a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
 }
 
-.sidebar-top{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    width:100%;
+.sidebar-top {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
-.sidebar-bottom{
-    margin-top:auto;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    width:100%;
+.sidebar-bottom {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
-.sidebar-btn{
-
-    width:100%;
-
-    height:48px;
-
-    border:none;
-
-    background:transparent;
-
-    color:#858585;
-
-    font-size:22px;
-
-    cursor:pointer;
-
-    transition:.25s;
-
-    position:relative;
-
+.sidebar-btn {
+    width: 100%;
+    height: 48px;
+    border: none;
+    background: transparent;
+    color: #858585;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
-.sidebar-btn:hover{
-
-    color:#ffffff;
-
-    background:#2a2d2e;
-
+.sidebar-btn-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    font-size: 24px;
+    transition: all 0.15s ease;
 }
 
-.sidebar-btn.active{
-
-    color:#ffffff;
-
+.sidebar-btn:hover {
+    color: #ffffff;
 }
 
-.sidebar-btn.active::before{
-
-    content:"";
-
-    position:absolute;
-
-    left:0;
-
-    top:0;
-
-    width:3px;
-
-    height:100%;
-
-    background:#007acc;
-
+.sidebar-btn:hover .sidebar-btn-inner {
+    background: rgba(255, 255, 255, 0.06);
 }
 
-@media(max-width:768px){
+.sidebar-btn.active {
+    color: #ffffff;
+}
 
-    .sidebar{
+.sidebar-btn.active .sidebar-btn-inner {
+    background: #2a2d30;
+    color: #ffffff;
+}
 
-        width:50px;
+.sidebar-btn.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #007acc;
+}
 
+@media (max-width: 768px) {
+    .sidebar {
+        width: 42px;
     }
-
-    .sidebar-btn{
-
-        font-size:20px;
-
+    .sidebar-btn {
+        height: 42px;
     }
-
+    .sidebar-btn-inner {
+        width: 34px;
+        height: 34px;
+        font-size: 20px;
+    }
 }

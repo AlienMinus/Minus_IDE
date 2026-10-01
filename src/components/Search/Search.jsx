@@ -2,14 +2,22 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import useEditor from "../../hooks/useEditor";
 import { getFileIcon } from "../../utils/fileIcons";
 import {
-  FaSearch,
   FaChevronRight,
   FaChevronDown,
-  FaTimes,
-  FaRedo,
-  FaCheck
+  FaTimes
 } from "react-icons/fa";
-import { VscReplace, VscReplaceAll, VscRegex, VscWholeWord } from "react-icons/vsc";
+import {
+  VscRefresh,
+  VscClearAll,
+  VscNewFile,
+  VscListTree,
+  VscCollapseAll,
+  VscReplaceAll,
+  VscCaseSensitive,
+  VscWholeWord,
+  VscRegex,
+  VscEllipsis
+} from "react-icons/vsc";
 import "./Search.css";
 
 export function Search() {
@@ -29,7 +37,12 @@ export function Search() {
   const [matchCase, setMatchCase] = useState(false);
   const [matchWholeWord, setMatchWholeWord] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
+  const [preserveCase, setPreserveCase] = useState(false);
+  const [showIncludeExclude, setShowIncludeExclude] = useState(false);
+  const [filesToInclude, setFilesToInclude] = useState("");
+  const [filesToExclude, setFilesToExclude] = useState("");
   const [collapsedFiles, setCollapsedFiles] = useState({});
+  const [viewAsTree, setViewAsTree] = useState(true);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -38,7 +51,7 @@ export function Search() {
     }
   }, []);
 
-  // Compute search matches across files
+  // Compute search matches across files with optional file inclusion/exclusion
   const searchResults = useMemo(() => {
     if (!searchQuery || !searchQuery.trim()) return [];
 
@@ -56,9 +69,30 @@ export function Search() {
       return [];
     }
 
+    const includeFilters = filesToInclude
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    const excludeFilters = filesToExclude
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
     const results = [];
 
     files.forEach((file) => {
+      const filePath = (file.path || file.name || "").toLowerCase();
+
+      // Check exclude
+      if (excludeFilters.some((filter) => filePath.includes(filter))) {
+        return;
+      }
+
+      // Check include
+      if (includeFilters.length > 0 && !includeFilters.some((filter) => filePath.includes(filter))) {
+        return;
+      }
+
       if (!file.content || typeof file.content !== "string") return;
 
       const lines = file.content.split("\n");
@@ -66,12 +100,12 @@ export function Search() {
 
       lines.forEach((lineText, lineIdx) => {
         let match;
-        // reset regex lastIndex
         regex.lastIndex = 0;
         while ((match = regex.exec(lineText)) !== null) {
           fileMatches.push({
             lineNumber: lineIdx + 1,
             column: match.index + 1,
+            matchLength: match[0].length,
             matchText: match[0],
             lineText: lineText.trim(),
             lineIndex: lineIdx
@@ -89,7 +123,7 @@ export function Search() {
     });
 
     return results;
-  }, [files, searchQuery, matchCase, matchWholeWord, useRegex]);
+  }, [files, searchQuery, matchCase, matchWholeWord, useRegex, filesToInclude, filesToExclude]);
 
   const totalMatchesCount = useMemo(() => {
     return searchResults.reduce((acc, curr) => acc + curr.matches.length, 0);
@@ -97,6 +131,19 @@ export function Search() {
 
   const toggleFileCollapse = (fileId) => {
     setCollapsedFiles((prev) => ({ ...prev, [fileId]: !prev[fileId] }));
+  };
+
+  const handleCollapseAll = () => {
+    const all = {};
+    searchResults.forEach((r) => {
+      all[r.file.id] = true;
+    });
+    setCollapsedFiles(all);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setReplaceQuery("");
   };
 
   const handleMatchClick = (file, match) => {
@@ -107,6 +154,12 @@ export function Search() {
         editorRef.current.setPosition({
           lineNumber: match.lineNumber,
           column: match.column
+        });
+        editorRef.current.setSelection({
+          startLineNumber: match.lineNumber,
+          startColumn: match.column,
+          endLineNumber: match.lineNumber,
+          endColumn: match.column + match.matchLength
         });
         editorRef.current.focus();
       }
@@ -138,22 +191,55 @@ export function Search() {
 
   return (
     <aside className="search-panel">
+      {/* Search Header matching Image 2 */}
       <div className="search-panel-header">
-        <span className="search-panel-title">SEARCH</span>
+        <span className="search-panel-title">Search</span>
+
+        <div className="search-header-actions">
+          <button
+            className="search-header-btn"
+            onClick={() => searchInputRef.current?.focus()}
+            title="Refresh"
+          >
+            <VscRefresh />
+          </button>
+          <button
+            className="search-header-btn"
+            onClick={handleClearSearch}
+            title="Clear Search Results"
+          >
+            <VscClearAll />
+          </button>
+          <button
+            className="search-header-btn"
+            onClick={() => setViewAsTree((prev) => !prev)}
+            title={viewAsTree ? "View as List" : "View as Tree"}
+          >
+            <VscListTree />
+          </button>
+          <button
+            className="search-header-btn"
+            onClick={handleCollapseAll}
+            title="Collapse All"
+          >
+            <VscCollapseAll />
+          </button>
+        </div>
       </div>
 
+      {/* Inputs Area */}
       <div className="search-inputs-area">
-        {/* Search Input Row */}
-        <div className="search-input-row">
+        {/* Search Input Row with Green Focus Outline */}
+        <div className="search-row-container">
           <button
             className={`search-expand-toggle ${isReplaceOpen ? "expanded" : ""}`}
             onClick={() => setIsReplaceOpen((prev) => !prev)}
             title="Toggle Replace"
           >
-            {isReplaceOpen ? <FaChevronDown /> : <FaChevronRight />}
+            <FaChevronDown className="search-toggle-chevron" />
           </button>
 
-          <div className="search-field-wrapper">
+          <div className="search-field-wrapper search-primary-field">
             <input
               ref={searchInputRef}
               type="text"
@@ -168,21 +254,21 @@ export function Search() {
                 onClick={() => setMatchCase((v) => !v)}
                 title="Match Case (Alt+C)"
               >
-                <span className="mod-text">Aa</span>
+                <span className="mod-label">Aa</span>
               </button>
               <button
                 className={`search-mod-btn ${matchWholeWord ? "active" : ""}`}
                 onClick={() => setMatchWholeWord((v) => !v)}
                 title="Match Whole Word (Alt+W)"
               >
-                <VscWholeWord />
+                <span className="mod-label underlined">ab</span>
               </button>
               <button
                 className={`search-mod-btn ${useRegex ? "active" : ""}`}
                 onClick={() => setUseRegex((v) => !v)}
                 title="Use Regular Expression (Alt+R)"
               >
-                <VscRegex />
+                <span className="mod-label star">.*</span>
               </button>
             </div>
           </div>
@@ -190,9 +276,9 @@ export function Search() {
 
         {/* Replace Input Row */}
         {isReplaceOpen && (
-          <div className="search-input-row replace-row">
+          <div className="search-row-container replace-row-container">
             <div className="replace-spacer" />
-            <div className="search-field-wrapper">
+            <div className="search-field-wrapper replace-field-wrapper">
               <input
                 type="text"
                 className="search-field-input"
@@ -202,6 +288,13 @@ export function Search() {
               />
               <div className="search-modifiers">
                 <button
+                  className={`search-mod-btn ${preserveCase ? "active" : ""}`}
+                  onClick={() => setPreserveCase((v) => !v)}
+                  title="Preserve Case (Alt+P)"
+                >
+                  <span className="mod-label">AB</span>
+                </button>
+                <button
                   className="search-mod-btn"
                   onClick={handleReplaceAll}
                   title="Replace All (Ctrl+Alt+Enter)"
@@ -209,13 +302,46 @@ export function Search() {
                 >
                   <VscReplaceAll />
                 </button>
+                <button
+                  className={`search-mod-btn ${showIncludeExclude ? "active" : ""}`}
+                  onClick={() => setShowIncludeExclude((v) => !v)}
+                  title="Toggle Search Details"
+                >
+                  <VscEllipsis />
+                </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Optional Files to include / exclude filter */}
+        {showIncludeExclude && (
+          <div className="search-details-section">
+            <div className="search-filter-row">
+              <label>files to include</label>
+              <input
+                type="text"
+                value={filesToInclude}
+                onChange={(e) => setFilesToInclude(e.target.value)}
+                placeholder="e.g. *.js, src/**"
+                className="search-filter-input"
+              />
+            </div>
+            <div className="search-filter-row">
+              <label>files to exclude</label>
+              <input
+                type="text"
+                value={filesToExclude}
+                onChange={(e) => setFilesToExclude(e.target.value)}
+                placeholder="e.g. node_modules, dist"
+                className="search-filter-input"
+              />
             </div>
           </div>
         )}
       </div>
 
-      {/* Results summary message */}
+      {/* Results summary bar */}
       <div className="search-summary-bar">
         {searchQuery ? (
           <span>
@@ -227,7 +353,7 @@ export function Search() {
         )}
       </div>
 
-      {/* Results Tree */}
+      {/* Results Tree List */}
       <div className="search-results-list">
         {searchResults.map(({ file, matches }) => {
           const isCollapsed = collapsedFiles[file.id];
@@ -255,7 +381,9 @@ export function Search() {
                       onClick={() => handleMatchClick(file, m)}
                     >
                       <span className="search-match-line-num">{m.lineNumber}</span>
-                      <span className="search-match-preview">{m.lineText}</span>
+                      <span className="search-match-preview">
+                        {m.lineText}
+                      </span>
                     </div>
                   ))}
                 </div>

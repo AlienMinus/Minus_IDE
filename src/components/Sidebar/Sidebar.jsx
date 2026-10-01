@@ -1,92 +1,81 @@
 import "./Sidebar.css";
-
-import { useState } from "react";
-
 import {
-    FaRegFileAlt,
-    FaSearch,
-    FaCodeBranch,
-    FaPlay,
-    FaPuzzlePiece,
-    FaUserCircle,
-    FaCog
-} from "react-icons/fa";
+    VscFiles,
+    VscSearch,
+    VscSourceControl,
+    VscDebugAlt,
+    VscExtensions,
+    VscAccount,
+    VscSettingsGear
+} from "react-icons/vsc";
 
 function Sidebar({ active = "explorer", onSetActive = () => {} }) {
-
     const menuItems = [
         {
             id: "explorer",
-            icon: <FaRegFileAlt />,
-            title: "Explorer"
+            icon: <VscFiles />,
+            title: "Explorer (Ctrl+Shift+E)"
         },
         {
             id: "search",
-            icon: <FaSearch />,
-            title: "Search"
+            icon: <VscSearch />,
+            title: "Search (Ctrl+Shift+F)"
         },
         {
             id: "git",
-            icon: <FaCodeBranch />,
-            title: "Source Control"
+            icon: <VscSourceControl />,
+            title: "Source Control (Ctrl+Shift+G)"
         },
         {
             id: "run",
-            icon: <FaPlay />,
-            title: "Run & Debug"
+            icon: <VscDebugAlt />,
+            title: "Run and Debug (Ctrl+Shift+D)"
         },
         {
             id: "extensions",
-            icon: <FaPuzzlePiece />,
-            title: "Extensions"
+            icon: <VscExtensions />,
+            title: "Extensions (Ctrl+Shift+X)"
         }
     ];
 
     return (
-
         <aside className="sidebar">
-
             <div className="sidebar-top">
-
-                {
-                    menuItems.map((item) => (
-
-                        <button
-                            key={item.id}
-                            className={`sidebar-btn ${active === item.id ? "active" : ""}`}
-                            title={item.title}
-                            onClick={() => onSetActive(item.id)}
-                        >
+                {menuItems.map((item) => (
+                    <button
+                        key={item.id}
+                        className={`sidebar-btn ${active === item.id ? "active" : ""}`}
+                        title={item.title}
+                        onClick={() => onSetActive(item.id)}
+                    >
+                        <span className="sidebar-btn-inner">
                             {item.icon}
-                        </button>
-
-                    ))
-                }
-
+                        </span>
+                    </button>
+                ))}
             </div>
 
             <div className="sidebar-bottom">
-
                 <button
                     className="sidebar-btn"
-                    title="Account"
+                    title="Accounts"
                 >
-                    <FaUserCircle />
+                    <span className="sidebar-btn-inner">
+                        <VscAccount />
+                    </span>
                 </button>
 
                 <button
                     className="sidebar-btn"
-                    title="Settings"
+                    title="Manage"
                 >
-                    <FaCog />
+                    <span className="sidebar-btn-inner">
+                        <VscSettingsGear />
+                    </span>
                 </button>
-
             </div>
-
         </aside>
-
     );
-
 }
 
 export default Sidebar;

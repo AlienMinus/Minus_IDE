@@ -17,7 +17,16 @@ import { VscCollapseAll } from "react-icons/vsc";
 import { getFileIcon } from "../../utils/fileIcons";
 
 function Explorer() {
-  const { workspaceTree, openFolder, refreshWorkspace, createFile, createFolder } = useFile();
+  const {
+    workspaceTree,
+    openFolder,
+    reconnectFolder,
+    refreshWorkspace,
+    createFile,
+    createFolder,
+    needsPermission,
+    persistedFolderInfo
+  } = useFile();
   const { openFile, openPreviewTab } = useEditor();
   const { runActiveFile } = useTerminal();
   const [openFolders, setOpenFolders] = useState({});
@@ -268,6 +277,11 @@ function Explorer() {
         </div>
       </div>
       <div className="explorer-body">
+        {needsPermission && (
+          <div className="explorer-permission-banner" onClick={reconnectFolder} title="Click to grant folder access">
+            <span>⚡ Reconnect <strong>{persistedFolderInfo?.name || "Folder"}</strong></span>
+          </div>
+        )}
         {workspaceTree && workspaceTree.length > 0 ? (
           <div>
             {inlineCreation && inlineCreation.parentFolderId === null && renderInlineInput(-1)}

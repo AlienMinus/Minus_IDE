@@ -1,5 +1,13 @@
-import { createContext, useMemo, useState } from "react";
+import { createContext, useMemo, useState, useEffect, useCallback } from "react";
 import { flattenFiles, traverseDirectory, readFileContent, writeFileContent } from "../services/fileService";
+import {
+  saveDirectoryHandle,
+  getStoredDirectoryHandle,
+  verifyHandlePermission,
+  saveWorkspaceState,
+  getStoredWorkspaceState,
+  clearWorkspaceState
+} from "../services/workspacePersistence";
 
 export const FileContext = createContext(null);
 
@@ -7,6 +15,78 @@ export function FileProvider({ children }) {
   const [workspaceTree, setWorkspaceTree] = useState([]);
   const [workspaceHandle, setWorkspaceHandle] = useState(null);
   const [files, setFiles] = useState([]);
+  const [needsPermission, setNeedsPermission] = useState(false);
+  const [persistedFolderInfo, setPersistedFolderInfo] = useState(null);
+
+  // Auto-restore last loaded folder on page refresh
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function autoRestoreWorkspace() {
+      // 1. Immediately restore cached workspace snapshot so UI doesn't lose tree/files
+      const cached = getStoredWorkspaceState();
+      if (cached && cached.workspaceTree && cached.workspaceTree.length > 0) {
+        setWorkspaceTree(cached.workspaceTree);
+        setFiles(flattenFiles(cached.workspaceTree));
+        setPersistedFolderInfo({
+          name: cached.folderName || cached.workspaceTree[0]?.name || "Workspace",
+          path: cached.folderPath || ""
+        });
+      }
+
+      // 2. Query stored handle from IndexedDB
+      const handle = await getStoredDirectoryHandle();
+      if (!handle || isCancelled) return;
+
+      setWorkspaceHandle(handle);
+
+      // 3. Check if permission is already active
+      const hasPermission = await verifyHandlePermission(handle, false);
+      if (hasPermission) {
+        try {
+          const children = await traverseDirectory(handle, handle.name);
+          const tree = [
+            {
+              id: handle.name,
+              name: handle.name,
+              type: "folder",
+              path: handle.name,
+              handle,
+              children
+            }
+          ];
+          if (!isCancelled) {
+            setWorkspaceTree(tree);
+            const flat = flattenFiles(tree);
+            setFiles(flat);
+            setNeedsPermission(false);
+            setPersistedFolderInfo({
+              name: handle.name,
+              path: handle.name
+            });
+            // Update cached snapshot
+            saveWorkspaceState({
+              folderName: handle.name,
+              folderPath: handle.name,
+              workspaceTree: tree
+            });
+          }
+        } catch (err) {
+          console.warn("Auto-restore directory traverse failed:", err);
+        }
+      } else {
+        if (!isCancelled) {
+          setNeedsPermission(true);
+        }
+      }
+    }
+
+    autoRestoreWorkspace();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   async function openFolder() {
     if (!window.showDirectoryPicker) {
@@ -30,9 +110,43 @@ export function FileProvider({ children }) {
 
       setWorkspaceHandle(dirHandle);
       setWorkspaceTree(tree);
-      setFiles(flattenFiles(tree));
+      const flat = flattenFiles(tree);
+      setFiles(flat);
+      setNeedsPermission(false);
+      setPersistedFolderInfo({
+        name: dirHandle.name,
+        path: dirHandle.name
+      });
+
+      // Persist handle in IndexedDB & snapshot in LocalStorage
+      await saveDirectoryHandle(dirHandle);
+      saveWorkspaceState({
+        folderName: dirHandle.name,
+        folderPath: dirHandle.name,
+        workspaceTree: tree
+      });
     } catch (error) {
-      console.error("Failed to open folder:", error);
+      if (error.name !== "AbortError") {
+        console.error("Failed to open folder:", error);
+      }
+    }
+  }
+
+  async function reconnectFolder() {
+    if (!workspaceHandle) {
+      // Re-trigger directory picker if handle was lost
+      await openFolder();
+      return;
+    }
+
+    try {
+      const granted = await verifyHandlePermission(workspaceHandle, true);
+      if (granted) {
+        await refreshWorkspace();
+        setNeedsPermission(false);
+      }
+    } catch (err) {
+      console.warn("Failed to reconnect folder permission:", err);
     }
   }
 
@@ -51,7 +165,13 @@ export function FileProvider({ children }) {
         }
       ];
       setWorkspaceTree(tree);
-      setFiles(flattenFiles(tree));
+      const flat = flattenFiles(tree);
+      setFiles(flat);
+      saveWorkspaceState({
+        folderName: workspaceHandle.name,
+        folderPath: workspaceHandle.name,
+        workspaceTree: tree
+      });
     } catch (error) {
       console.error("Failed to refresh workspace:", error);
     }
@@ -98,6 +218,11 @@ export function FileProvider({ children }) {
         };
         const updated = addNode(prev);
         setFiles(flattenFiles(updated));
+        saveWorkspaceState({
+          folderName: persistedFolderInfo?.name || "Workspace",
+          folderPath: persistedFolderInfo?.path || "",
+          workspaceTree: updated
+        });
         return updated;
       });
       return newFile;
@@ -135,7 +260,14 @@ export function FileProvider({ children }) {
             return n;
           });
         };
-        return addNode(prev);
+        const updated = addNode(prev);
+        setFiles(flattenFiles(updated));
+        saveWorkspaceState({
+          folderName: persistedFolderInfo?.name || "Workspace",
+          folderPath: persistedFolderInfo?.path || "",
+          workspaceTree: updated
+        });
+        return updated;
       });
     }
   }
@@ -167,13 +299,16 @@ export function FileProvider({ children }) {
       workspaceHandle,
       files,
       openFolder,
+      reconnectFolder,
       refreshWorkspace,
       createFile,
       createFolder,
       loadFileContent,
-      saveFile
+      saveFile,
+      needsPermission,
+      persistedFolderInfo
     }),
-    [workspaceTree, workspaceHandle, files]
+    [workspaceTree, workspaceHandle, files, needsPermission, persistedFolderInfo]
   );
 
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
