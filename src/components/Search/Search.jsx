@@ -7,8 +7,7 @@ import {
   FaChevronDown,
   FaTimes,
   FaRedo,
-  FaCheck,
-  FaCaseSensitive
+  FaCheck
 } from "react-icons/fa";
 import { VscReplace, VscReplaceAll, VscRegex, VscWholeWord } from "react-icons/vsc";
 import "./Search.css";
