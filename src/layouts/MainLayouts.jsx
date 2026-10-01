@@ -18,10 +18,12 @@ import BottomPanel from "../components/BottomPanel";
 import StatusBar from "../components/Statusbar";
 import Breadcrumb from "../components/Breadcrumb";
 import TaskPicker from "../components/TaskPicker/TaskPicker";
+import Search from "../components/Search/Search";
+import useEditor from "../hooks/useEditor";
 
 function MainLayout() {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [sidebarActive, setSidebarActive] = useState("explorer");
+  const { sidebarActive, setSidebarActive } = useEditor();
 
   return (
     <div className="layout">
@@ -45,14 +47,20 @@ function MainLayout() {
 
         <PanelResizeHandle className="resize-handle" />
 
-        {/* Explorer / Extensions */}
+        {/* Explorer / Extensions / Search */}
         <Panel
           className="explorer-panel"
           defaultSize={18}
           minSize={15}
           maxSize={30}
         >
-          {sidebarActive === "extensions" ? <Extensions /> : <Explorer />}
+          {sidebarActive === "extensions" ? (
+            <Extensions />
+          ) : sidebarActive === "search" ? (
+            <Search />
+          ) : (
+            <Explorer />
+          )}
         </Panel>
 
         <PanelResizeHandle className="resize-handle" />

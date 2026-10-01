@@ -26,7 +26,22 @@ function Navbar({ isChatOpen, toggleChat }) {
     const dropdownRef = useRef(null);
 
     const { openFolder } = useFile();
-    const { activeFile, saveActiveFile } = useEditor();
+    const {
+        activeFile,
+        saveActiveFile,
+        undo,
+        redo,
+        cut,
+        copy,
+        paste,
+        find,
+        replace,
+        findInFiles,
+        replaceInFiles,
+        toggleLineComment,
+        toggleBlockComment,
+        expandEmmet
+    } = useEditor();
     const {
         runActiveFile,
         isRunning,
@@ -55,7 +70,7 @@ function Navbar({ isChatOpen, toggleChat }) {
         }
     };
 
-    // Keyboard shortcuts for terminal actions (F5, Ctrl+Shift+B, Ctrl+Shift+`)
+    // Keyboard shortcuts for terminal & edit actions
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === "F5") {
@@ -67,11 +82,17 @@ function Navbar({ isChatOpen, toggleChat }) {
             } else if (e.ctrlKey && e.shiftKey && e.key === "`") {
                 e.preventDefault();
                 createTerminal();
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "F" || e.key === "f")) {
+                e.preventDefault();
+                findInFiles();
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "H" || e.key === "h")) {
+                e.preventDefault();
+                replaceInFiles();
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [runActiveFile, runBuildTask, createTerminal]);
+    }, [runActiveFile, runBuildTask, createTerminal, findInFiles, replaceInFiles]);
 
     const menuButtons = [
         { key: "file", label: "File", ref: fileRef },
@@ -105,6 +126,109 @@ function Navbar({ isChatOpen, toggleChat }) {
         }
 
         return item;
+    });
+
+    const editMenuItems = editMenu.map((item) => {
+        switch (item.id) {
+            case "undo":
+                return {
+                    ...item,
+                    onClick: () => {
+                        undo();
+                        setOpenMenu(null);
+                    }
+                };
+            case "redo":
+                return {
+                    ...item,
+                    onClick: () => {
+                        redo();
+                        setOpenMenu(null);
+                    }
+                };
+            case "cut":
+                return {
+                    ...item,
+                    onClick: () => {
+                        cut();
+                        setOpenMenu(null);
+                    }
+                };
+            case "copy":
+                return {
+                    ...item,
+                    onClick: () => {
+                        copy();
+                        setOpenMenu(null);
+                    }
+                };
+            case "paste":
+                return {
+                    ...item,
+                    onClick: () => {
+                        paste();
+                        setOpenMenu(null);
+                    }
+                };
+            case "find":
+                return {
+                    ...item,
+                    onClick: () => {
+                        find();
+                        setOpenMenu(null);
+                    }
+                };
+            case "replace":
+                return {
+                    ...item,
+                    onClick: () => {
+                        replace();
+                        setOpenMenu(null);
+                    }
+                };
+            case "findInFiles":
+                return {
+                    ...item,
+                    onClick: () => {
+                        findInFiles();
+                        setOpenMenu(null);
+                    }
+                };
+            case "replaceInFiles":
+                return {
+                    ...item,
+                    onClick: () => {
+                        replaceInFiles();
+                        setOpenMenu(null);
+                    }
+                };
+            case "toggleLineComment":
+                return {
+                    ...item,
+                    onClick: () => {
+                        toggleLineComment();
+                        setOpenMenu(null);
+                    }
+                };
+            case "toggleBlockComment":
+                return {
+                    ...item,
+                    onClick: () => {
+                        toggleBlockComment();
+                        setOpenMenu(null);
+                    }
+                };
+            case "emmetExpand":
+                return {
+                    ...item,
+                    onClick: () => {
+                        expandEmmet();
+                        setOpenMenu(null);
+                    }
+                };
+            default:
+                return item;
+        }
     });
 
     const terminalMenuItems = terminalMenu.map((item) => {
@@ -347,7 +471,7 @@ function Navbar({ isChatOpen, toggleChat }) {
             </div>
             
             {openMenu === 'file' && <DropdownMenu ref={dropdownRef} menu={fileMenuItems} position={menuPosition} />}
-            {openMenu === 'edit' && <DropdownMenu ref={dropdownRef} menu={editMenu} position={menuPosition} />}
+            {openMenu === 'edit' && <DropdownMenu ref={dropdownRef} menu={editMenuItems} position={menuPosition} />}
             {openMenu === 'view' && <DropdownMenu ref={dropdownRef} menu={viewMenu} position={menuPosition} />}
             {openMenu === 'terminal' && <DropdownMenu ref={dropdownRef} menu={terminalMenuItems} position={menuPosition} />}
             {openMenu === 'help' && <DropdownMenu ref={dropdownRef} menu={helpMenu} position={menuPosition} />}

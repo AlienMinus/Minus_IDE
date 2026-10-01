@@ -132,6 +132,10 @@ export function EditorProvider({ children }) {
   }
 
   const editorRef = useRef(null);
+  const [sidebarActive, setSidebarActive] = useState("explorer");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [replaceQuery, setReplaceQuery] = useState("");
+  const [isReplaceOpen, setIsReplaceOpen] = useState(false);
 
   function setEditorInstance(editor) {
     editorRef.current = editor;
@@ -163,6 +167,123 @@ export function EditorProvider({ children }) {
     return newFile;
   }
 
+  // --- Edit Operations ---
+  function undo() {
+    if (editorRef.current) {
+      editorRef.current.focus();
+      editorRef.current.trigger("hyperion", "undo", null);
+    }
+  }
+
+  function redo() {
+    if (editorRef.current) {
+      editorRef.current.focus();
+      editorRef.current.trigger("hyperion", "redo", null);
+    }
+  }
+
+  function cut() {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    const selection = editorRef.current.getSelection();
+    const model = editorRef.current.getModel();
+    if (model && selection && !selection.isEmpty()) {
+      const text = model.getValueInRange(selection);
+      navigator.clipboard.writeText(text);
+      editorRef.current.executeEdits("cut", [
+        { range: selection, text: "", forceMoveMarkers: true }
+      ]);
+    }
+  }
+
+  function copy() {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    const selection = editorRef.current.getSelection();
+    const model = editorRef.current.getModel();
+    if (model && selection && !selection.isEmpty()) {
+      const text = model.getValueInRange(selection);
+      navigator.clipboard.writeText(text);
+    }
+  }
+
+  function paste() {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    navigator.clipboard
+      .readText()
+      .then((text) => {
+        if (text && editorRef.current) {
+          const selection = editorRef.current.getSelection();
+          editorRef.current.executeEdits("paste", [
+            { range: selection, text, forceMoveMarkers: true }
+          ]);
+        }
+      })
+      .catch(() => {
+        editorRef.current?.trigger("hyperion", "editor.action.clipboardPasteAction", null);
+      });
+  }
+
+  function find() {
+    if (editorRef.current) {
+      editorRef.current.focus();
+      editorRef.current.trigger("hyperion", "actions.find", null);
+    }
+  }
+
+  function replace() {
+    if (editorRef.current) {
+      editorRef.current.focus();
+      editorRef.current.trigger("hyperion", "editor.action.startFindReplaceAction", null);
+    }
+  }
+
+  function findInFiles(initialQuery = "") {
+    setSidebarActive("search");
+    setIsReplaceOpen(false);
+    if (initialQuery) {
+      setSearchQuery(initialQuery);
+    } else {
+      const sel = getSelectedText();
+      if (sel) setSearchQuery(sel);
+    }
+  }
+
+  function replaceInFiles(initialQuery = "") {
+    setSidebarActive("search");
+    setIsReplaceOpen(true);
+    if (initialQuery) {
+      setSearchQuery(initialQuery);
+    } else {
+      const sel = getSelectedText();
+      if (sel) setSearchQuery(sel);
+    }
+  }
+
+  function toggleLineComment() {
+    if (editorRef.current) {
+      editorRef.current.focus();
+      editorRef.current.trigger("hyperion", "editor.action.commentLine", null);
+    }
+  }
+
+  function toggleBlockComment() {
+    if (editorRef.current) {
+      editorRef.current.focus();
+      editorRef.current.trigger("hyperion", "editor.action.blockComment", null);
+    }
+  }
+
+  function expandEmmet() {
+    if (editorRef.current) {
+      editorRef.current.focus();
+      import("../utils/emmetHelper").then(({ executeMonacoEmmet }) => {
+        executeMonacoEmmet(editorRef.current);
+      });
+    }
+  }
+
   return (
     <EditorContext.Provider
       value={{
@@ -181,7 +302,27 @@ export function EditorProvider({ children }) {
         editorRef,
         setEditorInstance,
         getSelectedText,
-        createOrOpenFile
+        createOrOpenFile,
+        sidebarActive,
+        setSidebarActive,
+        searchQuery,
+        setSearchQuery,
+        replaceQuery,
+        setReplaceQuery,
+        isReplaceOpen,
+        setIsReplaceOpen,
+        undo,
+        redo,
+        cut,
+        copy,
+        paste,
+        find,
+        replace,
+        findInFiles,
+        replaceInFiles,
+        toggleLineComment,
+        toggleBlockComment,
+        expandEmmet
       }}
     >
       {children}
