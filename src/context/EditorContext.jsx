@@ -1,7 +1,9 @@
-import { createContext, useState, useRef } from "react";
+import { createContext, useState, useRef, useContext, useEffect } from "react";
 import fileTree from "../data/fileTree";
 import { traverseDirectory, flattenFiles } from "../services/fileService";
 import { loadEditorFile, saveEditorFile, refreshEditorContent } from "../services/editorService";
+import { FileContext } from "./FileContext";
+import { saveWorkspaceState, getStoredWorkspaceState } from "../services/workspacePersistence";
 
 const initialFiles = flattenFiles(fileTree);
 
@@ -14,13 +16,102 @@ function extractTitleFromHtml(htmlContent) {
 export const EditorContext = createContext(null);
 
 export function EditorProvider({ children }) {
-  const [workspaceTree, setWorkspaceTree] = useState(fileTree);
+  const fileContext = useContext(FileContext);
+  const initialCached = getStoredWorkspaceState();
+
+  const [workspaceTree, setWorkspaceTree] = useState(() => {
+    return initialCached?.workspaceTree && initialCached.workspaceTree.length > 0
+      ? initialCached.workspaceTree
+      : fileTree;
+  });
   const [workspaceHandle, setWorkspaceHandle] = useState(null);
-  const [files, setFiles] = useState(initialFiles);
-  const [openFiles, setOpenFiles] = useState(initialFiles.slice(0, 1));
-  const [activeFile, setActiveFile] = useState(initialFiles[0] ?? null);
+
+  const [files, setFiles] = useState(() => {
+    if (initialCached?.workspaceTree && initialCached.workspaceTree.length > 0) {
+      return flattenFiles(initialCached.workspaceTree);
+    }
+    return initialFiles;
+  });
+
+  const [openFiles, setOpenFiles] = useState(() => {
+    if (initialCached?.openFiles && initialCached.openFiles.length > 0) {
+      return initialCached.openFiles;
+    }
+    return initialFiles.slice(0, 1);
+  });
+
+  const [activeFile, setActiveFile] = useState(() => {
+    if (initialCached?.openFiles && initialCached.openFiles.length > 0) {
+      if (initialCached.activeFileId) {
+        const found = initialCached.openFiles.find((f) => f.id === initialCached.activeFileId);
+        if (found) return found;
+      }
+      return initialCached.openFiles[0];
+    }
+    return initialFiles[0] ?? null;
+  });
+
+  const editorRef = useRef(null);
+  const [sidebarActive, setSidebarActive] = useState(() => {
+    return initialCached?.sidebarActive || "explorer";
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [replaceQuery, setReplaceQuery] = useState("");
+  const [isReplaceOpen, setIsReplaceOpen] = useState(false);
+
+  // Sync files and handles from FileContext
+  useEffect(() => {
+    if (fileContext?.files && fileContext.files.length > 0) {
+      setFiles((prevFiles) => {
+        return fileContext.files.map((fcFile) => {
+          const inMemoryOpen = openFiles.find((of) => of.id === fcFile.id || of.path === fcFile.path);
+          if (inMemoryOpen && inMemoryOpen.content != null) {
+            return { ...fcFile, content: inMemoryOpen.content };
+          }
+          return fcFile;
+        });
+      });
+
+      // Attach live handles to openFiles
+      setOpenFiles((prevOpen) => {
+        return prevOpen.map((tab) => {
+          const match = fileContext.files.find((f) => f.id === tab.id || f.path === tab.path);
+          if (match?.handle) {
+            return { ...tab, handle: match.handle };
+          }
+          return tab;
+        });
+      });
+
+      // Attach live handle to activeFile
+      setActiveFile((prevActive) => {
+        if (!prevActive) return prevActive;
+        const match = fileContext.files.find((f) => f.id === prevActive.id || f.path === prevActive.path);
+        if (match?.handle) {
+          return { ...prevActive, handle: match.handle };
+        }
+        return prevActive;
+      });
+    }
+  }, [fileContext?.files]);
+
+  // Persist openFiles, activeFile, and sidebar tab in LocalStorage
+  useEffect(() => {
+    saveWorkspaceState({
+      openFiles,
+      activeFileId: activeFile?.id || null,
+      sidebarActive
+    });
+  }, [openFiles, activeFile, sidebarActive]);
 
   async function openFolder() {
+    if (fileContext?.openFolder) {
+      await fileContext.openFolder();
+      setOpenFiles([]);
+      setActiveFile(null);
+      return;
+    }
+
     if (!window.showDirectoryPicker) {
       alert("Your browser does not support the File System Access API.");
       return;
@@ -51,32 +142,48 @@ export function EditorProvider({ children }) {
   }
 
   async function openFile(file) {
-    const existingFile = files.find((f) => f.id === file.id) ?? file;
-    let loadedFile = existingFile;
+    const existingFile =
+      files.find((f) => f.id === file.id || f.path === file.path) ||
+      fileContext?.files?.find((f) => f.id === file.id || f.path === file.path) ||
+      file;
 
-    if (loadedFile.handle && loadedFile.content == null) {
+    let loadedFile = { ...existingFile, ...file };
+
+    if (loadedFile.handle && loadedFile.content == null && !loadedFile.isBinary) {
       loadedFile = await loadEditorFile(loadedFile);
       setFiles((prev) => prev.map((f) => (f.id === loadedFile.id ? loadedFile : f)));
-      setOpenFiles((prev) => prev.map((f) => (f.id === loadedFile.id ? loadedFile : f)));
     }
 
-    const alreadyOpen = openFiles.some((f) => f.id === loadedFile.id);
-    if (!alreadyOpen) {
-      setOpenFiles((prev) => [...prev, loadedFile]);
-    }
+    setOpenFiles((prev) => {
+      const alreadyOpenIndex = prev.findIndex((f) => f.id === loadedFile.id);
+      if (alreadyOpenIndex >= 0) {
+        return prev.map((f, i) => (i === alreadyOpenIndex ? { ...f, ...loadedFile } : f));
+      }
+      return [...prev, loadedFile];
+    });
 
     setActiveFile(loadedFile);
   }
 
   async function saveActiveFile() {
     if (!activeFile) return;
-    if (!activeFile.handle) {
+
+    let targetHandle = activeFile.handle;
+    if (!targetHandle && fileContext?.files) {
+      const match = fileContext.files.find((f) => f.id === activeFile.id || f.path === activeFile.path);
+      if (match?.handle) {
+        targetHandle = match.handle;
+        activeFile.handle = match.handle;
+      }
+    }
+
+    if (!targetHandle) {
       alert("Unable to save this file. Open a folder first.");
       return;
     }
 
     try {
-      await saveEditorFile(activeFile);
+      await saveEditorFile({ ...activeFile, handle: targetHandle });
       alert(`Saved ${activeFile.name}`);
     } catch (error) {
       console.error("Save failed:", error);
@@ -130,12 +237,6 @@ export function EditorProvider({ children }) {
 
     setActiveFile(previewTab);
   }
-
-  const editorRef = useRef(null);
-  const [sidebarActive, setSidebarActive] = useState("explorer");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [replaceQuery, setReplaceQuery] = useState("");
-  const [isReplaceOpen, setIsReplaceOpen] = useState(false);
 
   function setEditorInstance(editor) {
     editorRef.current = editor;
@@ -287,8 +388,8 @@ export function EditorProvider({ children }) {
   return (
     <EditorContext.Provider
       value={{
-        workspaceTree,
-        workspaceHandle,
+        workspaceTree: fileContext?.workspaceTree || workspaceTree,
+        workspaceHandle: fileContext?.workspaceHandle || workspaceHandle,
         files,
         openFiles,
         activeFile,

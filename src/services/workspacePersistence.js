@@ -123,15 +123,11 @@ export async function clearStoredDirectoryHandle() {
 /**
  * Save lightweight serializable workspace snapshot in LocalStorage
  */
-export function saveWorkspaceState({
-  folderName,
-  folderPath,
-  workspaceTree,
-  openFiles,
-  activeFileId,
-  sidebarActive
-}) {
+export function saveWorkspaceState(partialState = {}) {
   try {
+    const existing = getStoredWorkspaceState() || {};
+    const merged = { ...existing, ...partialState };
+
     // Strip handles before serializing
     const sanitizeTree = (nodes) => {
       if (!Array.isArray(nodes)) return [];
@@ -144,18 +140,18 @@ export function saveWorkspaceState({
       });
     };
 
-    const sanitizedOpenFiles = (openFiles || []).map((file) => {
+    const sanitizedOpenFiles = (merged.openFiles || []).map((file) => {
       const { handle, rawFile, ...rest } = file;
       return rest;
     });
 
     const state = {
-      folderName,
-      folderPath,
-      workspaceTree: sanitizeTree(workspaceTree),
+      folderName: merged.folderName || null,
+      folderPath: merged.folderPath || null,
+      workspaceTree: sanitizeTree(merged.workspaceTree),
       openFiles: sanitizedOpenFiles,
-      activeFileId,
-      sidebarActive: sidebarActive || "explorer",
+      activeFileId: merged.activeFileId ?? null,
+      sidebarActive: merged.sidebarActive || "explorer",
       timestamp: Date.now()
     };
 
