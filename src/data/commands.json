@@ -1,36 +1,87 @@
 [
   {
-    "command": "help",
-    "description": "Show available commands"
+    "command": "run",
+    "description": "Execute active file or specified file in Hyperion Sandbox (C, Python, Node, Bash, React)",
+    "usage": "run [filename]"
   },
   {
-    "command": "clear",
-    "description": "Clear terminal"
+    "command": "runtimes",
+    "description": "Check status of sandbox runtimes (GCC, Python, Node.js, Bash, React)",
+    "usage": "runtimes"
+  },
+  {
+    "command": "c",
+    "description": "Compile and run C code directly in GCC sandbox",
+    "usage": "c <filename.c> or c <code>"
+  },
+  {
+    "command": "python",
+    "description": "Execute Python file or one-liner in Python 3.12 sandbox",
+    "usage": "python <filename.py> or python -c \"code\""
+  },
+  {
+    "command": "node",
+    "description": "Execute JavaScript/Node.js script or eval in Node sandbox",
+    "usage": "node <filename.js> or node -e \"code\""
+  },
+  {
+    "command": "bash",
+    "description": "Execute Bash script or shell command in GNU Bash sandbox",
+    "usage": "bash <filename.sh> or bash -c \"cmd\""
+  },
+  {
+    "command": "react",
+    "description": "Transpile and preview React JSX/TSX component",
+    "usage": "react <filename.jsx>"
+  },
+  {
+    "command": "gcc",
+    "description": "Compile C source code with MinGW GCC compiler",
+    "usage": "gcc main.c -o main.exe && ./main.exe"
+  },
+  {
+    "command": "ls",
+    "description": "List files and directories in current sandbox workspace",
+    "usage": "ls [-la]"
+  },
+  {
+    "command": "cat",
+    "description": "Display contents of a file in terminal",
+    "usage": "cat <filename>"
+  },
+  {
+    "command": "pwd",
+    "description": "Print working directory",
+    "usage": "pwd"
   },
   {
     "command": "echo",
-    "description": "Print text",
+    "description": "Print text to standard output",
     "usage": "echo [text]"
   },
   {
-    "command": "time",
-    "description": "Show current time"
+    "command": "clear",
+    "description": "Clear the terminal screen",
+    "usage": "clear (or Ctrl+L)"
   },
   {
-    "command": "date",
-    "description": "Show current date"
+    "command": "help",
+    "description": "Show available commands and sandbox runtimes",
+    "usage": "help"
   },
   {
     "command": "history",
-    "description": "Show command history"
+    "description": "Show terminal command history",
+    "usage": "history"
   },
   {
-    "command": "color",
-    "description": "Change text color",
-    "usage": "color [color]"
+    "command": "date",
+    "description": "Show current date",
+    "usage": "date"
   },
   {
-    "command": "resetcolor",
-    "description": "Reset text color to default"
+    "command": "time",
+    "description": "Show current time",
+    "usage": "time"
   }
 ]

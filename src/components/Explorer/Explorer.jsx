@@ -3,6 +3,7 @@ import "./Explorer.css";
 import { useEffect, useState } from "react";
 import useFile from "../../hooks/useFile";
 import useEditor from "../../hooks/useEditor";
+import useTerminal from "../../hooks/useTerminal";
 import ContextMenu from "../ContextMenu";
 import { Button } from "../Button";
 import Modal from "../Modal/Modal";
@@ -21,7 +22,9 @@ import {
   FaFileWord,
   FaFileExcel,
   FaFilePowerpoint,
-  FaFileCode
+  FaFileCode,
+  FaPython,
+  FaTerminal
 } from "react-icons/fa";
 import { FiFilePlus, FiFolderPlus, FiRefreshCw } from "react-icons/fi";
 import { VscCollapseAll } from "react-icons/vsc";
@@ -29,6 +32,7 @@ import { VscCollapseAll } from "react-icons/vsc";
 function Explorer() {
   const { workspaceTree, openFolder, refreshWorkspace, createFile, createFolder } = useFile();
   const { openFile, openPreviewTab } = useEditor();
+  const { runActiveFile } = useTerminal();
   const [openFolders, setOpenFolders] = useState({});
   const [selectedFile, setSelectedFile] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -79,15 +83,12 @@ function Explorer() {
   }
 
   function handleFileContextMenu(e, file) {
-    const fileType = file.language || file.name.split('.').pop().toLowerCase();
-    if (fileType === "html") {
-      e.preventDefault();
-      setContextMenu({
-        isOpen: true,
-        position: { x: e.clientX, y: e.clientY },
-        file: file
-      });
-    }
+    e.preventDefault();
+    setContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+      file: file
+    });
   }
 
   function handleOpenLiveServer() {
@@ -99,17 +100,27 @@ function Explorer() {
   function handleRunCode() {
     if (contextMenu.file) {
       openFile(contextMenu.file);
+      runActiveFile(contextMenu.file);
     }
   }
 
   function getIcon(fileType) {
     switch (fileType) {
       case "jsx":
+      case "tsx":
+      case "react":
         return <FaReact className="react-file" />;
+      case "py":
+      case "python":
+        return <FaPython style={{ color: "#387eb8" }} />;
+      case "sh":
+      case "bash":
+        return <FaTerminal style={{ color: "#4eaa25" }} />;
+      case "c":
+      case "cpp":
+        return <FaFileCode style={{ color: "#a8b9cc" }} />;
       case "js":
       case "ts":
-      case "tsx":
-      case "py":
       case "json":
       case "md":
       case "txt":
@@ -220,6 +231,7 @@ function Explorer() {
       <ContextMenu
         isOpen={contextMenu.isOpen}
         position={contextMenu.position}
+        file={contextMenu.file}
         onClose={() => setContextMenu({ isOpen: false, position: null, file: null })}
         onOpenLiveServer={handleOpenLiveServer}
         onRunCode={handleRunCode}

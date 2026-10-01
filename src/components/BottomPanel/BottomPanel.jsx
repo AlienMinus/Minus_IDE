@@ -1,8 +1,7 @@
 import "./BottomPanel.css";
-
 import { useState } from "react";
-
 import Terminal from "../Terminal";
+import Output from "../Output/Output";
 
 function BottomPanel() {
 
@@ -24,11 +23,7 @@ function BottomPanel() {
                 return <Terminal />;
 
             case "Output":
-                return (
-                    <div className="panel-content">
-                        No output available.
-                    </div>
-                );
+                return <Output />;
 
             case "Problems":
                 return (

@@ -1,88 +1,187 @@
 .terminal-container {
-
     width: 100%;
     height: 100%;
-
     display: flex;
     flex-direction: column;
-
     overflow: hidden;
-
-    background: #1e1e1e;
-
+    background: #181818;
 }
 
 .terminal-toolbar {
-
-    height: 35px;
-    min-height: 35px;
-
+    height: 36px;
+    min-height: 36px;
     display: flex;
     align-items: center;
-
-    padding: 0 15px;
-
+    justify-content: space-between;
+    padding: 0 12px;
     background: #252526;
-
     border-bottom: 1px solid #333;
-
     color: #cccccc;
-
     font-size: 13px;
-    font-weight: 600;
-
+    font-weight: 500;
     user-select: none;
+}
 
+.terminal-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.terminal-tabs-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.terminal-tab-item {
+    background: transparent;
+    border: none;
+    color: #888;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.terminal-tab-item:hover {
+    background: #2a2d2e;
+    color: #ccc;
+}
+
+.terminal-tab-item.active {
+    background: #37373d;
+    color: #fff;
+    font-weight: 600;
+}
+
+.terminal-add-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    padding: 4px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+}
+
+.terminal-add-btn:hover {
+    background: #2a2d2e;
+    color: #fff;
+}
+
+.terminal-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sandbox-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.sandbox-status-badge.active {
+    background: rgba(46, 160, 67, 0.15);
+    color: #3fb950;
+    border: 1px solid rgba(46, 160, 67, 0.3);
+}
+
+.sandbox-status-badge.running {
+    background: rgba(210, 153, 34, 0.15);
+    color: #d29922;
+    border: 1px solid rgba(210, 153, 34, 0.3);
+}
+
+.spin-icon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.term-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #2d2d30;
+    border: 1px solid #3c3c3c;
+    color: #d4d4d4;
+    padding: 3px 9px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.term-action-btn:hover:not(:disabled) {
+    background: #3e3e42;
+    color: #fff;
+}
+
+.term-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.term-action-btn.run-action-btn {
+    background: #0e639c;
+    border-color: #1177bb;
+    color: #fff;
+}
+
+.term-action-btn.run-action-btn:hover:not(:disabled) {
+    background: #1177bb;
+}
+
+.action-icon {
+    font-size: 10px;
 }
 
 .terminal {
-
     flex: 1;
-
     width: 100%;
-
+    padding: 6px 10px;
+    box-sizing: border-box;
     overflow: hidden;
-
 }
 
 /* xterm root */
-
 .terminal .xterm {
-
     width: 100% !important;
     height: 100% !important;
-
 }
 
 /* viewport */
-
 .terminal .xterm-viewport {
-
     overflow-y: auto !important;
-
 }
 
 /* screen */
-
 .terminal .xterm-screen {
-
     width: 100% !important;
     height: 100% !important;
-
 }
 
 /* helper textarea */
-
 .terminal .xterm-helper-textarea {
-
     opacity: 0;
-
 }
 
 /* remove padding */
-
 .terminal canvas {
-
     display: block;
-
 }

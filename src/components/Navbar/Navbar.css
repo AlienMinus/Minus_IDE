@@ -178,6 +178,17 @@
     font-size: 17px; /* Ensure icon size is consistent with other icons */
 }
 
+.run-btn.running .spin-icon {
+    color: #eab308;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 .profile {
 
     font-size: 22px;

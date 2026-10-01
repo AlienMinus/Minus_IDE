@@ -3,12 +3,14 @@ import "./Navbar.css";
 import DropdownMenu from "../DropdownMenu";
 import useFile from "../../hooks/useFile";
 import useEditor from "../../hooks/useEditor";
+import useTerminal from "../../hooks/useTerminal";
 
 import {
     FaBars,
     FaFolderOpen,
     FaPlay,
-    FaSearch
+    FaSearch,
+    FaSpinner
 } from "react-icons/fa";
 
 import { TbMessageChatbot } from "react-icons/tb";
@@ -24,7 +26,8 @@ function Navbar({ isChatOpen, toggleChat }) {
     const dropdownRef = useRef(null);
 
     const { openFolder } = useFile();
-    const { saveActiveFile } = useEditor();
+    const { activeFile, saveActiveFile } = useEditor();
+    const { runActiveFile, isRunning, createTerminal } = useTerminal();
     const [openMenu, setOpenMenu] = useState(null);
     const [selectedMenu, setSelectedMenu] = useState(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -37,6 +40,18 @@ function Navbar({ isChatOpen, toggleChat }) {
             closeTimer.current = null;
         }
     };
+
+    // Keyboard shortcut for running active file (Ctrl+F5 or F5)
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "F5") {
+                e.preventDefault();
+                runActiveFile();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [runActiveFile]);
 
     const menuButtons = [
         { key: "file", label: "File", ref: fileRef },
@@ -69,6 +84,28 @@ function Navbar({ isChatOpen, toggleChat }) {
             };
         }
 
+        return item;
+    });
+
+    const terminalMenuItems = terminalMenu.map((item) => {
+        if (item.id === "runActiveFile") {
+            return {
+                ...item,
+                onClick: async () => {
+                    await runActiveFile();
+                    setOpenMenu(null);
+                }
+            };
+        }
+        if (item.id === "newTerminal") {
+            return {
+                ...item,
+                onClick: () => {
+                    createTerminal();
+                    setOpenMenu(null);
+                }
+            };
+        }
         return item;
     });
 
@@ -186,8 +223,13 @@ function Navbar({ isChatOpen, toggleChat }) {
 
             <div className="navbar-right">
 
-                <button className="icon-btn run-btn">
-                    <FaPlay className="run-icon" />
+                <button
+                    className={`icon-btn run-btn ${isRunning ? 'running' : ''}`}
+                    onClick={() => runActiveFile()}
+                    disabled={isRunning}
+                    title={activeFile ? `Run ${activeFile.name} in Hyperion Terminal (F5)` : 'Run Active File (F5)'}
+                >
+                    {isRunning ? <FaSpinner className="run-icon spin-icon" /> : <FaPlay className="run-icon" />}
                 </button>
 
                 <button
@@ -203,7 +245,7 @@ function Navbar({ isChatOpen, toggleChat }) {
             {openMenu === 'file' && <DropdownMenu ref={dropdownRef} menu={fileMenuItems} position={menuPosition} />}
             {openMenu === 'edit' && <DropdownMenu ref={dropdownRef} menu={editMenu} position={menuPosition} />}
             {openMenu === 'view' && <DropdownMenu ref={dropdownRef} menu={viewMenu} position={menuPosition} />}
-            {openMenu === 'terminal' && <DropdownMenu ref={dropdownRef} menu={terminalMenu} position={menuPosition} />}
+            {openMenu === 'terminal' && <DropdownMenu ref={dropdownRef} menu={terminalMenuItems} position={menuPosition} />}
             {openMenu === 'help' && <DropdownMenu ref={dropdownRef} menu={helpMenu} position={menuPosition} />}
 
 

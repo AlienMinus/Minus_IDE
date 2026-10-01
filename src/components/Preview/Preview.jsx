@@ -47,9 +47,85 @@ function Preview({ compact = false, onOpenPreview, sourceFile }) {
   const [favicon, setFavicon] = useState(null);
   const [title, setTitle] = useState(null);
 
-  // Load HTML file content when sourceFile is provided
+function generateReactPreviewHtml(jsxCode, fileName) {
+  const sanitizedCode = (jsxCode || '')
+    .replace(/import\s+React\s*,\s*\{([^}]+)\}\s*from\s*['"]react['"];?/g, 'const { $1 } = React;')
+    .replace(/import\s+\*\s+as\s+React\s+from\s*['"]react['"];?/g, '')
+    .replace(/import\s+React\s+from\s*['"]react['"];?/g, '')
+    .replace(/import\s+['"][^'"]+\.css['"];?/g, '')
+    .replace(/export\s+default\s+function\s+([A-Za-z0-9_]+)/g, 'function $1')
+    .replace(/export\s+default\s+([A-Za-z0-9_]+);?/g, 'window.__DefaultComp = $1;');
+
+  const compMatch = jsxCode?.match(/(?:export\s+default\s+function\s+|function\s+|const\s+)([A-Za-z0-9_]+)/);
+  const detectedName = compMatch ? compMatch[1] : 'App';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${fileName} - React Live Sandbox</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #181818;
+      color: #f1f5f9;
+    }
+    #error-box {
+      display: none;
+      background: #450a0a;
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      padding: 14px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div id="error-box"></div>
+  <div id="root"></div>
+
+  <script>
+    window.onerror = function(msg, url, line, col, err) {
+      var box = document.getElementById('error-box');
+      box.style.display = 'block';
+      box.textContent = 'React Error: ' + msg + (line ? ' (Line ' + line + ')' : '');
+    };
+  </script>
+
+  <script type="text/babel">
+    try {
+      ${sanitizedCode}
+
+      var Target = window.__DefaultComp || (typeof ${detectedName} !== 'undefined' ? ${detectedName} : null);
+      if (Target) {
+        var root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Target />);
+      } else {
+        document.getElementById('root').innerHTML = '<div style="color:#94a3b8;padding:20px;">Component loaded. Export a React component to preview.</div>';
+      }
+    } catch (e) {
+      var box = document.getElementById('error-box');
+      box.style.display = 'block';
+      box.textContent = 'Compilation Error: ' + e.message;
+    }
+  </script>
+</body>
+</html>`;
+}
+
+  // Load HTML or React file content when sourceFile is provided
   useEffect(() => {
-    if (!sourceFile || !sourceFile.handle) {
+    if (!sourceFile) {
       setHtmlUrl(null);
       setFavicon(null);
       setTitle(null);
@@ -59,29 +135,46 @@ function Preview({ compact = false, onOpenPreview, sourceFile }) {
     let isMounted = true;
     let currentUrl = null;
 
-    const loadHtmlFile = async () => {
+    const loadContent = async () => {
       setLoadingFile(true);
       try {
-        const file = await sourceFile.handle.getFile();
-        const htmlContent = sourceFile.content || (await file.text());
-        
-        // Extract favicon and title
-        const extractedFavicon = extractFaviconFromHtml(htmlContent);
-        const extractedTitle = extractTitleFromHtml(htmlContent);
-        
-        if (isMounted) {
-          setFavicon(extractedFavicon);
-          setTitle(extractedTitle);
+        let content = sourceFile.content;
+        if (content == null && sourceFile.handle) {
+          const file = await sourceFile.handle.getFile();
+          content = await file.text();
         }
-        
-        const blob = new Blob([htmlContent], { type: "text/html" });
+
+        if (!content && content !== '') {
+          content = '<div>No content in file.</div>';
+        }
+
+        const ext = sourceFile.name?.split('.').pop()?.toLowerCase();
+        const isReact = ['jsx', 'tsx'].includes(ext) || sourceFile.language === 'react';
+
+        let finalHtml = content;
+        if (isReact) {
+          finalHtml = generateReactPreviewHtml(content, sourceFile.name);
+          if (isMounted) {
+            setTitle(`${sourceFile.name} (Live React Sandbox)`);
+          }
+        } else {
+          // Extract favicon and title for HTML files
+          const extractedFavicon = extractFaviconFromHtml(content);
+          const extractedTitle = extractTitleFromHtml(content);
+          if (isMounted) {
+            setFavicon(extractedFavicon);
+            setTitle(extractedTitle || sourceFile.name);
+          }
+        }
+
+        const blob = new Blob([finalHtml], { type: "text/html" });
         const url = URL.createObjectURL(blob);
         currentUrl = url;
         if (isMounted) {
           setHtmlUrl(url);
         }
       } catch (error) {
-        console.error("Failed to load HTML file:", error);
+        console.error("Failed to load preview:", error);
       } finally {
         if (isMounted) {
           setLoadingFile(false);
@@ -89,7 +182,7 @@ function Preview({ compact = false, onOpenPreview, sourceFile }) {
       }
     };
 
-    loadHtmlFile();
+    loadContent();
 
     return () => {
       isMounted = false;
