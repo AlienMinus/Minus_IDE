@@ -1,0 +1,350 @@
+.csv-preview-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #121316;
+  color: #e2e8f0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+}
+
+/* Toolbar */
+.csv-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #1a1c23;
+  border-bottom: 1px solid #2d3139;
+  min-height: 44px;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.csv-toolbar-left,
+.csv-toolbar-center,
+.csv-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.csv-brand-icon {
+  font-size: 1.25rem;
+  color: #0d9488;
+}
+
+.csv-file-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.csv-badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background-color: #112d2a;
+  color: #2dd4bf;
+  border: 1px solid #134e4a;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.csv-search-box {
+  display: flex;
+  align-items: center;
+  background-color: #0f1115;
+  border: 1px solid #2e3442;
+  border-radius: 6px;
+  padding: 4px 10px;
+  gap: 8px;
+  width: 240px;
+}
+
+.csv-search-icon {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.csv-search-input {
+  background: transparent;
+  border: none;
+  color: #f1f5f9;
+  font-size: 0.82rem;
+  outline: none;
+  width: 100%;
+}
+
+.csv-search-input::placeholder {
+  color: #64748b;
+}
+
+.csv-stat-badge {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  background-color: #0f1115;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid #222630;
+}
+
+.csv-view-toggle {
+  display: flex;
+  background-color: #0f1115;
+  border: 1px solid #2e3442;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.csv-toggle-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.csv-toggle-btn.active {
+  background-color: #262b37;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.csv-tool-btn {
+  background: transparent;
+  border: 1px solid #2e3442;
+  color: #cbd5e1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+}
+
+.csv-tool-btn:hover {
+  background-color: #272c38;
+  color: #f8fafc;
+  border-color: #0d9488;
+}
+
+/* Content Area */
+.csv-content-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background-color: #17181c;
+}
+
+.csv-table-scroll {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  position: relative;
+}
+
+.csv-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Headers */
+.csv-row-num-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  background-color: #1e2129;
+  color: #64748b;
+  padding: 8px 10px;
+  border-right: 2px solid #383f50;
+  border-bottom: 2px solid #383f50;
+  z-index: 3;
+  width: 44px;
+  min-width: 44px;
+  text-align: center;
+}
+
+.csv-col-header {
+  position: sticky;
+  top: 0;
+  background-color: #22252e;
+  color: #cbd5e1;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-right: 1px solid #2e3340;
+  border-bottom: 2px solid #383f50;
+  text-align: left;
+  z-index: 2;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s;
+}
+
+.csv-col-header:hover {
+  background-color: #2b303d;
+  color: #fff;
+}
+
+.csv-th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.csv-sort-icon {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Row Numbers & Cells */
+.csv-row-num {
+  position: sticky;
+  left: 0;
+  background-color: #20232c;
+  color: #64748b;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-right: 2px solid #383f50;
+  border-bottom: 1px solid #272b36;
+  text-align: right;
+  z-index: 1;
+  font-family: monospace;
+  user-select: none;
+}
+
+.csv-table td {
+  padding: 6px 14px;
+  border-right: 1px solid #232732;
+  border-bottom: 1px solid #232732;
+  color: #e2e8f0;
+  white-space: nowrap;
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.csv-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.csv-table td.is-number {
+  text-align: right;
+  font-family: "Consolas", monospace;
+  color: #38bdf8;
+}
+
+.csv-empty-td {
+  padding: 48px;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Raw View */
+.csv-raw-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.csv-raw-code {
+  margin: 0;
+  font-family: "Consolas", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cbd5e1;
+  white-space: pre;
+}
+
+/* Pagination Bar */
+.csv-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background-color: #17181c;
+  border-top: 1px solid #272b36;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.csv-page-btn {
+  background-color: #22252e;
+  border: 1px solid #333948;
+  color: #cbd5e1;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.csv-page-btn:hover:not(:disabled) {
+  background-color: #2b303c;
+  color: #fff;
+}
+
+.csv-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.csv-page-info {
+  color: #94a3b8;
+}
+
+/* Loading & Error */
+.csv-state-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: #94a3b8;
+  gap: 14px;
+  height: 100%;
+}
+
+.csv-spinner {
+  font-size: 2rem;
+  color: #0d9488;
+  animation: csv-spin 1s linear infinite;
+}
+
+@keyframes csv-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.csv-error {
+  color: #f87171;
+  text-align: center;
+  max-width: 480px;
+}
+
+.csv-error-icon {
+  font-size: 2.5rem;
+}

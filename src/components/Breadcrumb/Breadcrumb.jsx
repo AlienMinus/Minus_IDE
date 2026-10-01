@@ -2,9 +2,9 @@ import "./Breadcrumb.css";
 
 import {
     FaChevronRight,
-    FaFolder,
-    FaFileCode
+    FaFolder
 } from "react-icons/fa";
+import { getFileIcon } from "../../utils/fileIcons";
 
 import useEditor from "../../hooks/useEditor";
 
@@ -41,7 +41,7 @@ function Breadcrumb() {
             }
 
             <div className="crumb file">
-                <FaFileCode />
+                {getFileIcon(fileName)}
                 <span>{fileName}</span>
             </div>
 

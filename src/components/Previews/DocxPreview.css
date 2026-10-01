@@ -1,0 +1,295 @@
+.docx-preview-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #121316;
+  color: #e2e8f0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+}
+
+/* Toolbar */
+.docx-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #1a1c23;
+  border-bottom: 1px solid #2d3139;
+  min-height: 44px;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.docx-toolbar-left,
+.docx-toolbar-center,
+.docx-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.docx-brand-icon {
+  font-size: 1.25rem;
+  color: #2b579a;
+}
+
+.docx-file-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.docx-badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background-color: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.docx-tool-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+}
+
+.docx-tool-btn:hover {
+  background-color: #2d3139;
+  color: #f8fafc;
+  border-color: #3b4252;
+}
+
+.docx-tool-btn.active {
+  background-color: #3b4252;
+  color: #38bdf8;
+  border-color: #60a5fa;
+}
+
+.docx-zoom-indicator {
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-width: 44px;
+  text-align: center;
+  color: #cbd5e1;
+}
+
+.docx-stat-pill {
+  font-size: 0.78rem;
+  color: #64748b;
+  background: #0f1115;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid #222630;
+}
+
+/* Scroll Area & Paper View */
+.docx-scroll-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 32px 16px 64px;
+  display: flex;
+  justify-content: center;
+  background: #14161b;
+}
+
+.docx-page-scaler {
+  transition: transform 0.15s ease;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.docx-paper {
+  width: 100%;
+  max-width: 840px;
+  min-height: 1050px;
+  padding: 56px 64px;
+  border-radius: 6px;
+  line-height: 1.7;
+  font-size: 15px;
+  transition: background-color 0.2s, color 0.2s;
+  box-sizing: border-box;
+}
+
+/* Light paper mode (Default authentic document experience) */
+.docx-paper-light {
+  background-color: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.docx-paper-light h1,
+.docx-paper-light h2,
+.docx-paper-light h3,
+.docx-paper-light h4 {
+  color: #0f172a;
+  font-weight: 700;
+  margin-top: 1.4em;
+  margin-bottom: 0.6em;
+  line-height: 1.3;
+}
+
+.docx-paper-light h1 {
+  font-size: 1.85rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.docx-paper-light h2 {
+  font-size: 1.45rem;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 6px;
+}
+
+.docx-paper-light h3 {
+  font-size: 1.2rem;
+}
+
+.docx-paper-light p {
+  margin: 0.8em 0;
+  text-align: justify;
+}
+
+.docx-paper-light table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 14px;
+}
+
+.docx-paper-light th,
+.docx-paper-light td {
+  border: 1px solid #cbd5e1;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.docx-paper-light th {
+  background-color: #f1f5f9;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.docx-paper-light tr:nth-child(even) td {
+  background-color: #f8fafc;
+}
+
+.docx-paper-light blockquote {
+  border-left: 4px solid #2b579a;
+  margin: 1.2em 0;
+  padding: 8px 18px;
+  color: #475569;
+  background-color: #f8fafc;
+  font-style: italic;
+}
+
+.docx-paper-light img {
+  max-width: 100%;
+  height: auto;
+  margin: 1.2em auto;
+  display: block;
+  border-radius: 4px;
+}
+
+.docx-paper-light ul,
+.docx-paper-light ol {
+  margin: 0.8em 0;
+  padding-left: 28px;
+}
+
+.docx-paper-light li {
+  margin-bottom: 0.35em;
+}
+
+/* Dark paper mode */
+.docx-paper-dark {
+  background-color: #1f232b;
+  color: #e2e8f0;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+}
+
+.docx-paper-dark h1,
+.docx-paper-dark h2,
+.docx-paper-dark h3 {
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+.docx-paper-dark table,
+.docx-paper-dark th,
+.docx-paper-dark td {
+  border-color: #334155;
+}
+
+.docx-paper-dark th {
+  background-color: #2a2f3a;
+  color: #f8fafc;
+}
+
+.docx-paper-dark tr:nth-child(even) td {
+  background-color: #242832;
+}
+
+/* Loading & Error States */
+.docx-state-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: #94a3b8;
+  gap: 14px;
+}
+
+.docx-spinner {
+  font-size: 2rem;
+  color: #38bdf8;
+  animation: docx-spin 1s linear infinite;
+}
+
+@keyframes docx-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.docx-error {
+  color: #f87171;
+  text-align: center;
+  max-width: 480px;
+}
+
+.docx-error-icon {
+  font-size: 2.5rem;
+}
+
+@media print {
+  .docx-toolbar {
+    display: none !important;
+  }
+  .docx-preview-container {
+    background: white !important;
+  }
+  .docx-paper {
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}

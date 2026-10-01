@@ -1,0 +1,330 @@
+.xlsx-preview-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #121316;
+  color: #e2e8f0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+}
+
+/* Toolbar */
+.xlsx-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #1a1c23;
+  border-bottom: 1px solid #2d3139;
+  min-height: 44px;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.xlsx-toolbar-left,
+.xlsx-toolbar-center,
+.xlsx-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xlsx-brand-icon {
+  font-size: 1.25rem;
+  color: #107c41;
+}
+
+.xlsx-file-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xlsx-badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background-color: #132e1f;
+  color: #4ade80;
+  border: 1px solid #165b32;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.xlsx-search-box {
+  display: flex;
+  align-items: center;
+  background-color: #0f1115;
+  border: 1px solid #2e3442;
+  border-radius: 6px;
+  padding: 4px 10px;
+  gap: 8px;
+  width: 240px;
+}
+
+.xlsx-search-icon {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.xlsx-search-input {
+  background: transparent;
+  border: none;
+  color: #f1f5f9;
+  font-size: 0.82rem;
+  outline: none;
+  width: 100%;
+}
+
+.xlsx-search-input::placeholder {
+  color: #64748b;
+}
+
+.xlsx-stat-badge {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  background-color: #0f1115;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid #222630;
+}
+
+.xlsx-tool-btn {
+  background: transparent;
+  border: 1px solid #2e3442;
+  color: #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  transition: all 0.15s ease;
+}
+
+.xlsx-tool-btn:hover {
+  background-color: #272c38;
+  color: #f8fafc;
+  border-color: #107c41;
+}
+
+/* Grid & Table */
+.xlsx-grid-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background-color: #17181c;
+}
+
+.xlsx-table-scroll {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  position: relative;
+}
+
+.xlsx-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+  font-size: 13px;
+  font-family: "Consolas", monospace, sans-serif;
+}
+
+/* Column Header (A, B, C...) */
+.xlsx-col-header {
+  position: sticky;
+  top: 0;
+  background-color: #22252e;
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-right: 1px solid #2e3340;
+  border-bottom: 2px solid #383f50;
+  text-align: center;
+  min-width: 80px;
+  z-index: 2;
+  user-select: none;
+}
+
+/* Corner Header (#) */
+.xlsx-corner-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  background-color: #1e2129;
+  color: #64748b;
+  padding: 6px 10px;
+  border-right: 2px solid #383f50;
+  border-bottom: 2px solid #383f50;
+  z-index: 3;
+  width: 44px;
+  min-width: 44px;
+  text-align: center;
+}
+
+/* Row Number (1, 2, 3...) */
+.xlsx-row-num {
+  position: sticky;
+  left: 0;
+  background-color: #20232c;
+  color: #64748b;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-right: 2px solid #383f50;
+  border-bottom: 1px solid #272b36;
+  text-align: right;
+  z-index: 1;
+  user-select: none;
+}
+
+/* Cells */
+.xlsx-table td {
+  padding: 6px 12px;
+  border-right: 1px solid #232732;
+  border-bottom: 1px solid #232732;
+  color: #e2e8f0;
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xlsx-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.xlsx-table td.is-number {
+  text-align: right;
+  color: #67e8f9;
+}
+
+.xlsx-table td.is-highlight {
+  background-color: rgba(234, 179, 8, 0.25) !important;
+  color: #fef08a !important;
+  font-weight: bold;
+}
+
+/* Pagination Bar */
+.xlsx-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background-color: #17181c;
+  border-top: 1px solid #272b36;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.xlsx-page-btn {
+  background-color: #22252e;
+  border: 1px solid #333948;
+  color: #cbd5e1;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.xlsx-page-btn:hover:not(:disabled) {
+  background-color: #2b303c;
+  color: #fff;
+}
+
+.xlsx-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.xlsx-page-info {
+  color: #94a3b8;
+}
+
+/* Bottom Sheet Switcher */
+.xlsx-sheets-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 16px;
+  background-color: #1a1c23;
+  border-top: 1px solid #2d3139;
+  overflow-x: auto;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.xlsx-sheets-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+.xlsx-sheet-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #94a3b8;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.xlsx-sheet-tab:hover {
+  color: #e2e8f0;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.xlsx-sheet-tab.active {
+  color: #22c55e;
+  border-bottom-color: #107c41;
+  background-color: rgba(16, 124, 65, 0.12);
+}
+
+/* Loading & Error States */
+.xlsx-state-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: #94a3b8;
+  gap: 14px;
+  height: 100%;
+}
+
+.xlsx-spinner {
+  font-size: 2rem;
+  color: #107c41;
+  animation: xlsx-spin 1s linear infinite;
+}
+
+@keyframes xlsx-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.xlsx-error {
+  color: #f87171;
+  text-align: center;
+  max-width: 480px;
+}
+
+.xlsx-error-icon {
+  font-size: 2.5rem;
+}

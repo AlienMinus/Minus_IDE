@@ -1,0 +1,338 @@
+.pptx-preview-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #0d0f13;
+  color: #e2e8f0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+}
+
+.pptx-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+/* Toolbar */
+.pptx-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #171920;
+  border-bottom: 1px solid #262a34;
+  min-height: 44px;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.pptx-toolbar-left,
+.pptx-toolbar-center,
+.pptx-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pptx-brand-icon {
+  font-size: 1.25rem;
+  color: #d24726;
+}
+
+.pptx-file-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pptx-badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background-color: #2a1b1b;
+  color: #f87171;
+  border: 1px solid #451a1a;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.pptx-tool-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+}
+
+.pptx-tool-btn:hover:not(:disabled) {
+  background-color: #272c38;
+  color: #f8fafc;
+  border-color: #3b4252;
+}
+
+.pptx-tool-btn.active {
+  background-color: #333a4a;
+  color: #38bdf8;
+  border-color: #60a5fa;
+}
+
+.pptx-tool-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pptx-slide-counter {
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: center;
+  color: #cbd5e1;
+}
+
+/* Stage & Canvas */
+.pptx-stage-wrapper {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #0f1116;
+}
+
+.pptx-canvas-area {
+  width: 100%;
+  max-width: 960px;
+  display: flex;
+  justify-content: center;
+}
+
+.pptx-slide-canvas {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 480px;
+  background: linear-gradient(145deg, #1e222d, #141720);
+  border: 1px solid #2d3342;
+  border-radius: 10px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.65), 0 2px 10px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  padding: 36px 48px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.pptx-slide-canvas::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #d24726, #f97316);
+}
+
+.pptx-slide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.pptx-slide-num {
+  font-weight: 700;
+  color: #fb7185;
+}
+
+.pptx-slide-title {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 24px 0;
+  line-height: 1.3;
+  border-bottom: 1px solid #2d3342;
+  padding-bottom: 14px;
+}
+
+.pptx-slide-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pptx-blocks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pptx-block-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.pptx-block-item.is-bullet {
+  padding-left: 8px;
+}
+
+.pptx-block-item.is-para {
+  padding-left: 2px;
+}
+
+.bullet-dot {
+  font-size: 0.8rem;
+  color: #fb923c;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.block-text {
+  flex: 1;
+}
+
+.pptx-empty-slide-note {
+  color: #64748b;
+  font-style: italic;
+  font-size: 0.95rem;
+  margin-top: 24px;
+}
+
+.pptx-slide-media-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pptx-image-box {
+  max-width: 280px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #334155;
+  background: #000;
+}
+
+.pptx-image-box img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.pptx-slide-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #232834;
+}
+
+/* Bottom Thumbnails Strip */
+.pptx-thumbnails-strip {
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px;
+  background-color: #141720;
+  border-top: 1px solid #232834;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.pptx-thumb-card {
+  min-width: 120px;
+  max-width: 160px;
+  height: 68px;
+  background-color: #1c202a;
+  border: 1px solid #2a3140;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.pptx-thumb-card:hover {
+  background-color: #242938;
+  border-color: #475569;
+}
+
+.pptx-thumb-card.active {
+  border-color: #fb7185;
+  background-color: #262d3d;
+  box-shadow: 0 0 0 2px rgba(251, 113, 133, 0.35);
+}
+
+.pptx-thumb-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.pptx-thumb-title {
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Loading & Error States */
+.pptx-state-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: #94a3b8;
+  gap: 14px;
+}
+
+.pptx-spinner {
+  font-size: 2rem;
+  color: #d24726;
+  animation: pptx-spin 1s linear infinite;
+}
+
+@keyframes pptx-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.pptx-error {
+  color: #f87171;
+  text-align: center;
+  max-width: 480px;
+}
+
+.pptx-error-icon {
+  font-size: 2.5rem;
+}
