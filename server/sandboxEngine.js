@@ -413,14 +413,12 @@ export async function executeCommand({
   }
 
   // Set up execution directory
-  let workDir = cwd;
+  let workDir = cwd ? normalizePath(cwd) : null;
   let isTemp = false;
 
   if (!workDir || !fs.existsSync(workDir)) {
     workDir = createTempDir('hyp_cmd_');
     isTemp = true;
-    writeVirtualFiles(workDir, virtualFiles);
-  } else if (virtualFiles.length > 0) {
     writeVirtualFiles(workDir, virtualFiles);
   }
 
@@ -491,7 +489,7 @@ export function streamCommand({
   const paths = getRuntimePaths();
   const trimmed = (command || '').trim();
 
-  let workDir = cwd;
+  let workDir = cwd ? normalizePath(cwd) : null;
   let isTemp = false;
 
   if (!workDir || !fs.existsSync(workDir)) {
@@ -605,4 +603,187 @@ function runProcess(cmd, args, { cwd, stdin = '', timeoutMs = 15000, env = proce
       resolve({ stdout, stderr, exitCode: 1 });
     });
   });
+}
+
+/**
+ * Normalize Windows / Git Bash / relative paths into a clean absolute filesystem path
+ */
+export function normalizePath(inputPath) {
+  if (!inputPath || typeof inputPath !== 'string') return '';
+  let p = inputPath.trim().replace(/^["']|["']$/g, '');
+  // Git Bash style: /e/Portfolio/... -> E:\Portfolio\...
+  const gitBashDriveMatch = p.match(/^\/([a-zA-Z])\/(.*)$/);
+  if (gitBashDriveMatch) {
+    p = `${gitBashDriveMatch[1].toUpperCase()}:\\${gitBashDriveMatch[2].replace(/\//g, '\\')}`;
+  }
+  if (p.startsWith('~')) {
+    p = path.join(os.homedir(), p.slice(1));
+  }
+  return path.resolve(p);
+}
+
+/**
+ * Get available drive roots on Windows
+ */
+export function getAvailableDrives() {
+  if (process.platform !== 'win32') return ['/'];
+  const drives = [];
+  for (let i = 65; i <= 90; i++) {
+    const letter = String.fromCharCode(i);
+    const drivePath = letter + ':\\';
+    try {
+      if (fs.existsSync(drivePath)) drives.push(drivePath);
+    } catch {}
+  }
+  return drives;
+}
+
+/**
+ * Auto-resolve opened folder name and sample files to the actual OS path on the host
+ */
+export function resolveWorkspacePath({ folderName, sampleFiles = [] }) {
+  if (!folderName) return null;
+
+  // 1. Check if folderName itself is already an absolute path
+  const directPath = normalizePath(folderName);
+  if (fs.existsSync(directPath) && fs.statSync(directPath).isDirectory()) {
+    return directPath;
+  }
+
+  const cleanName = path.basename(folderName).toLowerCase();
+  const username = os.userInfo().username;
+
+  // 2. High-probability developer roots
+  const prioritizedRoots = [
+    'E:\\Portfolio',
+    'E:\\',
+    'D:\\Rough',
+    'D:\\',
+    path.join('C:\\Users', username, 'Desktop'),
+    path.join('C:\\Users', username, 'Documents'),
+    path.join('C:\\Users', username, 'Projects'),
+    path.join('C:\\Users', username, 'source\\repos'),
+    path.join('C:\\Users', username),
+    'C:\\'
+  ];
+
+  for (const root of prioritizedRoots) {
+    try {
+      const candidate = path.join(root, path.basename(folderName));
+      if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+        if (sampleFiles.length === 0 || sampleFiles.some((f) => fs.existsSync(path.join(candidate, f)))) {
+          return candidate;
+        }
+      }
+    } catch {}
+  }
+
+  // 3. Fast scan across discovered drives (1-2 levels)
+  const drives = getAvailableDrives();
+  for (const drive of drives) {
+    try {
+      const entries = fs.readdirSync(drive, { withFileTypes: true });
+      for (const ent of entries) {
+        if (ent.isDirectory() && !ent.name.startsWith('$') && !ent.name.startsWith('.')) {
+          const direct = path.join(drive, ent.name);
+          if (ent.name.toLowerCase() === cleanName) {
+            return direct;
+          }
+          try {
+            const subEntries = fs.readdirSync(direct, { withFileTypes: true });
+            for (const sub of subEntries) {
+              if (sub.isDirectory() && sub.name.toLowerCase() === cleanName) {
+                const subPath = path.join(direct, sub.name);
+                if (sampleFiles.length === 0 || sampleFiles.some((f) => fs.existsSync(path.join(subPath, f)))) {
+                  return subPath;
+                }
+              }
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
+/**
+ * Validate if a given path exists on disk
+ */
+export function validatePath(targetPath) {
+  if (!targetPath) return { exists: false };
+  const resolved = normalizePath(targetPath);
+  try {
+    if (fs.existsSync(resolved)) {
+      const stat = fs.statSync(resolved);
+      return {
+        exists: true,
+        isDirectory: stat.isDirectory(),
+        isFile: stat.isFile(),
+        path: resolved,
+        name: path.basename(resolved)
+      };
+    }
+  } catch {}
+  return { exists: false, path: resolved };
+}
+
+/**
+ * Read local disk directory tree for workspace loading
+ */
+export function readWorkspaceTree(dirPath, maxDepth = 4, currentDepth = 0) {
+  const resolved = normalizePath(dirPath);
+  if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
+    return [];
+  }
+
+  const entries = fs.readdirSync(resolved, { withFileTypes: true });
+  const nodes = [];
+
+  for (const entry of entries) {
+    const relPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      const children =
+        currentDepth < maxDepth && entry.name !== 'node_modules' && entry.name !== '.git'
+          ? readWorkspaceTree(relPath, maxDepth, currentDepth + 1)
+          : [];
+      nodes.push({
+        id: relPath,
+        name: entry.name,
+        type: 'folder',
+        path: relPath,
+        children
+      });
+    } else {
+      nodes.push({
+        id: relPath,
+        name: entry.name,
+        type: 'file',
+        path: relPath
+      });
+    }
+  }
+
+  return nodes;
+}
+
+/**
+ * Launch native Windows folder browser dialog
+ */
+export async function pickNativeFolder() {
+  if (process.platform === 'win32') {
+    const psCmd = `Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = 'Select Hyperion IDE Workspace'; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.SelectedPath }`;
+    try {
+      const out = execSync(`powershell -NoProfile -Command "${psCmd}"`, {
+        encoding: 'utf8',
+        timeout: 60000
+      }).trim();
+      return out || null;
+    } catch (e) {
+      console.warn('Native folder dialog canceled or failed:', e.message);
+      return null;
+    }
+  }
+  return null;
 }

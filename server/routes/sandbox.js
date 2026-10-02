@@ -1,5 +1,14 @@
 import express from 'express';
-import { getRuntimesInfo, executeCode, executeCommand, streamCommand } from '../sandboxEngine.js';
+import {
+  getRuntimesInfo,
+  executeCode,
+  executeCommand,
+  streamCommand,
+  resolveWorkspacePath,
+  validatePath,
+  readWorkspaceTree,
+  pickNativeFolder
+} from '../sandboxEngine.js';
 
 const router = express.Router();
 
@@ -14,6 +23,58 @@ router.get('/status', (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
+// POST /workspace/resolve - Auto-resolve host OS path for an opened workspace
+router.post('/workspace/resolve', (req, res) => {
+  try {
+    const { folderName, sampleFiles } = req.body;
+    const resolvedPath = resolveWorkspacePath({ folderName, sampleFiles });
+    res.json({
+      success: !!resolvedPath,
+      path: resolvedPath
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /workspace/validate - Check if path exists
+router.get('/workspace/validate', (req, res) => {
+  try {
+    const targetPath = req.query.path;
+    const result = validatePath(targetPath);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ exists: false, error: err.message });
+  }
+});
+
+// POST /workspace/pick - Trigger native OS folder browser dialog
+router.post('/workspace/pick', async (req, res) => {
+  try {
+    const selectedPath = await pickNativeFolder();
+    res.json({
+      success: !!selectedPath,
+      path: selectedPath
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /workspace/tree - Load directory tree from host path
+router.post('/workspace/tree', (req, res) => {
+  try {
+    const { path: dirPath, maxDepth } = req.body;
+    const tree = readWorkspaceTree(dirPath, maxDepth || 3);
+    res.json({
+      success: true,
+      tree
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
