@@ -35,21 +35,30 @@ function Editor() {
 
     // 1. Instant client-side check (0ms latency)
     const clientMarkers = checkClientSyntax(code, language, filename);
-    monaco.editor.setModelMarkers(model, "client-linter", clientMarkers);
+    monaco.editor.setModelMarkers(model, "diagnostics", clientMarkers);
 
     // 2. Authoritative compiler/interpreter check (GCC, Python AST, etc.)
     try {
       const markers = await getCodeDiagnostics({ code, language, filename });
-      if (markers && markers.length > 0) {
-        monaco.editor.setModelMarkers(model, "compiler-linter", markers);
-      } else if (clientMarkers.length === 0) {
-        monaco.editor.setModelMarkers(model, "compiler-linter", []);
+      if (markers !== undefined) {
+        monaco.editor.setModelMarkers(model, "diagnostics", markers);
       }
     } catch {}
   }, []);
 
   function handleEditorChange(value) {
     updateContent(value);
+
+    // 0ms instant syntax feedback on keystroke
+    if (editorRef.current && monacoRef.current && activeFile) {
+      const model = editorRef.current.getModel();
+      if (model) {
+        const lang = activeFile.language || getFileExtension(activeFile.name);
+        const instantMarkers = checkClientSyntax(value, lang, activeFile.name);
+        monacoRef.current.editor.setModelMarkers(model, "diagnostics", instantMarkers);
+      }
+    }
+
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
       runDiagnostics(value, activeFile);

@@ -288,6 +288,12 @@
   outline: none;
 }
 
+.bottom-tab .tab-badge.error-badge {
+  background: #f14c4c;
+  color: #ffffff;
+  font-weight: 700;
+}
+
 .panel-content {
   color: #858585;
   padding: 16px 20px;
@@ -296,46 +302,433 @@
   line-height: 1.5;
 }
 
-.ports-table-placeholder {
+/* ========================================================
+   PROBLEMS VIEW (VS Code Intelligent Diagnostics Panel)
+   ======================================================== */
+.problems-panel-container {
   display: flex;
   flex-direction: column;
-  max-width: 600px;
-  background: #1e1e1e;
-  border: 1px solid #333333;
-  border-radius: 4px;
+  width: 100%;
+  height: 100%;
+  background: #181818;
   overflow: hidden;
 }
 
-.ports-row-header {
-  display: grid;
-  grid-template-columns: 80px 90px 180px 1fr;
-  padding: 6px 12px;
+.problems-panel-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #2d2d2d;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.problems-search-box {
+  display: flex;
+  align-items: center;
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  border-radius: 3px;
+  padding: 2px 8px;
+  width: 280px;
+  gap: 6px;
+  transition: border-color 0.15s ease;
+}
+
+.problems-search-box:focus-within {
+  border-color: #007acc;
+}
+
+.problems-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #cccccc;
+  font-size: 11px;
+  width: 100%;
+}
+
+.problems-search-icon {
+  color: #858585;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.problems-clear-btn {
+  background: none;
+  border: none;
+  color: #858585;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+}
+
+.problems-clear-btn:hover {
+  color: #ffffff;
+}
+
+.problems-summary-badge {
+  font-size: 11px;
+  color: #969696;
+  background: #252526;
+  padding: 2px 9px;
+  border-radius: 10px;
+  border: 1px solid #333333;
+}
+
+.problems-list-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+}
+
+.problems-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 130px;
+  color: #858585;
+  font-size: 12px;
+  gap: 10px;
+}
+
+.problems-ok-icon {
+  font-size: 26px;
+  color: #3fb950;
+}
+
+.problems-group {
+  margin-bottom: 6px;
+}
+
+.problems-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  background: #202020;
+  font-size: 11px;
+  font-weight: 600;
+  color: #cccccc;
+  border-bottom: 1px solid #282828;
+  user-select: none;
+}
+
+.problems-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.problems-group-count {
+  font-size: 10px;
+  background: #2d2d30;
+  color: #969696;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.problem-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 14px 5px 24px;
+  gap: 8px;
+  font-size: 12px;
+  color: #cccccc;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.1s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+}
+
+.problem-row:hover {
+  background: #2a2d2e;
+}
+
+.problem-row.error {
+  border-left-color: #f14c4c;
+}
+
+.problem-row.warning {
+  border-left-color: #cca700;
+}
+
+.problem-severity-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.problem-severity-icon .icon-error {
+  color: #f14c4c;
+  font-size: 12px;
+}
+
+.problem-severity-icon .icon-warning {
+  color: #cca700;
+  font-size: 12px;
+}
+
+.problem-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.problem-source-tag {
+  color: #6e7681;
+  font-size: 11px;
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.problem-coords {
+  color: #858585;
+  font-size: 11px;
+  font-family: monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ========================================================
+   PORTS VIEW (VS Code Active Ports & Dev Servers Table)
+   ======================================================== */
+.ports-panel-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #181818;
+  overflow: hidden;
+}
+
+.ports-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #2d2d2d;
+  flex-shrink: 0;
+}
+
+.ports-search-box {
+  display: flex;
+  align-items: center;
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  border-radius: 3px;
+  padding: 2px 8px;
+  width: 220px;
+  gap: 6px;
+  transition: border-color 0.15s ease;
+}
+
+.ports-search-box:focus-within {
+  border-color: #007acc;
+}
+
+.ports-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #cccccc;
+  font-size: 11px;
+  width: 100%;
+}
+
+.ports-search-icon {
+  color: #858585;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.ports-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #2d2d30;
+  border: 1px solid #3c3c3c;
+  color: #cccccc;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ports-action-btn:hover {
+  background: #3e3e42;
+  color: #ffffff;
+}
+
+.ports-add-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
   background: #252526;
   border-bottom: 1px solid #333333;
-  font-weight: 600;
   font-size: 12px;
   color: #cccccc;
 }
 
-.ports-row {
-  display: grid;
-  grid-template-columns: 80px 90px 180px 1fr;
-  padding: 6px 12px;
+.ports-add-form input {
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  width: 100px;
+}
+
+.ports-confirm-btn {
+  background: #0e639c;
+  color: #ffffff;
+  border: none;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.ports-confirm-btn:hover {
+  background: #1177bb;
+}
+
+.ports-cancel-btn {
+  background: transparent;
+  color: #858585;
+  border: 1px solid #3c3c3c;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.ports-cancel-btn:hover {
+  color: #ffffff;
+}
+
+.ports-table-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.ports-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 12px;
-  color: #aaaaaa;
-  border-bottom: 1px solid #2a2a2a;
+  text-align: left;
 }
 
-.ports-row:last-child {
-  border-bottom: none;
+.ports-table th {
+  background: #202020;
+  color: #969696;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 7px 14px;
+  border-bottom: 1px solid #2d2d2d;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
-.port-link {
+.ports-table td {
+  padding: 7px 14px;
+  border-bottom: 1px solid #222222;
+  color: #cccccc;
+  vertical-align: middle;
+}
+
+.ports-table tr:hover td {
+  background: #1f1f1f;
+}
+
+.ports-empty-row {
+  text-align: center;
+  color: #858585;
+  padding: 30px !important;
+}
+
+.port-number-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.port-dot {
+  color: #3fb950;
+  font-size: 10px;
+}
+
+.port-origin-badge {
+  background: #252526;
+  border: 1px solid #333333;
+  color: #9cdcfe;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.port-address-link {
   color: #60a5fa;
   cursor: pointer;
   text-decoration: underline;
+  font-family: monospace;
 }
 
-.port-link:hover {
+.port-address-link:hover {
   color: #93c5fd;
+}
+
+.port-status-badge {
+  background: rgba(46, 160, 67, 0.15);
+  border: 1px solid rgba(46, 160, 67, 0.3);
+  color: #3fb950;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.port-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.port-inline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #2a2a2a;
+  border: 1px solid #3c3c3c;
+  color: #cccccc;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.port-inline-btn:hover {
+  background: #383838;
+  color: #ffffff;
 }

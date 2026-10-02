@@ -1,4 +1,4 @@
-import { lintCode } from "../services/sandboxService";
+import { lintCode } from "../services/sandboxService.js";
 
 /**
  * Heuristic client-side syntax checks for immediate, zero-latency feedback
@@ -179,9 +179,9 @@ export function checkClientSyntax(code = "", language = "", filename = "") {
       if (looksLikeStatement && nextStartsNewStatement) {
         markers.push({
           startLineNumber: i + 1,
-          startColumn: line.length + 1,
+          startColumn: Math.max(1, line.length),
           endLineNumber: i + 1,
-          endColumn: line.length + 2,
+          endColumn: line.length + 1,
           message: "expected ';' at end of statement",
           severity: 8, // Error
           source: "gcc"
@@ -229,8 +229,8 @@ export async function getCodeDiagnostics({ code, language, filename }) {
   // 2. Fetch compiler-level diagnostics from sandbox backend
   try {
     const res = await lintCode({ language, code, filename });
-    if (res.success && Array.isArray(res.markers) && res.markers.length > 0) {
-      // Backend GCC/compiler found authoritative markers
+    if (res && res.success && Array.isArray(res.markers)) {
+      // Backend GCC/compiler found authoritative markers (errors or empty [] if completely clean)
       return res.markers;
     }
   } catch (err) {
