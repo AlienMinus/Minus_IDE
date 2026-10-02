@@ -7,6 +7,7 @@ import useTerminal from "../../hooks/useTerminal";
 
 import {
     FaBars,
+    FaCheck,
     FaFolderOpen,
     FaPlay,
     FaSearch,
@@ -16,6 +17,8 @@ import {
 import { TbMessageChatbot } from "react-icons/tb";
 
 import { fileMenu, editMenu, viewMenu, terminalMenu, helpMenu } from "../../data/menu.jsx";
+import { getLanguageFromFileName, readFileContent } from "../../services/fileService";
+import { getRecentWorkspaces, clearRecentWorkspaces } from "../../services/workspacePersistence";
 
 function Navbar({ isChatOpen, toggleChat }) {
     const fileRef = useRef(null);
@@ -25,10 +28,34 @@ function Navbar({ isChatOpen, toggleChat }) {
     const helpRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    const { openFolder, openFolderByPath, persistedFolderInfo } = useFile();
+    const {
+        openFolder,
+        openFolderByPath,
+        persistedFolderInfo,
+        closeFolder,
+        addDirectoryToWorkspace,
+        createFile
+    } = useFile();
     const {
         activeFile,
         saveActiveFile,
+        saveAsFile,
+        saveAllFiles,
+        revertActiveFile,
+        createNewTextFile,
+        closeWorkspace,
+        closeFile,
+        openFile,
+        files,
+        openFiles,
+        workspaceTree,
+        setWorkspaceTree,
+        setFiles,
+        setOpenFiles,
+        isAutoSave,
+        toggleAutoSave,
+        isWordWrapOn,
+        createOrOpenFile,
         undo,
         redo,
         cut,

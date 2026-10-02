@@ -39,7 +39,12 @@ export const fileMenu = [
         id: "newWindowProfile",
         label: "New Window with Profile",
         submenu: true,
-        iconRight: <FaChevronRight />
+        iconRight: <FaChevronRight />,
+        items: [
+            { id: "profileDefault", label: "Default" },
+            { id: "profileEmpty", label: "Empty Workspace" },
+            { id: "profileDuplicate", label: "Duplicate Window" }
+        ]
     },
 
     {
@@ -81,7 +86,8 @@ export const fileMenu = [
         id: "openRecent",
         label: "Open Recent",
         submenu: true,
-        iconRight: <FaChevronRight />
+        iconRight: <FaChevronRight />,
+        items: []
     },
 
     {
@@ -131,7 +137,6 @@ export const fileMenu = [
         id: "saveAll",
         label: "Save All",
         shortcut: "Ctrl+K S",
-        disabled: true,
         onClick: () => {}
     },
 
@@ -145,7 +150,12 @@ export const fileMenu = [
         label: "Share",
         submenu: true,
         icon: <FaShareAlt />,
-        iconRight: <FaChevronRight />
+        iconRight: <FaChevronRight />,
+        items: [
+            { id: "shareCopyLink", label: "Copy Workspace Link" },
+            { id: "shareZip", label: "Export Workspace as ZIP..." },
+            { id: "shareFile", label: "Export Active File..." }
+        ]
     },
 
     {
@@ -166,7 +176,12 @@ export const fileMenu = [
         label: "Preferences",
         submenu: true,
         icon: <FaCog />,
-        iconRight: <FaChevronRight />
+        iconRight: <FaChevronRight />,
+        items: [
+            { id: "prefSettings", label: "Settings", shortcut: "Ctrl+," },
+            { id: "prefShortcuts", label: "Keyboard Shortcuts", shortcut: "Ctrl+K Ctrl+S" },
+            { id: "prefTheme", label: "Color Theme", shortcut: "Ctrl+K Ctrl+T" }
+        ]
     },
 
     {
