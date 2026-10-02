@@ -413,17 +413,30 @@ export async function executeCommand({
   }
 
   // Set up execution directory
-  let workDir = cwd ? normalizePath(cwd) : null;
+  let workDir = (cwd && cwd !== '~/HyperionIDE') ? normalizePath(cwd) : null;
   let isTemp = false;
 
   if (!workDir || !fs.existsSync(workDir)) {
     // If cwd was a folder name like "portfolio_v1", auto-resolve to host OS path
-    if (cwd) {
+    if (cwd && cwd !== '~/HyperionIDE') {
       const resolved = resolveWorkspacePath({ folderName: cwd });
       if (resolved && fs.existsSync(resolved)) {
         workDir = resolved;
       }
     }
+  }
+
+  // Fast-path pwd / cwd commands
+  if (trimmed === 'pwd' || trimmed === 'cwd') {
+    const pwdOutput = workDir || (cwd === '~/HyperionIDE' ? '~/HyperionIDE' : (cwd || ''));
+    return {
+      success: true,
+      stdout: pwdOutput,
+      stderr: '',
+      exitCode: 0,
+      executionTimeMs: 0,
+      cwd: pwdOutput
+    };
   }
 
   if (!workDir || !fs.existsSync(workDir)) {
@@ -523,11 +536,11 @@ export function streamCommand({
   const paths = getRuntimePaths();
   const trimmed = (command || '').trim();
 
-  let workDir = cwd ? normalizePath(cwd) : null;
+  let workDir = (cwd && cwd !== '~/HyperionIDE') ? normalizePath(cwd) : null;
   let isTemp = false;
 
   if (!workDir || !fs.existsSync(workDir)) {
-    if (cwd) {
+    if (cwd && cwd !== '~/HyperionIDE') {
       const resolved = resolveWorkspacePath({ folderName: cwd });
       if (resolved && fs.existsSync(resolved)) {
         workDir = resolved;

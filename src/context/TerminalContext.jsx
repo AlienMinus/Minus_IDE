@@ -101,6 +101,9 @@ export function TerminalProvider({ children }) {
         if (currentWorkspacePath && (currentWorkspacePath.includes(':') || currentWorkspacePath.includes('/'))) {
             setTerminals(prev => prev.map(t => {
                 if (!t.cwd || t.cwd === "~/HyperionIDE" || t.cwd === "portfolio_v1" || !t.cwd.includes(':')) {
+                    if (activeTerminalRef.current && activeTerminalRef.current.id === t.id) {
+                        activeTerminalRef.current.cwd = currentWorkspacePath;
+                    }
                     return { ...t, cwd: currentWorkspacePath };
                 }
                 return t;
@@ -129,7 +132,17 @@ export function TerminalProvider({ children }) {
 
     function createTerminal() {
         const newId = Date.now();
-        const termCwd = activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
+        const cached = getStoredWorkspaceState();
+        const workspacePath = fileCtx?.persistedFolderInfo?.path || cached?.folderPath;
+        const hasRealWorkspace = workspacePath &&
+                                 workspacePath !== "~/HyperionIDE" &&
+                                 workspacePath !== "portfolio_v1" &&
+                                 (workspacePath.includes(':') || workspacePath.includes('/'));
+
+        const termCwd = (activeTerminalRef.current?.cwd && activeTerminalRef.current.cwd !== "~/HyperionIDE")
+            ? activeTerminalRef.current.cwd
+            : (hasRealWorkspace ? workspacePath : (currentWorkspacePath || "~/HyperionIDE"));
+
         const newTerminal = {
             id: newId,
             title: `Terminal ${terminals.length + 1}`,
@@ -143,12 +156,18 @@ export function TerminalProvider({ children }) {
             ]
         };
 
-        setTerminals(prev => [...prev, newTerminal]);
+        activeTerminalRef.current = newTerminal;
+        setTerminals(prev => {
+            const updated = [...prev, newTerminal];
+            terminalsRef.current = updated;
+            return updated;
+        });
         setActiveTerminalId(newId);
     }
 
     /**
      * Kill Terminal (terminate terminal session and reset if all killed)
+     * Preserves working directory (PWD) so killing terminal does not reset folder state.
      */
     function killTerminal(idToKill) {
         const targetId = idToKill || activeTerminalId;
@@ -162,6 +181,28 @@ export function TerminalProvider({ children }) {
         }
         setIsRunning(false);
 
+        // Intelligently preserve working directory (PWD)
+        const cached = getStoredWorkspaceState();
+        const workspacePath = fileCtx?.persistedFolderInfo?.path || cached?.folderPath;
+        const hasRealWorkspace = workspacePath &&
+                                 workspacePath !== "~/HyperionIDE" &&
+                                 workspacePath !== "portfolio_v1" &&
+                                 (workspacePath.includes(':') || workspacePath.includes('/'));
+
+        let preservedCwd;
+        if (termToKill?.cwd && termToKill.cwd !== "~/HyperionIDE") {
+            // Keep the exact directory of the terminal being killed
+            preservedCwd = termToKill.cwd;
+        } else if (activeTerminalRef.current?.cwd && activeTerminalRef.current.cwd !== "~/HyperionIDE") {
+            // Keep the current active terminal directory
+            preservedCwd = activeTerminalRef.current.cwd;
+        } else if (hasRealWorkspace) {
+            // Fall back to active workspace directory
+            preservedCwd = workspacePath;
+        } else {
+            preservedCwd = termToKill?.cwd || activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
+        }
+
         setTerminals(prev => {
             const updated = prev.filter(t => t.id !== targetId);
             if (updated.length === 0) {
@@ -169,20 +210,26 @@ export function TerminalProvider({ children }) {
                 const freshTerm = {
                     id: freshId,
                     title: "Terminal 1",
-                    cwd: currentWorkspacePath || "~/HyperionIDE",
+                    cwd: preservedCwd,
                     history: [],
                     output: [
-                        "\x1b[33m[Hyperion] Terminal reset.\x1b[0m",
+                        "\x1b[33m[Hyperion] Terminal session reset.\x1b[0m",
+                        `\x1b[90mDirectory: ${preservedCwd}\x1b[0m`,
                         "$ "
                     ]
                 };
+                activeTerminalRef.current = freshTerm;
+                terminalsRef.current = [freshTerm];
                 setActiveTerminalId(freshId);
                 return [freshTerm];
             }
 
             if (activeTerminalId === targetId) {
-                setActiveTerminalId(updated[0].id);
+                const nextActive = updated[0];
+                activeTerminalRef.current = nextActive;
+                setActiveTerminalId(nextActive.id);
             }
+            terminalsRef.current = updated;
             return updated;
         });
 
@@ -227,7 +274,19 @@ export function TerminalProvider({ children }) {
      */
     function splitTerminal() {
         const newId = Date.now();
-        const termCwd = activeTerminal?.cwd || currentWorkspacePath || "~/HyperionIDE";
+        const cached = getStoredWorkspaceState();
+        const workspacePath = fileCtx?.persistedFolderInfo?.path || cached?.folderPath;
+        const hasRealWorkspace = workspacePath &&
+                                 workspacePath !== "~/HyperionIDE" &&
+                                 workspacePath !== "portfolio_v1" &&
+                                 (workspacePath.includes(':') || workspacePath.includes('/'));
+
+        const termCwd = (activeTerminalRef.current?.cwd && activeTerminalRef.current.cwd !== "~/HyperionIDE")
+            ? activeTerminalRef.current.cwd
+            : (activeTerminal?.cwd && activeTerminal.cwd !== "~/HyperionIDE")
+            ? activeTerminal.cwd
+            : (hasRealWorkspace ? workspacePath : (currentWorkspacePath || "~/HyperionIDE"));
+
         const newTerm = {
             id: newId,
             title: `Terminal ${terminals.length + 1} (Split)`,
@@ -240,7 +299,11 @@ export function TerminalProvider({ children }) {
             ]
         };
 
-        setTerminals(prev => [...prev, newTerm]);
+        setTerminals(prev => {
+            const updated = [...prev, newTerm];
+            terminalsRef.current = updated;
+            return updated;
+        });
         setIsSplit(true);
     }
 
@@ -865,7 +928,11 @@ export function TerminalProvider({ children }) {
             const currentCwd = activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
             const target = argsStr.trim();
             if (!target || target === "~") {
-                const homeOrRoot = currentWorkspacePath || "~/HyperionIDE";
+                const cached = getStoredWorkspaceState();
+                const workspacePath = fileCtx?.persistedFolderInfo?.path || cached?.folderPath;
+                const homeOrRoot = (workspacePath && workspacePath !== "~/HyperionIDE" && workspacePath !== "portfolio_v1")
+                    ? workspacePath
+                    : (currentWorkspacePath || "~/HyperionIDE");
                 if (activeTerminalRef.current) activeTerminalRef.current.cwd = homeOrRoot;
                 setTerminals((prev) =>
                     prev.map((t) => (t.id === activeTerminalId ? { ...t, cwd: homeOrRoot } : t))
@@ -913,6 +980,10 @@ export function TerminalProvider({ children }) {
 
         if (cmd === "pwd" || cmd === "cwd") {
             const currentCwd = activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
+            if (currentCwd === "~/HyperionIDE") {
+                appendToTerminal([currentCwd, "$ "]);
+                return;
+            }
             const isPhysical = currentCwd && (currentCwd.includes(':') || currentCwd.startsWith('/'));
             try {
                 const res = await executeShellCommand("pwd", {
