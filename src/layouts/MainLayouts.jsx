@@ -33,83 +33,76 @@ function MainLayout() {
       />
 
       {/* Main Content */}
-      <PanelGroup direction="horizontal" className="layout-body">
+      <div className="layout-main-container">
+        {/* Fixed Activity Bar */}
+        <Sidebar active={sidebarActive} onSetActive={setSidebarActive} />
 
-        {/* Activity Bar */}
-        <Panel
-          className="sidebar-panel"
-          defaultSize={5}
-          minSize={5}
-          maxSize={6}
-        >
-          <Sidebar active={sidebarActive} onSetActive={setSidebarActive} />
-        </Panel>
+        {/* Resizable Explorer / Editor / Chat */}
+        <PanelGroup direction="horizontal" className="layout-body">
+          {/* Explorer / Extensions / Search */}
+          <Panel
+            className="explorer-panel"
+            defaultSize={20}
+            minSize={12}
+            maxSize={35}
+          >
+            {sidebarActive === "extensions" ? (
+              <Extensions />
+            ) : sidebarActive === "search" ? (
+              <Search />
+            ) : (
+              <Explorer />
+            )}
+          </Panel>
 
-        <PanelResizeHandle className="resize-handle" />
+          <PanelResizeHandle className="resize-handle" />
 
-        {/* Explorer / Extensions / Search */}
-        <Panel
-          className="explorer-panel"
-          defaultSize={18}
-          minSize={15}
-          maxSize={30}
-        >
-          {sidebarActive === "extensions" ? (
-            <Extensions />
-          ) : sidebarActive === "search" ? (
-            <Search />
-          ) : (
-            <Explorer />
-          )}
-        </Panel>
+          {/* Editor + Bottom Panel */}
+          <Panel className="editor-panel" defaultSize={80} minSize={40}>
 
-        <PanelResizeHandle className="resize-handle" />
+            <PanelGroup direction="vertical">
 
-        {/* Editor + Bottom Panel */}
-        <Panel className="editor-panel" defaultSize={77} minSize={40}>
+              {/* Editor */}
+              <Panel defaultSize={72} minSize={40}>
 
-          <PanelGroup direction="vertical">
+                <div className="editor-section">
 
-            {/* Editor */}
-            <Panel defaultSize={72} minSize={40}>
-
-              <div className="editor-section">
-
-                <Tabs />
-                    <Breadcrumb />
+                  <Tabs />
+                      <Breadcrumb />
 
 
-                <div className="editor-wrapper">
-                  <Editor />
+                  <div className="editor-wrapper">
+                    <Editor />
+                  </div>
+
                 </div>
 
-              </div>
+              </Panel>
 
-            </Panel>
+              <PanelResizeHandle className="resize-handle-horizontal" />
 
-            <PanelResizeHandle className="resize-handle-horizontal" />
+              {/* Bottom Panel */}
+              <Panel defaultSize={28} minSize={15}>
 
-            {/* Bottom Panel */}
-            <Panel defaultSize={28} minSize={15}>
+                <BottomPanel />
 
-              <BottomPanel />
+              </Panel>
 
-            </Panel>
+            </PanelGroup>
 
-          </PanelGroup>
+          </Panel>
 
-        </Panel>
+          {isChatOpen && (
+            <>
+              <PanelResizeHandle className="resize-handle" />
+              <Panel className="chat-panel" defaultSize={20} minSize={15} maxSize={35}>
+                <Chat />
+              </Panel>
+            </>
+          )}
 
-        {isChatOpen && (
-          <>
-            <PanelResizeHandle className="resize-handle" />
-            <Panel className="chat-panel" defaultSize={20} minSize={15} maxSize={35}>
-              <Chat />
-            </Panel>
-          </>
-        )}
-
-      </PanelGroup>
+        </PanelGroup>
+      </div>
 
       <StatusBar />
       <TaskPicker />

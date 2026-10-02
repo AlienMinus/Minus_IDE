@@ -8,22 +8,26 @@
     overflow: hidden;
 }
 
+.layout-main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    min-height: 0;
+    width: 100%;
+}
+
 .layout-body {
     flex: 1;
     overflow: hidden;
     min-height: 0;
 }
 
-.sidebar-panel,
 .explorer-panel,
 .editor-panel,
 .terminal-panel {
     min-height: 0;
     overflow: hidden;
-}
-
-.sidebar-panel {
-    height: 100%;
 }
 
 .explorer-panel {
