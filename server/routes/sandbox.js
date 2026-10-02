@@ -4,6 +4,7 @@ import {
   executeCode,
   executeCommand,
   streamCommand,
+  killProcessTree,
   resolveWorkspacePath,
   validatePath,
   readWorkspaceTree,
@@ -153,9 +154,10 @@ router.post('/stream', (req, res) => {
     command,
     cwd,
     virtualFiles,
-    timeoutMs: timeoutMs || 60000,
+    timeoutMs: timeoutMs !== undefined ? timeoutMs : 0,
     onChunk: (chunk) => {
       res.write(`data: ${JSON.stringify({ type: 'output', data: chunk })}\n\n`);
+      if (res.flush) res.flush();
     },
     onExit: (exitCode) => {
       res.write(`data: ${JSON.stringify({ type: 'exit', code: exitCode })}\n\n`);
@@ -166,6 +168,20 @@ router.post('/stream', (req, res) => {
   req.on('close', () => {
     runner.kill();
   });
+});
+
+// POST /kill - Terminate process by PID
+router.post('/kill', (req, res) => {
+  try {
+    const { pid } = req.body;
+    if (pid) {
+      killProcessTree(pid);
+      return res.json({ success: true, message: `Process ${pid} killed.` });
+    }
+    res.json({ success: false, error: 'No PID provided' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 import { replManager } from '../replEngine.js';

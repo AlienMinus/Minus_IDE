@@ -435,20 +435,24 @@ export async function executeCommand({
   }
 
   try {
-    // Run via Git Bash with access to GCC, Python, Node, and Unix utils
+    // For npm, npx, node, python or general commands on Windows, prefer cmd.exe unless explicitly running bash
+    const isWindows = process.platform === 'win32';
+    const isExplicitBash = trimmed.startsWith('bash ') || trimmed.startsWith('./');
     const bash = paths.bash;
     const isBashAvailable = fs.existsSync(bash);
 
     let runner;
     let runnerArgs;
 
-    if (isBashAvailable) {
+    if (!isWindows && isBashAvailable) {
+      runner = bash;
+      runnerArgs = ['-c', trimmed];
+    } else if (isWindows && isExplicitBash && isBashAvailable) {
       runner = bash;
       runnerArgs = ['-c', trimmed];
     } else {
-      // Fallback to cmd.exe on Windows if bash is absent
       runner = process.env.COMSPEC || 'cmd.exe';
-      runnerArgs = ['/c', trimmed];
+      runnerArgs = ['/d', '/s', '/c', trimmed];
     }
 
     const env = {
@@ -488,6 +492,24 @@ export async function executeCommand({
 }
 
 /**
+ * Kill process and all its children across platforms
+ */
+export function killProcessTree(pid) {
+  if (!pid) return;
+  if (process.platform === 'win32') {
+    try {
+      execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore' });
+    } catch {}
+  } else {
+    try {
+      process.kill(-pid, 'SIGKILL');
+    } catch {
+      try { process.kill(pid, 'SIGKILL'); } catch {}
+    }
+  }
+}
+
+/**
  * Stream command output with chunk callbacks
  */
 export function streamCommand({
@@ -496,7 +518,7 @@ export function streamCommand({
   virtualFiles = [],
   onChunk,
   onExit,
-  timeoutMs = 60000
+  timeoutMs = 0
 }) {
   const paths = getRuntimePaths();
   const trimmed = (command || '').trim();
@@ -521,9 +543,24 @@ export function streamCommand({
     }
   }
 
+  const isWindows = process.platform === 'win32';
+  const isExplicitBash = trimmed.startsWith('bash ') || trimmed.startsWith('./');
   const bash = paths.bash;
-  const runner = fs.existsSync(bash) ? bash : (process.env.COMSPEC || 'cmd.exe');
-  const runnerArgs = fs.existsSync(bash) ? ['-c', trimmed] : ['/c', trimmed];
+  const isBashAvailable = fs.existsSync(bash);
+
+  let runner;
+  let runnerArgs;
+
+  if (!isWindows && isBashAvailable) {
+    runner = bash;
+    runnerArgs = ['-c', trimmed];
+  } else if (isWindows && isExplicitBash && isBashAvailable) {
+    runner = bash;
+    runnerArgs = ['-c', trimmed];
+  } else {
+    runner = process.env.COMSPEC || 'cmd.exe';
+    runnerArgs = ['/d', '/s', '/c', trimmed];
+  }
 
   const child = spawn(runner, runnerArgs, {
     cwd: workDir,
@@ -539,7 +576,7 @@ export function streamCommand({
   if (timeoutMs > 0) {
     timer = setTimeout(() => {
       try {
-        child.kill();
+        killProcessTree(child.pid);
         onChunk(`\r\n\x1b[31m[Process timed out after ${timeoutMs / 1000}s]\x1b[0m\r\n`);
       } catch {}
     }, timeoutMs);
@@ -567,11 +604,10 @@ export function streamCommand({
   });
 
   return {
+    pid: child.pid,
     kill: () => {
       if (timer) clearTimeout(timer);
-      try {
-        child.kill();
-      } catch {}
+      killProcessTree(child.pid);
       if (isTemp) cleanupDir(workDir);
     }
   };
@@ -592,9 +628,7 @@ function runProcess(cmd, args, { cwd, stdin = '', timeoutMs = 15000, env = proce
 
     const timer = setTimeout(() => {
       timedOut = true;
-      try {
-        child.kill('SIGKILL');
-      } catch {}
+      killProcessTree(child.pid);
     }, timeoutMs);
 
     if (stdin && child.stdin) {
