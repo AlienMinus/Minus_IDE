@@ -284,6 +284,8 @@
   flex-direction: column;
   overflow: hidden;
   background: #181818;
+  border: none;
+  outline: none;
 }
 
 .panel-content {

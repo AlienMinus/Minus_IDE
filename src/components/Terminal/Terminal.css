@@ -223,17 +223,22 @@
     height: 100%;
     display: flex;
     overflow: hidden;
+    background: #181818;
+    border: none;
+    outline: none;
 }
 
 .terminal-body-split-wrapper.split .main-pane {
     width: 50%;
-    border-right: 1px solid #333333;
+    border-right: 1px solid #2d2d2d;
 }
 
 .split-pane-container {
     width: 50%;
     height: 100%;
-    background: #161616;
+    background: #181818;
+    border: none;
+    outline: none;
 }
 
 .terminal {
@@ -241,28 +246,58 @@
     min-height: 0;
     width: 100%;
     height: 100%;
-    padding: 6px 12px;
+    padding: 4px 8px;
     box-sizing: border-box;
     overflow: hidden;
     position: relative;
+    background-color: #181818 !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 /* xterm root */
 .terminal .xterm {
     height: 100% !important;
+    background-color: #181818 !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
-/* viewport */
+/* viewport - override default #000 black background from xterm.css */
 .terminal .xterm-viewport {
+    background-color: #181818 !important;
     overflow-y: auto !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* screen & canvas */
+.terminal .xterm-screen,
+.terminal .xterm-screen canvas,
+.terminal canvas {
+    display: block;
+    background-color: #181818 !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 /* helper textarea */
 .terminal .xterm-helper-textarea {
     opacity: 0;
+    outline: none !important;
+    border: none !important;
 }
 
-/* remove padding */
-.terminal canvas {
-    display: block;
+/* Remove any focus outline or border */
+.terminal:focus,
+.terminal *:focus,
+.terminal .xterm:focus,
+.terminal .xterm.focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
