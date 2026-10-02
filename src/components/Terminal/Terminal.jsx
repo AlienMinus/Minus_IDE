@@ -97,7 +97,18 @@ function TerminalComponent({ hideToolbar = false }) {
 
       const fitAddon = new FitAddon();
       terminal.loadAddon(fitAddon);
-      terminal.loadAddon(new WebLinksAddon());
+      const webLinksAddon = new WebLinksAddon((event, uri) => {
+        if (uri.includes('localhost') || uri.includes('127.0.0.1') || uri.includes('0.0.0.0')) {
+          event?.preventDefault?.();
+          const clean = uri.replace('0.0.0.0', 'localhost');
+          if (openLiveBrowserTabRef.current) {
+            openLiveBrowserTabRef.current(clean, `Preview: ${clean}`);
+            return;
+          }
+        }
+        window.open(uri, '_blank', 'noopener,noreferrer');
+      });
+      terminal.loadAddon(webLinksAddon);
       terminal.loadAddon(new SearchAddon());
 
       terminal.open(terminalRef.current);
@@ -126,14 +137,14 @@ function TerminalComponent({ hideToolbar = false }) {
           term.write('^C\r\n' + currentPrompt);
           currentCommand.current = "";
           historyIndex.current = -1;
-          terminateTask();
+          terminateTaskRef.current();
           return;
         }
 
         // Ctrl+L (Clear screen)
         if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'l') {
           domEvent.preventDefault();
-          executeCommand('clear');
+          executeCommandRef.current('clear');
           currentCommand.current = "";
           historyIndex.current = -1;
           return;
@@ -194,13 +205,13 @@ function TerminalComponent({ hideToolbar = false }) {
           if (!toExecute.trim() && !activeTerminalRef.current?.replState?.isMultiLine) {
             term.write('\r\n' + currentPrompt);
             outputLines.current += 1;
-            executeCommand("");
+            executeCommandRef.current("");
             return;
           }
           term.write('\r\n');
           // Advance outputLines by 1 so the command echo in activeTerminal.output is not printed twice!
           outputLines.current += 1;
-          executeCommand(toExecute);
+          executeCommandRef.current(toExecute);
         } else if (data === "\x7f" || data === "\b") {
           if (currentCommand.current.length > 0) {
             term.write("\b \b");
