@@ -826,7 +826,11 @@ export function EditorProvider({ children }) {
         toggleStatusBar,
         toggleZenMode,
         toggleFullScreen,
-        openView
+        openView,
+        openDiffTab,
+        comparedFile,
+        setComparedFile,
+        renameOpenFile
       }}
     >
       {children}

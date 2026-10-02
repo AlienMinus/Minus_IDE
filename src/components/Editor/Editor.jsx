@@ -1,6 +1,6 @@
 import "./Editor.css";
 import { useEffect, useState, useRef, useCallback } from "react";
-import MonacoEditor from "@monaco-editor/react";
+import MonacoEditor, { DiffEditor } from "@monaco-editor/react";
 import useEditor from "../../hooks/useEditor";
 import Preview from "../Preview";
 import LiveBrowser from "../LiveBrowser/LiveBrowser";
