@@ -13,14 +13,20 @@ import {
   ImagePreview
 } from "../Previews";
 import { getFileExtension } from "../../utils/fileIcons";
+import { isBinaryFile } from "../../services/fileService";
 import { checkClientSyntax, getCodeDiagnostics } from "../../utils/codeDiagnostics";
+import useFile from "../../hooks/useFile";
 
 function Editor() {
-  const { activeFile, updateContent, setEditorInstance, closeFile, setProblems, isWordWrapOn } = useEditor();
+  const { activeFile, updateContent, setEditorInstance, closeFile, setProblems, isWordWrapOn, saveActiveFile, files } = useEditor();
+  const { persistedFolderInfo } = useFile();
   const [previewUrl, setPreviewUrl] = useState(null);
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
   const debounceTimerRef = useRef(null);
+  const saveActiveFileRef = useRef(saveActiveFile);
+  saveActiveFileRef.current = saveActiveFile;
+  const mediaBlobUrlRef = useRef(null);
 
   const runDiagnostics = useCallback(async (code, file, monacoInstance, editorInstance) => {
     if (!file || file.isBinary || file.isPreview || file.isLiveUrl) return;
@@ -67,25 +73,110 @@ function Editor() {
   }
 
   useEffect(() => {
-    let objectUrl;
+    let isCancelled = false;
 
     async function createMediaPreview() {
-      if (!activeFile || !activeFile.isBinary || !activeFile.handle) {
+      if (!activeFile) {
         setPreviewUrl(null);
         return;
       }
 
       const extension = getFileExtension(activeFile.name);
+      const isImage = ["png", "jpg", "jpeg", "gif", "svg", "webp"].includes(extension);
+      const isMedia = isImage || ["pdf", "mp3", "wav", "mp4", "webm"].includes(extension);
 
-      if (["pdf", "png", "jpg", "jpeg", "gif", "svg", "webp", "mp3", "mp4"].includes(extension)) {
-        try {
-          const file = await activeFile.handle.getFile();
-          objectUrl = URL.createObjectURL(file);
-          setPreviewUrl(objectUrl);
-        } catch (e) {
-          console.error("Failed to load binary media:", e);
-        }
+      if (!isMedia) {
+        setPreviewUrl(null);
         return;
+      }
+
+      // Find file handle if not directly on activeFile
+      let handle = activeFile.handle;
+      if (!handle && files) {
+        const found = files.find((f) => f.id === activeFile.id || f.path === activeFile.path || f.name === activeFile.name);
+        if (found?.handle) {
+          handle = found.handle;
+        }
+      }
+
+      if (handle) {
+        try {
+          const file = await handle.getFile();
+          if (isCancelled) return;
+
+          if (file.size === 0) {
+            setPreviewUrl("EMPTY_FILE");
+            return;
+          }
+
+          if (isImage) {
+            // Use FileReader to create permanent, unrevokable Data URL
+            const reader = new FileReader();
+            reader.onload = () => {
+              if (!isCancelled) {
+                setPreviewUrl(reader.result);
+              }
+            };
+            reader.onerror = () => {
+              if (!isCancelled) {
+                if (mediaBlobUrlRef.current) URL.revokeObjectURL(mediaBlobUrlRef.current);
+                const url = URL.createObjectURL(file);
+                mediaBlobUrlRef.current = url;
+                setPreviewUrl(url);
+              }
+            };
+            reader.readAsDataURL(file);
+            return;
+          } else {
+            // For PDF, audio, video: use Blob URL with proper lifetime management
+            if (mediaBlobUrlRef.current) {
+              URL.revokeObjectURL(mediaBlobUrlRef.current);
+            }
+            const mimeType = extension === "mp4" ? "video/mp4" :
+                             extension === "mp3" ? "audio/mpeg" :
+                             extension === "pdf" ? "application/pdf" : file.type;
+            const blob = file.type ? file : new Blob([await file.arrayBuffer()], { type: mimeType });
+            if (isCancelled) return;
+            const url = URL.createObjectURL(blob);
+            mediaBlobUrlRef.current = url;
+            setPreviewUrl(url);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to load binary media from handle:", e);
+        }
+      }
+
+      // If no handle or handle failed, try backend host path
+      const filePath = activeFile.path || (persistedFolderInfo?.path ? `${persistedFolderInfo.path}/${activeFile.name}` : null);
+      if (filePath) {
+        try {
+          const res = await fetch(`/api/sandbox/workspace/file?path=${encodeURIComponent(filePath)}`);
+          if (res.ok) {
+            const blob = await res.blob();
+            if (isCancelled) return;
+            if (blob.size === 0) {
+              setPreviewUrl("EMPTY_FILE");
+              return;
+            }
+            if (isImage) {
+              const reader = new FileReader();
+              reader.onload = () => {
+                if (!isCancelled) setPreviewUrl(reader.result);
+              };
+              reader.readAsDataURL(blob);
+              return;
+            } else {
+              if (mediaBlobUrlRef.current) URL.revokeObjectURL(mediaBlobUrlRef.current);
+              const url = URL.createObjectURL(blob);
+              mediaBlobUrlRef.current = url;
+              setPreviewUrl(url);
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn("Backend media load error:", err);
+        }
       }
 
       setPreviewUrl(null);
@@ -94,23 +185,27 @@ function Editor() {
     createMediaPreview();
 
     return () => {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      isCancelled = true;
     };
-  }, [activeFile]);
+  }, [activeFile?.id, activeFile?.name, activeFile?.path, files, persistedFolderInfo?.path]);
 
   function renderBinaryPreview() {
     if (!activeFile) {
       return null;
     }
 
-    if (!activeFile.handle) {
-      return <div className="editor-binary-state">Binary preview not available.</div>;
-    }
-
     const extension = getFileExtension(activeFile.name);
     const imageExtensions = new Set(["png", "jpg", "jpeg", "gif", "svg", "webp"]);
+
+    if (previewUrl === "EMPTY_FILE") {
+      return (
+        <div className="editor-binary-state" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "10px", color: "#cccccc" }}>
+          <div style={{ fontSize: "28px" }}>⚠️</div>
+          <div style={{ fontSize: "16px", fontWeight: "600" }}>Image file is empty (0 bytes)</div>
+          <div style={{ color: "#858585", fontSize: "13px" }}>{activeFile.name} does not contain any image data.</div>
+        </div>
+      );
+    }
 
     if (extension === "pdf") {
       if (!previewUrl) {
@@ -121,7 +216,7 @@ function Editor() {
 
     if (imageExtensions.has(extension)) {
       if (!previewUrl) {
-        return <div className="editor-binary-state">Loading image...</div>;
+        return <div className="editor-binary-state">Loading image preview...</div>;
       }
       return <ImagePreview src={previewUrl} fileName={activeFile.name} />;
     }
@@ -318,7 +413,7 @@ function Editor() {
   }
 
   // 7. Binary preview (PDF, Image, Audio, Video)
-  if (activeFile.isBinary) {
+  if (activeFile.isBinary || isBinaryFile(activeFile.name)) {
     return (
       <div className="editor-container">
         {renderBinaryPreview()}

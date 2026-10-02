@@ -1,4 +1,5 @@
 import express from 'express';
+import fs from 'fs';
 import {
   getRuntimesInfo,
   executeCode,
@@ -10,10 +11,28 @@ import {
   readWorkspaceTree,
   pickNativeFolder,
   getActivePorts,
-  lintCode
+  lintCode,
+  normalizePath
 } from '../sandboxEngine.js';
 
 const router = express.Router();
+
+// GET /workspace/file - Serve local file directly for media preview
+router.get('/workspace/file', (req, res) => {
+  try {
+    const filePath = req.query.path;
+    if (!filePath) {
+      return res.status(400).json({ error: 'path is required' });
+    }
+    const resolved = normalizePath(filePath);
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    res.sendFile(resolved);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /ports - Query active listening TCP ports
 router.get('/ports', (req, res) => {

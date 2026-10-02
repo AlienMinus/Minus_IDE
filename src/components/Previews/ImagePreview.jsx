@@ -5,13 +5,23 @@ import "./ImagePreview.css";
 export default function ImagePreview({ src, fileName }) {
   const [zoom, setZoom] = useState(1);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [hasError, setHasError] = useState(false);
   const containerRef = useRef(null);
   const isDraggingRef = useRef(false);
   const startPosRef = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
 
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
   const handleImageLoad = (e) => {
+    setHasError(false);
     const { naturalWidth, naturalHeight } = e.target;
     setDimensions({ width: naturalWidth, height: naturalHeight });
+  };
+
+  const handleImageError = () => {
+    setHasError(true);
   };
 
   const handleZoomIn = () => {
@@ -141,13 +151,26 @@ export default function ImagePreview({ src, fileName }) {
             transformOrigin: "top center"
           }}
         >
-          <img
-            src={src}
-            alt={fileName || "Image Preview"}
-            onLoad={handleImageLoad}
-            className="natural-image"
-            draggable={false}
-          />
+          {hasError ? (
+            <div style={{ padding: "40px 28px", color: "#f87171", textAlign: "center", lineHeight: "1.5" }}>
+              <div style={{ fontSize: "28px", marginBottom: "8px" }}>⚠️</div>
+              <div style={{ fontSize: "14px", fontWeight: "600", color: "#f3f4f6" }}>
+                Could not display image: {fileName}
+              </div>
+              <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>
+                The image file may be empty, corrupted, or unsupported.
+              </div>
+            </div>
+          ) : (
+            <img
+              src={src}
+              alt={fileName || "Image Preview"}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              className="natural-image"
+              draggable={false}
+            />
+          )}
         </div>
       </div>
     </div>
