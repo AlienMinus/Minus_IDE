@@ -190,6 +190,7 @@ function Explorer() {
             <div
               className={`folder ${selectedItem?.id === item.id ? "selected" : ""}`}
               style={{ paddingLeft: `${level * 18}px` }}
+              title={level === 0 && persistedFolderInfo?.path ? `Workspace: ${persistedFolderInfo.path}` : (item.path || item.name)}
               onClick={() => {
                 setSelectedItem(item);
                 toggleFolder(item.id);

@@ -64,6 +64,14 @@ export const fileMenu = [
     },
 
     {
+        id: "openFolderPath",
+        label: "Open Folder by Path...",
+        shortcut: "Ctrl+Shift+O",
+        icon: <FaFolder />,
+        onClick: () => {}
+    },
+
+    {
         id: "openWorkspace",
         label: "Open Workspace from File...",
         onClick: () => {}

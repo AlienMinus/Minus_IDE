@@ -262,6 +262,11 @@ function TerminalComponent() {
             <button className="terminal-add-btn" onClick={createTerminal} title="New Terminal (Ctrl+Shift+`)">
               <FaPlus />
             </button>
+            {activeTerminal?.cwd && (
+              <span className="terminal-cwd-badge" title={`Working Directory: ${activeTerminal.cwd}`}>
+                📁 {activeTerminal.cwd}
+              </span>
+            )}
           </div>
         </div>
 

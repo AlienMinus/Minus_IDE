@@ -94,6 +94,28 @@
     color: #fff;
 }
 
+.terminal-cwd-badge {
+    font-size: 11px;
+    color: #858585;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+    display: inline-flex;
+    align-items: center;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.terminal-cwd-badge:hover {
+    color: #ccc;
+    border-color: #444;
+}
+
 .terminal-toolbar-right {
     display: flex;
     align-items: center;

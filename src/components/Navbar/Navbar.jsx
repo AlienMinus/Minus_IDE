@@ -25,7 +25,7 @@ function Navbar({ isChatOpen, toggleChat }) {
     const helpRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    const { openFolder } = useFile();
+    const { openFolder, openFolderByPath, persistedFolderInfo } = useFile();
     const {
         activeFile,
         saveActiveFile,
@@ -110,6 +110,20 @@ function Navbar({ isChatOpen, toggleChat }) {
                 ...item,
                 onClick: async () => {
                     await openFolder();
+                    setOpenMenu(null);
+                }
+            };
+        }
+
+        if (item.id === "openFolderPath") {
+            return {
+                ...item,
+                onClick: async () => {
+                    const defaultPath = persistedFolderInfo?.path || "E:\\Portfolio\\portfolio_v1";
+                    const inputPath = window.prompt("Enter local directory path to open as workspace:", defaultPath);
+                    if (inputPath && inputPath.trim()) {
+                        await openFolderByPath(inputPath.trim());
+                    }
                     setOpenMenu(null);
                 }
             };

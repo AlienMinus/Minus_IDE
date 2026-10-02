@@ -368,7 +368,8 @@ export function TerminalProvider({ children }) {
         lastActionRef.current = { type: 'command', command: 'npm run build' };
 
         try {
-            const res = await executeShellCommand('npm run build', { virtualFiles: files });
+            const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
+            const res = await executeShellCommand('npm run build', { cwd: targetCwd, virtualFiles: files });
             const outLines = [];
             if (res.stdout) {
                 outLines.push(...res.stdout.replace(/\r\n/g, '\n').split('\n'));
@@ -384,7 +385,7 @@ export function TerminalProvider({ children }) {
         } finally {
             setIsRunning(false);
         }
-    }, [files, appendToTerminal]);
+    }, [files, activeTerminal?.cwd, currentWorkspacePath, appendToTerminal]);
 
     /**
      * Show Running Tasks & Status
@@ -439,7 +440,8 @@ export function TerminalProvider({ children }) {
             appendToTerminal([`\x1b[34m[Restarting Task]\x1b[0m ${last.command}`]);
             setIsRunning(true);
             try {
-                const res = await executeShellCommand(last.command, { virtualFiles: files });
+                const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
+                const res = await executeShellCommand(last.command, { cwd: targetCwd, virtualFiles: files });
                 appendToTerminal([res.stdout || '', res.stderr ? `\x1b[31m${res.stderr}\x1b[0m` : '', "$ "].filter(Boolean));
             } catch (err) {
                 appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, "$ "]);
@@ -447,7 +449,7 @@ export function TerminalProvider({ children }) {
                 setIsRunning(false);
             }
         }
-    }, [activeFile, files, appendToTerminal, runActiveFile, runCodeSnippet]);
+    }, [activeFile, files, activeTerminal?.cwd, currentWorkspacePath, appendToTerminal, runActiveFile, runCodeSnippet]);
 
     /**
      * Configure Tasks... (Opens .vscode/tasks.json)
@@ -485,7 +487,8 @@ export function TerminalProvider({ children }) {
         lastActionRef.current = { type: 'command', command: taskCmd };
 
         try {
-            const res = await executeShellCommand(taskCmd, { virtualFiles: files });
+            const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
+            const res = await executeShellCommand(taskCmd, { cwd: targetCwd, virtualFiles: files });
             const outLines = [];
             if (res.stdout) {
                 outLines.push(...res.stdout.replace(/\r\n/g, '\n').split('\n'));
@@ -501,7 +504,7 @@ export function TerminalProvider({ children }) {
         } finally {
             setIsRunning(false);
         }
-    }, [files, appendToTerminal]);
+    }, [files, activeTerminal?.cwd, currentWorkspacePath, appendToTerminal]);
 
     /**
      * Execute Terminal Command
@@ -682,11 +685,83 @@ export function TerminalProvider({ children }) {
             return;
         }
 
+        if (cmd === "cd") {
+            const target = argsStr.trim();
+            if (!target || target === "~") {
+                const homeOrRoot = currentWorkspacePath || "~/HyperionIDE";
+                setTerminals((prev) =>
+                    prev.map((t) => (t.id === activeTerminalId ? { ...t, cwd: homeOrRoot } : t))
+                );
+                appendToTerminal([`\x1b[32m✔ Directory: ${homeOrRoot}\x1b[0m`, "$ "]);
+                return;
+            }
+
+            let candidate = target.replace(/^["']|["']$/g, "");
+            if (!candidate.includes(":") && !candidate.startsWith("/") && !candidate.startsWith("\\")) {
+                const base = (activeTerminal?.cwd || currentWorkspacePath || "").replace(/\\/g, "/");
+                if (candidate === "..") {
+                    const parts = base.split("/").filter(Boolean);
+                    parts.pop();
+                    candidate = parts.join("/");
+                    if (candidate.endsWith(":")) candidate += "/";
+                } else if (candidate === ".") {
+                    candidate = base;
+                } else {
+                    candidate = `${base}/${candidate}`;
+                }
+            }
+
+            try {
+                const check = await validateWorkspacePath(candidate);
+                if (check.exists && check.isDirectory) {
+                    const finalPath = check.path;
+                    setTerminals((prev) =>
+                        prev.map((t) => (t.id === activeTerminalId ? { ...t, cwd: finalPath } : t))
+                    );
+                    if (fileCtx?.setWorkspacePath) {
+                        fileCtx.setWorkspacePath(finalPath);
+                    }
+                    saveWorkspaceState({ folderPath: finalPath });
+                    appendToTerminal([`\x1b[32m✔ Directory changed to: ${finalPath}\x1b[0m`, "$ "]);
+                } else {
+                    appendToTerminal([`\x1b[31mcd: no such file or directory: ${target}\x1b[0m`, "$ "]);
+                }
+            } catch (err) {
+                appendToTerminal([`\x1b[31mcd error: ${err.message}\x1b[0m`, "$ "]);
+            }
+            return;
+        }
+
+        if (cmd === "pwd") {
+            const currentCwd = activeTerminal?.cwd || currentWorkspacePath || "~/HyperionIDE";
+            try {
+                const res = await executeShellCommand("pwd", {
+                    cwd: currentCwd,
+                    virtualFiles: files
+                });
+                const outLines = [];
+                if (res.cwd) {
+                    outLines.push(res.cwd);
+                } else if (res.stdout) {
+                    outLines.push(...res.stdout.trim().split("\n"));
+                } else {
+                    outLines.push(currentCwd);
+                }
+                outLines.push("$ ");
+                appendToTerminal(outLines);
+            } catch {
+                appendToTerminal([currentCwd, "$ "]);
+            }
+            return;
+        }
+
         setIsRunning(true);
         lastActionRef.current = { type: 'command', command: trimmed };
 
         try {
+            const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
             const res = await executeShellCommand(trimmed, {
+                cwd: targetCwd,
                 virtualFiles: files
             });
 
@@ -713,7 +788,7 @@ export function TerminalProvider({ children }) {
             setIsRunning(false);
         }
 
-    }, [activeTerminal, activeTerminalId, files, runActiveFile, runCodeSnippet, appendToTerminal, setTerminalOutput]);
+    }, [activeTerminal, activeTerminalId, files, currentWorkspacePath, fileCtx, runActiveFile, runCodeSnippet, appendToTerminal, setTerminalOutput]);
 
     const value = {
         terminals,
