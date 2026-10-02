@@ -58,6 +58,28 @@ export function EditorProvider({ children }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [replaceQuery, setReplaceQuery] = useState("");
   const [isReplaceOpen, setIsReplaceOpen] = useState(false);
+  const [problems, setProblems] = useState([]);
+
+  function jumpToProblem(problem) {
+    if (!problem) return;
+    if (problem.fileId || problem.filename) {
+      const target = openFiles.find(
+        (f) => f.id === problem.fileId || f.name === problem.filename || f.path === problem.filename
+      ) || files.find((f) => f.name === problem.filename || f.path === problem.filename);
+      if (target && target.id !== activeFile?.id) {
+        openFile(target);
+      }
+    }
+    setTimeout(() => {
+      if (editorRef.current) {
+        const line = problem.startLineNumber || problem.lineNumber || 1;
+        const col = problem.startColumn || problem.column || 1;
+        editorRef.current.revealPositionInCenter({ lineNumber: line, column: col });
+        editorRef.current.setPosition({ lineNumber: line, column: col });
+        editorRef.current.focus();
+      }
+    }, 60);
+  }
 
   // Sync files and handles from FileContext
   useEffect(() => {
@@ -453,7 +475,10 @@ export function EditorProvider({ children }) {
         openLiveBrowserTab,
         toggleLineComment,
         toggleBlockComment,
-        expandEmmet
+        expandEmmet,
+        problems,
+        setProblems,
+        jumpToProblem
       }}
     >
       {children}

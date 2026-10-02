@@ -1,5 +1,5 @@
 import "./Editor.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import MonacoEditor from "@monaco-editor/react";
 import useEditor from "../../hooks/useEditor";
 import Preview from "../Preview";
@@ -12,13 +12,48 @@ import {
   MarkdownPreview
 } from "../Previews";
 import { getFileExtension } from "../../utils/fileIcons";
+import { checkClientSyntax, getCodeDiagnostics } from "../../utils/codeDiagnostics";
 
 function Editor() {
-  const { activeFile, updateContent, setEditorInstance, closeFile } = useEditor();
+  const { activeFile, updateContent, setEditorInstance, closeFile, setProblems } = useEditor();
   const [previewUrl, setPreviewUrl] = useState(null);
+  const monacoRef = useRef(null);
+  const editorRef = useRef(null);
+  const debounceTimerRef = useRef(null);
+
+  const runDiagnostics = useCallback(async (code, file, monacoInstance, editorInstance) => {
+    if (!file || file.isBinary || file.isPreview || file.isLiveUrl) return;
+    const monaco = monacoInstance || monacoRef.current;
+    const editor = editorInstance || editorRef.current;
+    if (!monaco || !editor) return;
+
+    const model = editor.getModel();
+    if (!model) return;
+
+    const language = file.language || getFileExtension(file.name);
+    const filename = file.name || "";
+
+    // 1. Instant client-side check (0ms latency)
+    const clientMarkers = checkClientSyntax(code, language, filename);
+    monaco.editor.setModelMarkers(model, "client-linter", clientMarkers);
+
+    // 2. Authoritative compiler/interpreter check (GCC, Python AST, etc.)
+    try {
+      const markers = await getCodeDiagnostics({ code, language, filename });
+      if (markers && markers.length > 0) {
+        monaco.editor.setModelMarkers(model, "compiler-linter", markers);
+      } else if (clientMarkers.length === 0) {
+        monaco.editor.setModelMarkers(model, "compiler-linter", []);
+      }
+    } catch {}
+  }, []);
 
   function handleEditorChange(value) {
     updateContent(value);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      runDiagnostics(value, activeFile);
+    }, 250);
   }
 
   useEffect(() => {
@@ -120,6 +155,8 @@ function Editor() {
 
   function handleEditorDidMount(editor, monaco) {
     editor.focus();
+    editorRef.current = editor;
+    monacoRef.current = monaco;
     if (setEditorInstance) {
       setEditorInstance(editor);
     }
@@ -136,7 +173,56 @@ function Editor() {
     });
 
     monaco.editor.setTheme("webide-dark");
+
+    // Run initial diagnostics on editor mount
+    if (activeFile && activeFile.content != null) {
+      runDiagnostics(activeFile.content, activeFile, monaco, editor);
+    }
   }
+
+  // Synchronize Monaco markers with Problems panel in real-time
+  useEffect(() => {
+    const monaco = monacoRef.current;
+    if (!monaco) return;
+
+    const syncMarkers = () => {
+      const allMarkers = monaco.editor.getModelMarkers({});
+      const formatted = allMarkers.map((m) => {
+        const uriPath = m.resource?.path || "";
+        const fname = uriPath.split("/").pop() || activeFile?.name || "file";
+        return {
+          id: `${fname}-${m.startLineNumber}-${m.startColumn}-${m.message}`,
+          filename: fname,
+          fileId: activeFile?.id,
+          message: m.message,
+          severity: m.severity, // 8 = Error, 4 = Warning, 2 = Info
+          startLineNumber: m.startLineNumber,
+          startColumn: m.startColumn,
+          endLineNumber: m.endLineNumber,
+          endColumn: m.endColumn,
+          source: m.source || (m.severity === 8 ? "Error" : "Warning")
+        };
+      });
+      if (setProblems) {
+        setProblems(formatted);
+      }
+    };
+
+    const disposable = monaco.editor.onDidChangeMarkers(() => {
+      syncMarkers();
+    });
+
+    syncMarkers();
+
+    return () => disposable.dispose();
+  }, [setProblems, activeFile?.id, activeFile?.name]);
+
+  // Re-run diagnostics when switching active file
+  useEffect(() => {
+    if (activeFile && activeFile.content != null && monacoRef.current && editorRef.current) {
+      runDiagnostics(activeFile.content, activeFile);
+    }
+  }, [activeFile?.id, activeFile?.name, runDiagnostics]);
 
   if (!activeFile) {
     return (
