@@ -19,6 +19,8 @@ import StatusBar from "../components/Statusbar";
 import Breadcrumb from "../components/Breadcrumb";
 import TaskPicker from "../components/TaskPicker/TaskPicker";
 import Search from "../components/Search/Search";
+import SourceControl from "../components/SourceControl/SourceControl";
+import RunDebug from "../components/RunDebug/RunDebug";
 import CommandPalette from "../components/CommandPalette/CommandPalette";
 import useEditor from "../hooks/useEditor";
 import useTerminal from "../hooks/useTerminal";
@@ -135,6 +137,10 @@ function MainLayout() {
                   <Extensions />
                 ) : sidebarActive === "search" ? (
                   <Search />
+                ) : sidebarActive === "git" ? (
+                  <SourceControl />
+                ) : sidebarActive === "run" ? (
+                  <RunDebug />
                 ) : (
                   <Explorer />
                 )}
