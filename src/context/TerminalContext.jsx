@@ -3,6 +3,7 @@ import commandsData from "../data/commands.json";
 import {
   executeCode,
   executeCommand as executeShellCommand,
+  streamShellCommand,
   getSandboxStatus,
   detectLanguage,
   validateWorkspacePath,
@@ -119,9 +120,16 @@ export function TerminalProvider({ children }) {
 
     const activeTerminal = terminals.find(t => t.id === activeTerminalId) || terminals[0];
 
+    const activeTerminalRef = useRef(activeTerminal);
+    activeTerminalRef.current = activeTerminal;
+    const terminalsRef = useRef(terminals);
+    terminalsRef.current = terminals;
+    const activeProcessAbortCtrl = useRef(null);
+    const detectedUrlsRef = useRef(new Set());
+
     function createTerminal() {
         const newId = Date.now();
-        const termCwd = activeTerminal?.cwd || currentWorkspacePath || "~/HyperionIDE";
+        const termCwd = activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
         const newTerminal = {
             id: newId,
             title: `Terminal ${terminals.length + 1}`,
@@ -148,6 +156,10 @@ export function TerminalProvider({ children }) {
         if (termToKill?.replState?.active) {
             exitReplSession(termToKill.replState.sessionId).catch(() => {});
         }
+        if (activeProcessAbortCtrl.current) {
+            try { activeProcessAbortCtrl.current.abort(); } catch {}
+            activeProcessAbortCtrl.current = null;
+        }
         setIsRunning(false);
 
         setTerminals(prev => {
@@ -157,7 +169,7 @@ export function TerminalProvider({ children }) {
                 const freshTerm = {
                     id: freshId,
                     title: "Terminal 1",
-                    cwd: "~/HyperionIDE",
+                    cwd: currentWorkspacePath || "~/HyperionIDE",
                     history: [],
                     output: [
                         "\x1b[33m[Hyperion] Terminal reset.\x1b[0m",
@@ -183,8 +195,15 @@ export function TerminalProvider({ children }) {
      * Terminate currently running task / process
      */
     function terminateTask() {
-        if (activeTerminal?.replState?.active) {
-            exitReplSession(activeTerminal.replState.sessionId).catch(() => {});
+        if (activeProcessAbortCtrl.current) {
+            try {
+                activeProcessAbortCtrl.current.abort();
+            } catch {}
+            activeProcessAbortCtrl.current = null;
+        }
+
+        if (activeTerminalRef.current?.replState?.active) {
+            exitReplSession(activeTerminalRef.current.replState.sessionId).catch(() => {});
             setTerminals(prev => prev.map(t => {
                 if (t.id !== activeTerminalId) return t;
                 return {
@@ -843,9 +862,11 @@ export function TerminalProvider({ children }) {
         }
 
         if (cmd === "cd") {
+            const currentCwd = activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
             const target = argsStr.trim();
             if (!target || target === "~") {
                 const homeOrRoot = currentWorkspacePath || "~/HyperionIDE";
+                if (activeTerminalRef.current) activeTerminalRef.current.cwd = homeOrRoot;
                 setTerminals((prev) =>
                     prev.map((t) => (t.id === activeTerminalId ? { ...t, cwd: homeOrRoot } : t))
                 );
@@ -855,7 +876,7 @@ export function TerminalProvider({ children }) {
 
             let candidate = target.replace(/^["']|["']$/g, "");
             if (!candidate.includes(":") && !candidate.startsWith("/") && !candidate.startsWith("\\")) {
-                const base = (activeTerminal?.cwd || currentWorkspacePath || "").replace(/\\/g, "/");
+                const base = currentCwd.replace(/\\/g, "/");
                 if (candidate === "..") {
                     const parts = base.split("/").filter(Boolean);
                     parts.pop();
@@ -872,6 +893,7 @@ export function TerminalProvider({ children }) {
                 const check = await validateWorkspacePath(candidate);
                 if (check.exists && check.isDirectory) {
                     const finalPath = check.path;
+                    if (activeTerminalRef.current) activeTerminalRef.current.cwd = finalPath;
                     setTerminals((prev) =>
                         prev.map((t) => (t.id === activeTerminalId ? { ...t, cwd: finalPath } : t))
                     );
@@ -890,7 +912,7 @@ export function TerminalProvider({ children }) {
         }
 
         if (cmd === "pwd" || cmd === "cwd") {
-            const currentCwd = activeTerminal?.cwd || currentWorkspacePath || "~/HyperionIDE";
+            const currentCwd = activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
             const isPhysical = currentCwd && (currentCwd.includes(':') || currentCwd.startsWith('/'));
             try {
                 const res = await executeShellCommand("pwd", {
@@ -913,12 +935,74 @@ export function TerminalProvider({ children }) {
             return;
         }
 
+        const targetCwd = activeTerminalRef.current?.cwd || currentWorkspacePath;
+        const isPhysical = targetCwd && (targetCwd.includes(':') || targetCwd.startsWith('/'));
+
+        // Check if command is a dev server or long-running command (vite, npm run dev, npm start, etc.)
+        const isDevServer = trimmed.startsWith('npm run dev') ||
+                            trimmed.startsWith('npm start') ||
+                            trimmed.startsWith('npm run serve') ||
+                            trimmed === 'vite' ||
+                            trimmed.startsWith('vite ') ||
+                            trimmed.startsWith('next dev');
+
         setIsRunning(true);
         lastActionRef.current = { type: 'command', command: trimmed };
 
+        if (isDevServer) {
+            const abortCtrl = new AbortController();
+            activeProcessAbortCtrl.current = abortCtrl;
+            detectedUrlsRef.current.clear();
+
+            let collectedOutput = "";
+
+            try {
+                await streamShellCommand({
+                    command: trimmed,
+                    cwd: targetCwd,
+                    virtualFiles: isPhysical ? undefined : files,
+                    timeoutMs: 0,
+                    signal: abortCtrl.signal,
+                    onChunk: (chunk) => {
+                        collectedOutput += chunk;
+                        const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
+                        appendToTerminal(chunkLines);
+
+                        // Scan for local dev server URLs (e.g. http://localhost:5173, http://127.0.0.1:5175)
+                        const urlRegex = /(https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?(?:\/[^\s\x1b"'\)\]>]*)*)/gi;
+                        let match;
+                        while ((match = urlRegex.exec(chunk)) !== null) {
+                            let detectedUrl = match[1].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
+                            if (!detectedUrlsRef.current.has(detectedUrl)) {
+                                detectedUrlsRef.current.add(detectedUrl);
+                                appendToTerminal([
+                                    `\r\n\x1b[1;32m✔ Local Dev Server detected:\x1b[0m \x1b[1;36m${detectedUrl}\x1b[0m`,
+                                    `\x1b[90m➜ Opening Live Preview in Editor...\x1b[0m\r\n`
+                                ]);
+                                if (editorCtx?.openLiveBrowserTab) {
+                                    editorCtx.openLiveBrowserTab(detectedUrl, `Preview: ${detectedUrl}`);
+                                }
+                            }
+                        }
+                    },
+                    onExit: (code) => {
+                        activeProcessAbortCtrl.current = null;
+                        setIsRunning(false);
+                        appendToTerminal(["$ "]);
+                    }
+                });
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    appendToTerminal([`\x1b[31mStream error: ${err.message}\x1b[0m`, "$ "]);
+                }
+            } finally {
+                activeProcessAbortCtrl.current = null;
+                setIsRunning(false);
+            }
+            return;
+        }
+
         try {
-            const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
-            const isPhysical = targetCwd && (targetCwd.includes(':') || targetCwd.startsWith('/'));
             const res = await executeShellCommand(trimmed, {
                 cwd: targetCwd,
                 virtualFiles: isPhysical ? undefined : files
@@ -928,6 +1012,23 @@ export function TerminalProvider({ children }) {
             if (res.stdout) {
                 const stdoutFormatted = res.stdout.replace(/\r\n/g, '\n').split('\n');
                 outLines.push(...stdoutFormatted);
+
+                // Detect URLs if any
+                const urlRegex = /(https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?(?:\/[^\s\x1b"'\)\]>]*)*)/gi;
+                let match;
+                while ((match = urlRegex.exec(res.stdout)) !== null) {
+                    let detectedUrl = match[1].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
+                    if (!detectedUrlsRef.current.has(detectedUrl)) {
+                        detectedUrlsRef.current.add(detectedUrl);
+                        outLines.push(
+                            `\x1b[1;32m✔ Local Server detected:\x1b[0m \x1b[1;36m${detectedUrl}\x1b[0m`,
+                            `\x1b[90m➜ Opening Live Preview in Editor...\x1b[0m`
+                        );
+                        if (editorCtx?.openLiveBrowserTab) {
+                            editorCtx.openLiveBrowserTab(detectedUrl, `Preview: ${detectedUrl}`);
+                        }
+                    }
+                }
             }
             if (res.stderr) {
                 const stderrFormatted = res.stderr.replace(/\r\n/g, '\n').split('\n')
@@ -947,7 +1048,7 @@ export function TerminalProvider({ children }) {
             setIsRunning(false);
         }
 
-    }, [activeTerminal, activeTerminalId, files, currentWorkspacePath, fileCtx, runActiveFile, runCodeSnippet, appendToTerminal, setTerminalOutput]);
+    }, [activeTerminal, activeTerminalId, files, currentWorkspacePath, fileCtx, runActiveFile, runCodeSnippet, appendToTerminal, setTerminalOutput, editorCtx]);
 
     const value = {
         terminals,

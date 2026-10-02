@@ -6,6 +6,7 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { SearchAddon } from "@xterm/addon-search";
 import "@xterm/xterm/css/xterm.css";
 import useTerminal from "../../hooks/useTerminal";
+import useEditor from "../../hooks/useEditor";
 import {
   FaPlay,
   FaTrash,
@@ -15,10 +16,11 @@ import {
   FaTimes,
   FaColumns,
   FaStop,
-  FaTrashAlt
+  FaTrashAlt,
+  FaGlobe
 } from "react-icons/fa";
 
-function TerminalComponent() {
+function TerminalComponent({ hideToolbar = false }) {
   const terminalRef = useRef(null);
   const xtermRef = useRef(null);
   const fitAddonRef = useRef(null);
@@ -40,6 +42,15 @@ function TerminalComponent() {
     isRunning,
     setActiveTerminal
   } = useTerminal();
+
+  const { openLiveBrowserTab } = useEditor();
+
+  const executeCommandRef = useRef(executeCommand);
+  executeCommandRef.current = executeCommand;
+  const terminateTaskRef = useRef(terminateTask);
+  terminateTaskRef.current = terminateTask;
+  const openLiveBrowserTabRef = useRef(openLiveBrowserTab);
+  openLiveBrowserTabRef.current = openLiveBrowserTab;
 
   const activeTerminalRef = useRef(activeTerminal);
   activeTerminalRef.current = activeTerminal;
