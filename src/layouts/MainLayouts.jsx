@@ -123,7 +123,6 @@ function MainLayout() {
         )}
 
         {/* Resizable Explorer / Editor / Chat */}
-        {/* Resizable Explorer / Editor / Chat */}
         <PanelGroup direction="horizontal" className="layout-body">
           {/* Explorer / Extensions / Search */}
           {!isZenMode && isSidebarVisible && (
