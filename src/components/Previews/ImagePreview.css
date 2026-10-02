@@ -1,0 +1,115 @@
+/* ========================================================
+   VS Code Native Image Viewer (Natural Size / No Fit)
+   ======================================================== */
+.image-preview-root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: auto;
+  background-color: #181818;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+/* Floating VS Code Status Toolbar */
+.image-preview-toolbar {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(30, 30, 30, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid #3c3c3c;
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.img-tool-btn {
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.img-tool-btn:hover {
+  background: #3e3e42;
+  color: #ffffff;
+}
+
+.img-zoom-label {
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-weight: 600;
+  color: #9cdcfe;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s ease;
+}
+
+.img-zoom-label:hover {
+  background: #2d2d30;
+}
+
+.img-dimensions-badge {
+  font-size: 11px;
+  color: #858585;
+  border-left: 1px solid #444444;
+  padding-left: 8px;
+  margin-left: 4px;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+/* Image Viewport */
+.image-viewport-wrapper {
+  margin: auto;
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: min-content;
+  min-height: min-content;
+}
+
+/* Checkerboard transparent pattern background frame */
+.image-canvas-frame {
+  display: inline-block;
+  background-image: linear-gradient(45deg, #242424 25%, transparent 25%),
+                    linear-gradient(-45deg, #242424 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #242424 75%),
+                    linear-gradient(-45deg, transparent 75%, #242424 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  background-color: #1a1a1a;
+  border: 1px solid #333333;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  transition: transform 0.12s ease-out;
+  line-height: 0;
+}
+
+/* STRICT NATURAL SIZE - Never forced or stretched to fit window */
+.natural-image {
+  display: block;
+  max-width: none !important;
+  max-height: none !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: none !important;
+  pointer-events: none;
+}
