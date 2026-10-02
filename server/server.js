@@ -28,8 +28,16 @@ app.get('/health', (req, res) => {
 });
 
 if (!process.env.VERCEL) {
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log(`HyperionIDE Sandbox Server listening on http://localhost:${port}`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is already in use by another instance of HyperionIDE Server (it is currently active).`);
+    } else {
+      console.error('Server error:', err.message);
+    }
   });
 }
 

@@ -417,9 +417,21 @@ export async function executeCommand({
   let isTemp = false;
 
   if (!workDir || !fs.existsSync(workDir)) {
+    // If cwd was a folder name like "portfolio_v1", auto-resolve to host OS path
+    if (cwd) {
+      const resolved = resolveWorkspacePath({ folderName: cwd });
+      if (resolved && fs.existsSync(resolved)) {
+        workDir = resolved;
+      }
+    }
+  }
+
+  if (!workDir || !fs.existsSync(workDir)) {
     workDir = createTempDir('hyp_cmd_');
     isTemp = true;
-    writeVirtualFiles(workDir, virtualFiles);
+    if (virtualFiles && virtualFiles.length > 0) {
+      writeVirtualFiles(workDir, virtualFiles);
+    }
   }
 
   try {
@@ -493,9 +505,20 @@ export function streamCommand({
   let isTemp = false;
 
   if (!workDir || !fs.existsSync(workDir)) {
+    if (cwd) {
+      const resolved = resolveWorkspacePath({ folderName: cwd });
+      if (resolved && fs.existsSync(resolved)) {
+        workDir = resolved;
+      }
+    }
+  }
+
+  if (!workDir || !fs.existsSync(workDir)) {
     workDir = createTempDir('hyp_stream_');
     isTemp = true;
-    writeVirtualFiles(workDir, virtualFiles);
+    if (virtualFiles && virtualFiles.length > 0) {
+      writeVirtualFiles(workDir, virtualFiles);
+    }
   }
 
   const bash = paths.bash;
