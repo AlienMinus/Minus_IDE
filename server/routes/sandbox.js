@@ -168,4 +168,63 @@ router.post('/stream', (req, res) => {
   });
 });
 
+import { replManager } from '../replEngine.js';
+
+// POST /repl/start - Start interactive REPL session (Python / Node)
+router.post('/repl/start', async (req, res) => {
+  try {
+    const { sessionId, runtime = 'python', cwd } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId is required.' });
+    }
+    const session = await replManager.startSession({ sessionId, runtime, cwd });
+    res.json({
+      success: true,
+      data: session
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+// POST /repl/eval - Evaluate statement in active REPL session
+router.post('/repl/eval', async (req, res) => {
+  try {
+    const { sessionId, code } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId is required.' });
+    }
+    const result = await replManager.evalCode({ sessionId, code });
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+// POST /repl/exit - Terminate active REPL session
+router.post('/repl/exit', (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId is required.' });
+    }
+    const result = replManager.exitSession(sessionId);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
 export default router;
