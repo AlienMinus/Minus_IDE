@@ -40,7 +40,17 @@ function Navbar({ isChatOpen, toggleChat }) {
         replaceInFiles,
         toggleLineComment,
         toggleBlockComment,
-        expandEmmet
+        expandEmmet,
+        openView,
+        toggleWordWrap,
+        toggleSidebar,
+        toggleBottomPanel,
+        toggleStatusBar,
+        toggleZenMode,
+        toggleFullScreen,
+        setIsCommandPaletteOpen,
+        setCommandPaletteMode,
+        editorRef
     } = useEditor();
     const {
         runActiveFile,
@@ -70,21 +80,67 @@ function Navbar({ isChatOpen, toggleChat }) {
         }
     };
 
-    // Keyboard shortcuts for terminal & edit actions
+    // Keyboard shortcuts for terminal, edit & view actions
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === "F5") {
                 e.preventDefault();
                 runActiveFile();
+            } else if (e.key === "F11") {
+                e.preventDefault();
+                toggleFullScreen();
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "P" || e.key === "p")) {
+                e.preventDefault();
+                setCommandPaletteMode("commands");
+                setIsCommandPaletteOpen(true);
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "E" || e.key === "e")) {
+                e.preventDefault();
+                openView("explorer");
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "F" || e.key === "f")) {
+                e.preventDefault();
+                openView("search");
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "G" || e.key === "g")) {
+                e.preventDefault();
+                openView("git");
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
+                e.preventDefault();
+                openView("run");
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "X" || e.key === "x")) {
+                e.preventDefault();
+                openView("extensions");
+            } else if (e.ctrlKey && e.altKey && (e.key === "I" || e.key === "i")) {
+                e.preventDefault();
+                if (toggleChat) toggleChat();
+            } else if (e.ctrlKey && e.altKey && (e.key === "/" || e.key === "?")) {
+                e.preventDefault();
+                openView("browser");
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "M" || e.key === "m")) {
+                e.preventDefault();
+                openView("problems");
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "U" || e.key === "u")) {
+                e.preventDefault();
+                openView("output");
+            } else if (e.ctrlKey && e.shiftKey && (e.key === "Y" || e.key === "y")) {
+                e.preventDefault();
+                openView("debugConsole");
+            } else if (e.ctrlKey && e.key === "`" && !e.shiftKey) {
+                e.preventDefault();
+                openView("terminal");
+            } else if (e.altKey && (e.key === "Z" || e.key === "z")) {
+                e.preventDefault();
+                toggleWordWrap();
+            } else if (e.ctrlKey && (e.key === "B" || e.key === "b") && !e.shiftKey) {
+                e.preventDefault();
+                toggleSidebar();
+            } else if (e.ctrlKey && (e.key === "J" || e.key === "j") && !e.shiftKey) {
+                e.preventDefault();
+                toggleBottomPanel();
             } else if (e.ctrlKey && e.shiftKey && (e.key === "B" || e.key === "b")) {
                 e.preventDefault();
                 runBuildTask();
             } else if (e.ctrlKey && e.shiftKey && e.key === "`") {
                 e.preventDefault();
                 createTerminal();
-            } else if (e.ctrlKey && e.shiftKey && (e.key === "F" || e.key === "f")) {
-                e.preventDefault();
-                findInFiles();
             } else if (e.ctrlKey && e.shiftKey && (e.key === "H" || e.key === "h")) {
                 e.preventDefault();
                 replaceInFiles();
@@ -92,7 +148,20 @@ function Navbar({ isChatOpen, toggleChat }) {
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [runActiveFile, runBuildTask, createTerminal, findInFiles, replaceInFiles]);
+    }, [
+        runActiveFile,
+        runBuildTask,
+        createTerminal,
+        replaceInFiles,
+        openView,
+        toggleWordWrap,
+        toggleSidebar,
+        toggleBottomPanel,
+        toggleFullScreen,
+        setIsCommandPaletteOpen,
+        setCommandPaletteMode,
+        toggleChat
+    ]);
 
     const menuButtons = [
         { key: "file", label: "File", ref: fileRef },
@@ -351,6 +420,236 @@ function Navbar({ isChatOpen, toggleChat }) {
         }
     });
 
+    const viewMenuItems = viewMenu.map((item) => {
+        switch (item.id) {
+            case "commandPalette":
+                return {
+                    ...item,
+                    onClick: () => {
+                        setCommandPaletteMode("commands");
+                        setIsCommandPaletteOpen(true);
+                        setOpenMenu(null);
+                    }
+                };
+            case "openView":
+                return {
+                    ...item,
+                    onClick: () => {
+                        setCommandPaletteMode("views");
+                        setIsCommandPaletteOpen(true);
+                        setOpenMenu(null);
+                    }
+                };
+            case "appearance":
+                return {
+                    ...item,
+                    items: (item.items || []).map((subItem) => {
+                        switch (subItem.id) {
+                            case "toggleFullScreen":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        toggleFullScreen();
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "toggleZenMode":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        toggleZenMode();
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "toggleSidebar":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        toggleSidebar();
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "togglePanel":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        toggleBottomPanel();
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "toggleStatusBar":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        toggleStatusBar();
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "zoomIn":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        editorRef.current?.trigger("editor", "editor.action.fontZoomIn", null);
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "zoomOut":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        editorRef.current?.trigger("editor", "editor.action.fontZoomOut", null);
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "resetZoom":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        editorRef.current?.trigger("editor", "editor.action.fontZoomReset", null);
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            default:
+                                return subItem;
+                        }
+                    })
+                };
+            case "editorLayout":
+                return {
+                    ...item,
+                    items: (item.items || []).map((subItem) => {
+                        switch (subItem.id) {
+                            case "layoutSingle":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        openView("explorer");
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "layoutSplitRight":
+                            case "layoutSplitDown":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        splitTerminal();
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "toggleMaximized":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        toggleMaximizeTerminal();
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            default:
+                                return subItem;
+                        }
+                    })
+                };
+            case "explorer":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("explorer");
+                        setOpenMenu(null);
+                    }
+                };
+            case "search":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("search");
+                        setOpenMenu(null);
+                    }
+                };
+            case "sourceControl":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("git");
+                        setOpenMenu(null);
+                    }
+                };
+            case "run":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("run");
+                        setOpenMenu(null);
+                    }
+                };
+            case "extensions":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("extensions");
+                        setOpenMenu(null);
+                    }
+                };
+            case "chat":
+                return {
+                    ...item,
+                    onClick: () => {
+                        if (toggleChat) toggleChat();
+                        setOpenMenu(null);
+                    }
+                };
+            case "browser":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("browser");
+                        setOpenMenu(null);
+                    }
+                };
+            case "problems":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("problems");
+                        setOpenMenu(null);
+                    }
+                };
+            case "output":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("output");
+                        setOpenMenu(null);
+                    }
+                };
+            case "debugConsole":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("debugConsole");
+                        setOpenMenu(null);
+                    }
+                };
+            case "terminal":
+                return {
+                    ...item,
+                    onClick: () => {
+                        openView("terminal");
+                        setOpenMenu(null);
+                    }
+                };
+            case "wordWrap":
+                return {
+                    ...item,
+                    onClick: () => {
+                        toggleWordWrap();
+                        setOpenMenu(null);
+                    }
+                };
+            default:
+                return item;
+        }
+    });
+
     const handleMenuHover = (menu, ref) => {
         if (!allowedMenuKeys.has(menu)) {
             return;
@@ -484,11 +783,11 @@ function Navbar({ isChatOpen, toggleChat }) {
 
             </div>
             
-            {openMenu === 'file' && <DropdownMenu ref={dropdownRef} menu={fileMenuItems} position={menuPosition} />}
-            {openMenu === 'edit' && <DropdownMenu ref={dropdownRef} menu={editMenuItems} position={menuPosition} />}
-            {openMenu === 'view' && <DropdownMenu ref={dropdownRef} menu={viewMenu} position={menuPosition} />}
-            {openMenu === 'terminal' && <DropdownMenu ref={dropdownRef} menu={terminalMenuItems} position={menuPosition} />}
-            {openMenu === 'help' && <DropdownMenu ref={dropdownRef} menu={helpMenu} position={menuPosition} />}
+            {openMenu === 'file' && <DropdownMenu ref={dropdownRef} menu={fileMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
+            {openMenu === 'edit' && <DropdownMenu ref={dropdownRef} menu={editMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
+            {openMenu === 'view' && <DropdownMenu ref={dropdownRef} menu={viewMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
+            {openMenu === 'terminal' && <DropdownMenu ref={dropdownRef} menu={terminalMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
+            {openMenu === 'help' && <DropdownMenu ref={dropdownRef} menu={helpMenu} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
 
 
         </header>
