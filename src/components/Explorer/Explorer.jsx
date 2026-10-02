@@ -196,7 +196,7 @@ function Explorer() {
                 toggleFolder(item.id);
               }}
             >
-              {isOpen ? <FaChevronDown /> : <FaChevronRight />}
+              {isOpen ? <FaChevronDown className="folder-chevron" /> : <FaChevronRight className="folder-chevron" />}
               {isOpen ? <FaFolderOpen className="folder-icon" /> : <FaFolder className="folder-icon" />}
               <span>{item.name}</span>
             </div>

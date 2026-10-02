@@ -112,6 +112,7 @@
     text-overflow:ellipsis;
     white-space:nowrap;
     min-width:0;
+    flex: 1;
 }
 
 .folder span {
@@ -119,6 +120,35 @@
     text-overflow:ellipsis;
     white-space:nowrap;
     min-width:0;
+    flex: 1;
+}
+
+.file-icon,
+.folder-icon,
+.video-icon,
+.file svg,
+.folder svg.folder-icon {
+    flex-shrink: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.folder-chevron {
+    flex-shrink: 0 !important;
+    min-width: 12px;
+    width: 12px;
+    height: 12px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .folder:hover,
