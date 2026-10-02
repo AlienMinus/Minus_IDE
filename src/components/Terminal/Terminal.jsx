@@ -107,10 +107,12 @@ function TerminalComponent() {
         const term = xtermRef.current;
         if (!term) return;
 
+        const currentPrompt = activeTerminalRef.current?.replState?.prompt || '$ ';
+
         // Ctrl+C (Interrupt / Cancel)
         if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c') {
           domEvent.preventDefault();
-          term.write('^C\r\n$ ');
+          term.write('^C\r\n' + currentPrompt);
           currentCommand.current = "";
           historyIndex.current = -1;
           terminateTask();
@@ -143,7 +145,7 @@ function TerminalComponent() {
 
           historyIndex.current = newIdx;
           const cmd = history[newIdx] || "";
-          term.write('\x1b[2K\r$ ' + cmd);
+          term.write('\x1b[2K\r' + currentPrompt + cmd);
           currentCommand.current = cmd;
           return;
         }
@@ -157,11 +159,11 @@ function TerminalComponent() {
           if (historyIndex.current < history.length - 1) {
             historyIndex.current++;
             const cmd = history[historyIndex.current] || "";
-            term.write('\x1b[2K\r$ ' + cmd);
+            term.write('\x1b[2K\r' + currentPrompt + cmd);
             currentCommand.current = cmd;
           } else {
             historyIndex.current = -1;
-            term.write('\x1b[2K\r$ ');
+            term.write('\x1b[2K\r' + currentPrompt);
             currentCommand.current = "";
           }
           return;
@@ -177,8 +179,9 @@ function TerminalComponent() {
           const toExecute = currentCommand.current;
           currentCommand.current = "";
           historyIndex.current = -1;
-          if (!toExecute.trim()) {
-            term.write('\r\n$ ');
+          const currentPrompt = activeTerminalRef.current?.replState?.prompt || '$ ';
+          if (!toExecute.trim() && !activeTerminalRef.current?.replState?.isMultiLine) {
+            term.write('\r\n' + currentPrompt);
             outputLines.current += 1;
             executeCommand("");
             return;
@@ -217,7 +220,13 @@ function TerminalComponent() {
     const writeOutput = (lines) => {
       lines.forEach((line, index) => {
         const formatted = String(line).replace(/\r?\n/g, '\r\n');
-        if (index === lines.length - 1 && formatted.endsWith('$ ')) {
+        const isPromptLine = index === lines.length - 1 && (
+          formatted.endsWith('$ ') ||
+          formatted.endsWith('>>> ') ||
+          formatted.endsWith('... ') ||
+          formatted.endsWith('> ')
+        );
+        if (isPromptLine) {
           term.write(formatted);
         } else {
           term.writeln(formatted);
@@ -307,7 +316,15 @@ function TerminalComponent() {
         </div>
 
         <div className="terminal-toolbar-right">
-          {isRunning ? (
+          {activeTerminal?.replState?.active ? (
+            <span
+              className="sandbox-status-badge repl-active"
+              style={{ background: '#0e639c', color: '#fff' }}
+              title={`Active ${activeTerminal.replState.runtime.toUpperCase()} REPL. Type exit() or .exit to return.`}
+            >
+              <FaCheckCircle /> {activeTerminal.replState.runtime.toUpperCase()} REPL
+            </span>
+          ) : isRunning ? (
             <span className="sandbox-status-badge running">
               <FaSpinner className="spin-icon" /> RUNNING
             </span>
