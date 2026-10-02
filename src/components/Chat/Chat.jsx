@@ -34,6 +34,24 @@ function Chat() {
     textarea.style.height = `${Math.min(textarea.scrollHeight, 180)}px`;
   };
 
+  useEffect(() => {
+    const handleAddToChat = (e) => {
+      const targetFile = e.detail?.file;
+      if (targetFile) {
+        const snippet = targetFile.content
+          ? `\n// File: ${targetFile.name}\n\`\`\`${targetFile.language || ""}\n${targetFile.content}\n\`\`\`\n`
+          : `\n// File: ${targetFile.name}\n`;
+        setMessage((prev) => (prev ? `${prev}\n${snippet}` : snippet));
+        setTimeout(() => {
+          resizeTextarea();
+          if (textareaRef.current) textareaRef.current.focus();
+        }, 50);
+      }
+    };
+    window.addEventListener("hyperion:add-to-chat", handleAddToChat);
+    return () => window.removeEventListener("hyperion:add-to-chat", handleAddToChat);
+  }, []);
+
   const startTyping = (messageItem) => {
     const { id, text } = messageItem;
     if (typingTimers.current[id]) {

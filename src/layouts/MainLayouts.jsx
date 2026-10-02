@@ -1,5 +1,5 @@
 import "./MainLayouts.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   Panel,
@@ -57,6 +57,12 @@ function MainLayout() {
   } = useTerminal();
 
   const { openFolder } = useFile();
+
+  useEffect(() => {
+    const handleOpenChat = () => setIsChatOpen(true);
+    window.addEventListener("hyperion:open-chat", handleOpenChat);
+    return () => window.removeEventListener("hyperion:open-chat", handleOpenChat);
+  }, []);
 
   const handleSidebarClick = (id) => {
     if (sidebarActive === id && isSidebarVisible) {

@@ -4,49 +4,274 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 999;
+  z-index: 1999;
+  cursor: default;
 }
 
 .context-menu {
-  background: #252526;
-  border: 1px solid #3a3d41;
+  position: fixed;
+  background: #181818;
+  border: 1px solid #333333;
   border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  padding: 4px 0;
-  min-width: 200px;
-  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
+  padding: 6px 0;
+  min-width: 270px;
+  z-index: 2000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  animation: contextMenuFade 0.1s ease-out;
+}
+
+@keyframes contextMenuFade {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .context-menu-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   width: 100%;
-  padding: 8px 12px;
+  padding: 5px 16px;
   border: none;
   background: transparent;
-  color: #f5f5f5;
+  color: #00e676; /* Vibrant green matching screenshot */
   cursor: pointer;
-  font-size: 12px;
-  transition: 0.15s;
+  font-size: 13px;
   text-align: left;
+  transition: background 0.1s ease;
+  box-sizing: border-box;
+  position: relative;
+  outline: none;
 }
 
 .context-menu-item:hover {
-  background: #3a3d41;
-  color: #fff;
+  background: #252829;
+  color: #38ef7d;
 }
 
-.context-menu-icon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
+.context-menu-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
 }
 
-.run-icon-color {
-  color: #22c55e;
+.context-menu-shortcut {
+  margin-left: 20px;
+  font-size: 12px;
+  color: #00e676;
+  opacity: 0.85;
+  font-family: monospace, -apple-system, sans-serif;
 }
 
-.preview-icon-color {
-  color: #3b82f6;
+.context-menu-item:hover .context-menu-shortcut {
+  opacity: 1;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: #333333;
+  margin: 4px 0;
+}
+
+/* Submenu */
+.context-menu-item.has-submenu {
+  position: relative;
+}
+
+.context-submenu {
+  position: absolute;
+  left: 100%;
+  top: -4px;
+  margin-left: 2px;
+  background: #181818;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
+  padding: 6px 0;
+  min-width: 180px;
+  z-index: 2001;
+}
+
+/* Modals */
+.context-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  backdrop-filter: blur(2px);
+}
+
+.context-modal-content {
+  background: #1e1e1e;
+  border: 1px solid #3e3e42;
+  border-radius: 8px;
+  width: 620px;
+  max-width: 92vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8);
+  color: #cccccc;
+  animation: contextMenuFade 0.15s ease-out;
+}
+
+.context-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid #333333;
+  font-weight: 600;
+  font-size: 14px;
+  color: #00e676;
+}
+
+.context-modal-close {
+  background: transparent;
+  border: none;
+  color: #888888;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.context-modal-close:hover {
+  color: #ffffff;
+  background: #333333;
+}
+
+.context-modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Git History Modal Specifics */
+.history-commit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-commit-card {
+  background: #252526;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-commit-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.commit-hash {
+  background: #181818;
+  border: 1px solid #3a3d41;
+  color: #00e676;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.commit-subject {
+  font-weight: 500;
+  color: #eeeeee;
+  font-size: 13px;
+}
+
+.history-commit-bottom {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11.5px;
+  color: #888888;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 30px;
+  color: #888888;
+}
+
+/* CSV Head Table Specifics */
+.csv-head-modal {
+  width: 820px;
+}
+
+.csv-modal-body {
+  padding: 0;
+  max-height: 500px;
+}
+
+.csv-head-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  color: #cccccc;
+}
+
+.csv-head-table th,
+.csv-head-table td {
+  padding: 6px 10px;
+  border: 1px solid #333333;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.csv-head-table th {
+  background: #252526;
+  color: #00e676;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.csv-head-table tr:hover {
+  background: #282a2b;
+}
+
+.csv-head-table .row-index {
+  color: #666666;
+  font-family: monospace;
+  text-align: center;
+  width: 30px;
+}
+
+/* Toast */
+.context-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #181818;
+  border: 1px solid #00e676;
+  color: #00e676;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  z-index: 3100;
+  animation: contextMenuFade 0.2s ease-out;
 }

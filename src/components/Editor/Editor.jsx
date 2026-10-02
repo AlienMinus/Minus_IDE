@@ -350,6 +350,26 @@ function Editor() {
     );
   }
 
+  // 1b. Side-by-side Diff comparison tab
+  if (activeFile.isDiff || activeFile.type === "diff") {
+    return (
+      <div className="editor-container">
+        <DiffEditor
+          height="100%"
+          theme="vs-dark"
+          original={activeFile.originalFile?.content || ""}
+          modified={activeFile.modifiedFile?.content || ""}
+          language={activeFile.modifiedFile?.language || activeFile.originalFile?.language || "javascript"}
+          options={{
+            readOnly: false,
+            minimap: { enabled: false },
+            automaticLayout: true
+          }}
+        />
+      </div>
+    );
+  }
+
   // 2. Static HTML / React Live Sandbox Preview tab
   if (activeFile.isPreview) {
     return (
