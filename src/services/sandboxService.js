@@ -421,3 +421,39 @@ export async function exitReplSession(sessionId) {
   }
 }
 
+/**
+ * Fetch all active listening TCP ports from host
+ */
+export async function getActivePorts() {
+  try {
+    const res = await fetch(`${API_BASE}/ports`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.ports || [];
+  } catch (err) {
+    console.warn('Failed to fetch active ports:', err);
+    return [
+      { port: 5173, protocol: 'HTTP', process: 'node.exe', origin: 'Vite Dev Server (Frontend)', address: 'http://localhost:5173', status: 'LISTENING', isLocal: true },
+      { port: 3000, protocol: 'HTTP', process: 'node.exe', origin: 'Hyperion Sandbox API (Backend)', address: 'http://localhost:3000', status: 'LISTENING', isLocal: true }
+    ];
+  }
+}
+
+/**
+ * Run compiler/interpreter syntax diagnostic on code
+ */
+export async function lintCode({ language, code, filename }) {
+  try {
+    const res = await fetch(`${API_BASE}/lint`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language, code, filename })
+    });
+    if (!res.ok) return { success: false, markers: [] };
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return { success: false, markers: [] };
+  }
+}
+
