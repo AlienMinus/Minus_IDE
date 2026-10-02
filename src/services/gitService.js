@@ -5,8 +5,9 @@ export async function resolveEffectiveCwd(customCwd) {
     return customCwd;
   }
   const folderName = customCwd || "WebIDE";
+  const apiBase = typeof window !== "undefined" ? "/api/sandbox" : "http://localhost:3000/api/sandbox";
   try {
-    const res = await fetch("/api/sandbox/workspace/resolve", {
+    const res = await fetch(`${apiBase}/workspace/resolve`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ folderName })
@@ -361,12 +362,13 @@ export async function getGitLog(cwd, limit = 15) {
       .split("\n")
       .filter(Boolean)
       .map((line) => {
-        const parts = line.split("\t");
+        const clean = line.replace(/^"/, "").replace(/"$/, "");
+        const parts = clean.split("\t");
         return {
-          hash: parts[0] || "",
-          author: parts[1] || "",
-          date: parts[2] || "",
-          subject: parts.slice(3).join("\t") || ""
+          hash: (parts[0] || "").replace(/^"/, "").trim(),
+          author: (parts[1] || "").trim(),
+          date: (parts[2] || "").trim(),
+          subject: (parts.slice(3).join("\t") || "").replace(/"$/, "").trim()
         };
       });
   } catch {

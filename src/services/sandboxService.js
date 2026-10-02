@@ -3,7 +3,7 @@
  * Communicates with Hyperion Sandbox backend for executing direct codes and shell commands.
  */
 
-const API_BASE = '/api/sandbox';
+const API_BASE = typeof window !== 'undefined' ? '/api/sandbox' : 'http://localhost:3000/api/sandbox';
 
 /**
  * Detect language from filename or extension

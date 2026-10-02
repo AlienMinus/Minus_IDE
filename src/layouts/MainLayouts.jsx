@@ -103,7 +103,16 @@ function MainLayout() {
 
     // File
     { id: "file-save", category: "File", label: "Save Active File", shortcut: "Ctrl+S", action: saveActiveFile },
-    { id: "file-open-folder", category: "File", label: "Open Folder...", action: openFolder }
+    { id: "file-open-folder", category: "File", label: "Open Folder...", action: openFolder },
+
+    // Git
+    { id: "git-open", category: "Git", label: "Git: Focus on Source Control View", shortcut: "Ctrl+Shift+G", action: () => openView("git") },
+    { id: "git-commit", category: "Git", label: "Git: Commit Changes", action: () => openView("git") },
+    { id: "git-push", category: "Git", label: "Git: Push to Remote", action: () => openView("git") },
+    { id: "git-pull", category: "Git", label: "Git: Pull (Rebase / Merge)", action: () => openView("git") },
+    { id: "git-sync", category: "Git", label: "Git: Synchronize (Pull and Push)", action: () => openView("git") },
+    { id: "git-publish", category: "Git", label: "Git: Publish to GitHub", action: () => openView("git") },
+    { id: "git-branch", category: "Git", label: "Git: Switch or Create Branch...", action: () => openView("git") }
   ];
 
   const viewOnlyCommands = allCommands.filter((c) => c.category === "View" && !c.label.startsWith("Toggle"));
