@@ -1,7 +1,15 @@
-import { createContext, useState, useContext, useCallback, useRef } from "react";
+import { createContext, useState, useContext, useCallback, useRef, useEffect } from "react";
 import commandsData from "../data/commands.json";
-import { executeCode, executeCommand as executeShellCommand, getSandboxStatus, detectLanguage } from "../services/sandboxService";
+import {
+  executeCode,
+  executeCommand as executeShellCommand,
+  getSandboxStatus,
+  detectLanguage,
+  validateWorkspacePath
+} from "../services/sandboxService";
 import { EditorContext } from "./EditorContext";
+import { FileContext } from "./FileContext";
+import { getStoredWorkspaceState, saveWorkspaceState } from "../services/workspacePersistence";
 
 export const TerminalContext = createContext();
 
@@ -49,30 +57,53 @@ const DEFAULT_TASKS_JSON = JSON.stringify({
 
 export function TerminalProvider({ children }) {
     const editorCtx = useContext(EditorContext);
+    const fileCtx = useContext(FileContext);
     const activeFile = editorCtx?.activeFile;
     const files = editorCtx?.files || [];
     const openPreviewTab = editorCtx?.openPreviewTab;
     const getSelectedText = editorCtx?.getSelectedText;
     const createOrOpenFile = editorCtx?.createOrOpenFile;
 
-    const [terminals, setTerminals] = useState([
-        {
-            id: 1,
-            title: "Terminal 1",
-            cwd: "~/HyperionIDE",
-            history: [],
-            output: [
-                "\x1b[1;36m========================================================\x1b[0m",
-                "\x1b[1;36m  Hyperion IDE Execution Sandbox Terminal v2.0         \x1b[0m",
-                "\x1b[1;36m========================================================\x1b[0m",
-                "\x1b[32m✔ Sandbox Engine: Online\x1b[0m",
-                "\x1b[90mSupported Runtimes: C (GCC), Python 3.12, Node.js, Bash, React 19\x1b[0m",
-                "\x1b[90mType '\x1b[33mhelp\x1b[90m' for command list, '\x1b[33mruntimes\x1b[90m' to check compilers, or '\x1b[33mrun\x1b[90m' to execute current file.\x1b[0m",
-                "",
-                "$ "
-            ]
+    const cachedState = getStoredWorkspaceState();
+    const currentWorkspacePath = fileCtx?.persistedFolderInfo?.path || cachedState?.folderPath || null;
+
+    const [terminals, setTerminals] = useState(() => {
+        const initialCwd = currentWorkspacePath || "~/HyperionIDE";
+        return [
+            {
+                id: 1,
+                title: "Terminal 1",
+                cwd: initialCwd,
+                history: [],
+                output: [
+                    "\x1b[1;36m========================================================\x1b[0m",
+                    "\x1b[1;36m  Hyperion IDE Execution Sandbox Terminal v2.0         \x1b[0m",
+                    "\x1b[1;36m========================================================\x1b[0m",
+                    "\x1b[32m✔ Sandbox Engine: Online\x1b[0m",
+                    initialCwd && initialCwd !== "~/HyperionIDE"
+                        ? `\x1b[34m📁 Workspace Directory:\x1b[0m \x1b[1m${initialCwd}\x1b[0m`
+                        : "\x1b[90mTip: Open a folder to bind the terminal to that directory.\x1b[0m",
+                    "\x1b[90mSupported Runtimes: C (GCC), Python 3.12, Node.js, Bash, React 19\x1b[0m",
+                    "\x1b[90mType '\x1b[33mhelp\x1b[90m' for command list, '\x1b[33mruntimes\x1b[90m' to check compilers, or '\x1b[33mpwd\x1b[90m' for directory.\x1b[0m",
+                    "",
+                    "$ "
+                ]
+            }
+        ];
+    });
+
+    // Sync terminal cwd whenever workspace folder path is updated / resolved
+    useEffect(() => {
+        if (currentWorkspacePath && (currentWorkspacePath.includes(':') || currentWorkspacePath.includes('/'))) {
+            setTerminals(prev => prev.map(t => {
+                if (!t.cwd || t.cwd === "~/HyperionIDE" || t.cwd === "portfolio_v1" || !t.cwd.includes(':')) {
+                    return { ...t, cwd: currentWorkspacePath };
+                }
+                return t;
+            }));
         }
-    ]);
+    }, [currentWorkspacePath]);
+
     const [activeTerminalId, setActiveTerminalId] = useState(1);
     const [commands] = useState(commandsData);
     const [isRunning, setIsRunning] = useState(false);
@@ -87,13 +118,15 @@ export function TerminalProvider({ children }) {
 
     function createTerminal() {
         const newId = Date.now();
+        const termCwd = activeTerminal?.cwd || currentWorkspacePath || "~/HyperionIDE";
         const newTerminal = {
             id: newId,
             title: `Terminal ${terminals.length + 1}`,
-            cwd: "~/HyperionIDE",
+            cwd: termCwd,
             history: [],
             output: [
                 `Hyperion Terminal ${terminals.length + 1}`,
+                `Directory: ${termCwd}`,
                 "--------------------------------",
                 "$ "
             ]
@@ -155,13 +188,15 @@ export function TerminalProvider({ children }) {
      */
     function splitTerminal() {
         const newId = Date.now();
+        const termCwd = activeTerminal?.cwd || currentWorkspacePath || "~/HyperionIDE";
         const newTerm = {
             id: newId,
             title: `Terminal ${terminals.length + 1} (Split)`,
-            cwd: "~/HyperionIDE",
+            cwd: termCwd,
             history: [],
             output: [
                 "\x1b[36m[Split Terminal Pane]\x1b[0m",
+                `Directory: ${termCwd}`,
                 "$ "
             ]
         };
