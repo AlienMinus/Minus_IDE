@@ -17,8 +17,9 @@ import {
 import { TbMessageChatbot } from "react-icons/tb";
 
 import { fileMenu, editMenu, viewMenu, terminalMenu, helpMenu } from "../../data/menu.jsx";
-import { getLanguageFromFileName, readFileContent } from "../../services/fileService";
+import { getLanguageFromFileName, readFileContent, flattenFiles } from "../../services/fileService";
 import { getRecentWorkspaces, clearRecentWorkspaces } from "../../services/workspacePersistence";
+import { cloneRepository, getRepoRemoteUrl } from "../../services/gitService";
 
 function Navbar({ isChatOpen, toggleChat }) {
     const fileRef = useRef(null);
