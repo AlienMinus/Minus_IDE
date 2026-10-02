@@ -448,6 +448,126 @@ export function FileProvider({ children }) {
     }
   }
 
+  async function deleteFile(file) {
+    if (!file) return false;
+    const fileId = typeof file === "string" ? file : file.id;
+    const fileName = file.name || fileId;
+    const fullPath = file.path
+      ? (persistedFolderInfo?.path && !file.path.includes(":") ? `${persistedFolderInfo.path}/${file.path}` : file.path)
+      : null;
+
+    if (fullPath) {
+      try {
+        await fetch("/api/sandbox/workspace/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: fullPath })
+        });
+      } catch {}
+    }
+
+    if (workspaceHandle && file.handle) {
+      try {
+        const findParentHandle = (items) => {
+          for (const item of items) {
+            if (item.children) {
+              if (item.children.some((c) => c.id === fileId || c.name === fileName)) {
+                return item.handle || workspaceHandle;
+              }
+              const found = findParentHandle(item.children);
+              if (found) return found;
+            }
+          }
+          return workspaceHandle;
+        };
+        const parentHandle = findParentHandle(workspaceTree);
+        if (parentHandle?.removeEntry) {
+          await parentHandle.removeEntry(fileName, { recursive: false });
+        }
+      } catch (err) {
+        console.warn("removeEntry failed:", err);
+      }
+    }
+
+    const removeNode = (nodes) => {
+      return nodes
+        .filter((n) => n.id !== fileId && n.name !== fileName && n.path !== file.path)
+        .map((n) => {
+          if (n.children) {
+            return { ...n, children: removeNode(n.children) };
+          }
+          return n;
+        });
+    };
+
+    setWorkspaceTree((prev) => {
+      const updated = removeNode(prev);
+      setFiles(flattenFiles(updated));
+      saveWorkspaceState({
+        folderName: persistedFolderInfo?.name || "Workspace",
+        folderPath: persistedFolderInfo?.path || "",
+        workspaceTree: updated
+      });
+      return updated;
+    });
+
+    return true;
+  }
+
+  async function renameFile(file, newName) {
+    if (!file || !newName || !newName.trim()) return false;
+    const trimmed = newName.trim();
+    if (file.name === trimmed) return true;
+
+    const fileId = file.id;
+    const oldPath = file.path || file.name;
+    const newPath = oldPath.includes("/")
+      ? oldPath.substring(0, oldPath.lastIndexOf("/") + 1) + trimmed
+      : (oldPath.includes("\\") ? oldPath.substring(0, oldPath.lastIndexOf("\\") + 1) + trimmed : trimmed);
+
+    const fullOldPath = persistedFolderInfo?.path && !oldPath.includes(":") ? `${persistedFolderInfo.path}/${oldPath}` : oldPath;
+    const fullNewPath = persistedFolderInfo?.path && !newPath.includes(":") ? `${persistedFolderInfo.path}/${newPath}` : newPath;
+
+    if (fullOldPath && fullNewPath) {
+      try {
+        await fetch("/api/sandbox/workspace/rename", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ oldPath: fullOldPath, newPath: fullNewPath })
+        });
+      } catch {}
+    }
+
+    const updateNode = (nodes) => {
+      return nodes.map((n) => {
+        if (n.id === fileId || n.name === file.name || n.path === oldPath) {
+          return {
+            ...n,
+            name: trimmed,
+            path: newPath
+          };
+        }
+        if (n.children) {
+          return { ...n, children: updateNode(n.children) };
+        }
+        return n;
+      });
+    };
+
+    setWorkspaceTree((prev) => {
+      const updated = updateNode(prev);
+      setFiles(flattenFiles(updated));
+      saveWorkspaceState({
+        folderName: persistedFolderInfo?.name || "Workspace",
+        folderPath: persistedFolderInfo?.path || "",
+        workspaceTree: updated
+      });
+      return updated;
+    });
+
+    return true;
+  }
+
   const value = useMemo(
     () => ({
       workspaceTree,
@@ -460,6 +580,8 @@ export function FileProvider({ children }) {
       refreshWorkspace,
       createFile,
       createFolder,
+      deleteFile,
+      renameFile,
       loadFileContent,
       saveFile,
       needsPermission,
