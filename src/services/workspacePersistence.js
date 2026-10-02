@@ -9,6 +9,49 @@ const DB_VERSION = 1;
 const STORE_NAME = "workspace_handles";
 const HANDLE_KEY = "last_opened_directory";
 const STATE_KEY = "hyperion_saved_workspace_state";
+const RECENTS_KEY = "hyperion_recent_workspaces";
+
+/**
+ * Record a path or name to recently opened workspaces
+ */
+export function recordRecentWorkspace(workspacePathOrName) {
+  if (!workspacePathOrName || typeof workspacePathOrName !== "string") return;
+  try {
+    const raw = localStorage.getItem(RECENTS_KEY);
+    let list = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(list)) list = [];
+    list = [workspacePathOrName, ...list.filter((item) => item !== workspacePathOrName)].slice(0, 15);
+    localStorage.setItem(RECENTS_KEY, JSON.stringify(list));
+  } catch (err) {
+    console.warn("Failed to record recent workspace:", err);
+  }
+}
+
+/**
+ * Get list of recently opened workspace paths
+ */
+export function getRecentWorkspaces() {
+  try {
+    const raw = localStorage.getItem(RECENTS_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Clear recently opened workspaces
+ */
+export function clearRecentWorkspaces() {
+  try {
+    localStorage.removeItem(RECENTS_KEY);
+  } catch (err) {
+    console.warn("Failed to clear recent workspaces:", err);
+  }
+}
+
 
 /**
  * Open IndexedDB database
