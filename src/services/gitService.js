@@ -375,3 +375,30 @@ export async function getGitLog(cwd, limit = 15) {
     return [];
   }
 }
+
+/**
+ * Clone a Git repository
+ */
+export async function cloneRepository(repoUrl, targetDir = null, parentCwd = null) {
+  const effectiveCwd = await resolveEffectiveCwd(parentCwd);
+  const cmd = targetDir ? `git clone "${repoUrl}" "${targetDir}"` : `git clone "${repoUrl}"`;
+  return await executeCommand(cmd, { cwd: effectiveCwd, timeoutMs: 120000 });
+}
+
+/**
+ * Get current repository remote URL
+ */
+export async function getRepoRemoteUrl(cwd) {
+  try {
+    const res = await runGit("git remote get-url origin", cwd);
+    if (res.success && res.stdout.trim()) {
+      return res.stdout.trim();
+    }
+    const remotes = await getRemotes(cwd);
+    if (remotes.length > 0) {
+      return remotes[0].fetchUrl || remotes[0].pushUrl || "";
+    }
+  } catch {}
+  return "";
+}
+
