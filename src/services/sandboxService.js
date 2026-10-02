@@ -183,6 +183,73 @@ export async function executeCommand(command, { cwd, virtualFiles = [], timeoutM
 }
 
 /**
+ * Stream Direct Shell Command with chunk-by-chunk callbacks and abort support
+ */
+export async function streamShellCommand({
+  command,
+  cwd,
+  virtualFiles = [],
+  timeoutMs = 0,
+  onChunk,
+  onExit,
+  signal
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        command,
+        cwd,
+        virtualFiles: virtualFiles.map(f => ({ path: f.path || f.name, name: f.name, content: f.content || '' })),
+        timeoutMs
+      }),
+      signal
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      onChunk?.(`\r\n\x1b[31m[Sandbox Error ${res.status}: ${errText}]\x1b[0m\r\n`);
+      onExit?.(1);
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        try {
+          const payload = JSON.parse(trimmed.slice(6));
+          if (payload.type === 'output' && payload.data) {
+            onChunk?.(payload.data);
+          } else if (payload.type === 'exit') {
+            onExit?.(payload.code);
+          }
+        } catch {}
+      }
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      onChunk?.('\r\n\x1b[33m[Process terminated by user]\x1b[0m\r\n');
+    } else {
+      onChunk?.(`\r\n\x1b[31m[Connection error: ${err.message}]\x1b[0m\r\n`);
+    }
+    onExit?.(1);
+  }
+}
+
+/**
  * Fallback browser execution for JavaScript
  */
 function executeBrowserJs(code) {
