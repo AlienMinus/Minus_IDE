@@ -304,107 +304,109 @@ function TerminalComponent({ hideToolbar = false }) {
 
   return (
     <div className="terminal-container">
-      <div className="terminal-toolbar">
-        <div className="terminal-toolbar-left">
-          <div className="terminal-tabs-header">
-            {terminals.map(t => (
-              <div
-                key={t.id}
-                className={`terminal-tab-item ${activeTerminal?.id === t.id ? 'active' : ''}`}
-                onClick={() => setActiveTerminal(t)}
-              >
-                <span>{t.title}</span>
-                <span
-                  className="terminal-tab-kill"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    killTerminal(t.id);
-                  }}
-                  title="Kill Terminal"
+      {!hideToolbar && (
+        <div className="terminal-toolbar">
+          <div className="terminal-toolbar-left">
+            <div className="terminal-tabs-header">
+              {terminals.map(t => (
+                <div
+                  key={t.id}
+                  className={`terminal-tab-item ${activeTerminal?.id === t.id ? 'active' : ''}`}
+                  onClick={() => setActiveTerminal(t)}
                 >
-                  <FaTimes />
+                  <span>{t.title}</span>
+                  <span
+                    className="terminal-tab-kill"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      killTerminal(t.id);
+                    }}
+                    title="Kill Terminal"
+                  >
+                    <FaTimes />
+                  </span>
+                </div>
+              ))}
+              <button className="terminal-add-btn" onClick={createTerminal} title="New Terminal (Ctrl+Shift+`)">
+                <FaPlus />
+              </button>
+              {activeTerminal?.cwd && (
+                <span className="terminal-cwd-badge" title={`Working Directory: ${activeTerminal.cwd}`}>
+                  📁 {activeTerminal.cwd}
                 </span>
-              </div>
-            ))}
-            <button className="terminal-add-btn" onClick={createTerminal} title="New Terminal (Ctrl+Shift+`)">
-              <FaPlus />
-            </button>
-            {activeTerminal?.cwd && (
-              <span className="terminal-cwd-badge" title={`Working Directory: ${activeTerminal.cwd}`}>
-                📁 {activeTerminal.cwd}
+              )}
+            </div>
+          </div>
+
+          <div className="terminal-toolbar-right">
+            {activeTerminal?.replState?.active ? (
+              <span
+                className="sandbox-status-badge repl-active"
+                style={{ background: '#0e639c', color: '#fff' }}
+                title={`Active ${activeTerminal.replState.runtime.toUpperCase()} REPL. Type exit() or .exit to return.`}
+              >
+                <FaCheckCircle /> {activeTerminal.replState.runtime.toUpperCase()} REPL
+              </span>
+            ) : isRunning ? (
+              <span className="sandbox-status-badge running">
+                <FaSpinner className="spin-icon" /> RUNNING
+              </span>
+            ) : (
+              <span className="sandbox-status-badge active" title="MinGW GCC, Python 3.12, Node.js, Bash & React ready">
+                <FaCheckCircle /> SANDBOX ONLINE
               </span>
             )}
+
+            <button
+              className="term-action-btn run-action-btn"
+              onClick={() => runActiveFile()}
+              disabled={isRunning}
+              title="Run Active File (F5)"
+              aria-label="Run Active File"
+            >
+              <FaPlay className="action-icon" />
+            </button>
+
+            {isRunning && (
+              <button
+                className="term-action-btn stop-action-btn"
+                onClick={terminateTask}
+                title="Terminate Running Process (Ctrl+C)"
+                aria-label="Terminate Process"
+              >
+                <FaStop className="action-icon" />
+              </button>
+            )}
+
+            <button
+              className="term-action-btn"
+              onClick={splitTerminal}
+              title="Split Terminal Side by Side (Ctrl+Shift+5)"
+              aria-label="Split Terminal"
+            >
+              <FaColumns className="action-icon" />
+            </button>
+
+            <button
+              className="term-action-btn kill-btn"
+              onClick={() => killTerminal(activeTerminal?.id)}
+              title="Kill Terminal Session"
+              aria-label="Kill Terminal"
+            >
+              <FaTrashAlt className="action-icon" />
+            </button>
+
+            <button
+              className="term-action-btn"
+              onClick={() => executeCommand('clear')}
+              title="Clear Terminal Screen (Ctrl+L)"
+              aria-label="Clear Terminal Screen"
+            >
+              <FaTrash className="action-icon" />
+            </button>
           </div>
         </div>
-
-        <div className="terminal-toolbar-right">
-          {activeTerminal?.replState?.active ? (
-            <span
-              className="sandbox-status-badge repl-active"
-              style={{ background: '#0e639c', color: '#fff' }}
-              title={`Active ${activeTerminal.replState.runtime.toUpperCase()} REPL. Type exit() or .exit to return.`}
-            >
-              <FaCheckCircle /> {activeTerminal.replState.runtime.toUpperCase()} REPL
-            </span>
-          ) : isRunning ? (
-            <span className="sandbox-status-badge running">
-              <FaSpinner className="spin-icon" /> RUNNING
-            </span>
-          ) : (
-            <span className="sandbox-status-badge active" title="MinGW GCC, Python 3.12, Node.js, Bash & React ready">
-              <FaCheckCircle /> SANDBOX ONLINE
-            </span>
-          )}
-
-          <button
-            className="term-action-btn run-action-btn"
-            onClick={() => runActiveFile()}
-            disabled={isRunning}
-            title="Run Active File (F5)"
-            aria-label="Run Active File"
-          >
-            <FaPlay className="action-icon" />
-          </button>
-
-          {isRunning && (
-            <button
-              className="term-action-btn stop-action-btn"
-              onClick={terminateTask}
-              title="Terminate Running Process (Ctrl+C)"
-              aria-label="Terminate Process"
-            >
-              <FaStop className="action-icon" />
-            </button>
-          )}
-
-          <button
-            className="term-action-btn"
-            onClick={splitTerminal}
-            title="Split Terminal Side by Side (Ctrl+Shift+5)"
-            aria-label="Split Terminal"
-          >
-            <FaColumns className="action-icon" />
-          </button>
-
-          <button
-            className="term-action-btn kill-btn"
-            onClick={() => killTerminal(activeTerminal?.id)}
-            title="Kill Terminal Session"
-            aria-label="Kill Terminal"
-          >
-            <FaTrashAlt className="action-icon" />
-          </button>
-
-          <button
-            className="term-action-btn"
-            onClick={() => executeCommand('clear')}
-            title="Clear Terminal Screen (Ctrl+L)"
-            aria-label="Clear Terminal Screen"
-          >
-            <FaTrash className="action-icon" />
-          </button>
-        </div>
-      </div>
+      )}
 
       <div className={`terminal-body-split-wrapper ${isSplit ? 'split' : ''}`}>
         <div ref={terminalRef} className="terminal main-pane" />
