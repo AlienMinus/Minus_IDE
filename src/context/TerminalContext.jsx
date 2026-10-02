@@ -732,12 +732,13 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        if (cmd === "pwd") {
+        if (cmd === "pwd" || cmd === "cwd") {
             const currentCwd = activeTerminal?.cwd || currentWorkspacePath || "~/HyperionIDE";
+            const isPhysical = currentCwd && (currentCwd.includes(':') || currentCwd.startsWith('/'));
             try {
                 const res = await executeShellCommand("pwd", {
                     cwd: currentCwd,
-                    virtualFiles: files
+                    virtualFiles: isPhysical ? undefined : files
                 });
                 const outLines = [];
                 if (res.cwd) {
@@ -760,9 +761,10 @@ export function TerminalProvider({ children }) {
 
         try {
             const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
+            const isPhysical = targetCwd && (targetCwd.includes(':') || targetCwd.startsWith('/'));
             const res = await executeShellCommand(trimmed, {
                 cwd: targetCwd,
-                virtualFiles: files
+                virtualFiles: isPhysical ? undefined : files
             });
 
             const outLines = [];

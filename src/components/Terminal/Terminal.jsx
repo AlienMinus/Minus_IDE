@@ -41,9 +41,13 @@ function TerminalComponent() {
     setActiveTerminal
   } = useTerminal();
 
+  const activeTerminalRef = useRef(activeTerminal);
+  activeTerminalRef.current = activeTerminal;
+
   const currentCommand = useRef("");
   const outputLines = useRef(0);
-  const historyIndex = useRef(0);
+  const historyIndex = useRef(-1);
+  const lastTerminalId = useRef(activeTerminal?.id);
 
   // Initialize main xterm
   useEffect(() => {
@@ -101,13 +105,14 @@ function TerminalComponent() {
       // Keyboard navigation and shortcuts
       terminal.onKey(({ domEvent }) => {
         const term = xtermRef.current;
-        if (!term || !activeTerminal) return;
+        if (!term) return;
 
         // Ctrl+C (Interrupt / Cancel)
         if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c') {
           domEvent.preventDefault();
           term.write('^C\r\n$ ');
           currentCommand.current = "";
+          historyIndex.current = -1;
           terminateTask();
           return;
         }
@@ -117,32 +122,49 @@ function TerminalComponent() {
           domEvent.preventDefault();
           executeCommand('clear');
           currentCommand.current = "";
+          historyIndex.current = -1;
           return;
         }
 
-        // Arrow Up
+        // Arrow Up (Recall previous commands)
         if (domEvent.key === 'ArrowUp') {
           domEvent.preventDefault();
-          if (activeTerminal.history && historyIndex.current > 0) {
-            historyIndex.current--;
-            const command = activeTerminal.history[historyIndex.current] || "";
-            term.write('\x1b[2K\r$ ' + command);
-            currentCommand.current = command;
+          const history = activeTerminalRef.current?.history || [];
+          if (history.length === 0) return;
+
+          let newIdx;
+          if (historyIndex.current === -1) {
+            newIdx = history.length - 1;
+          } else if (historyIndex.current > 0) {
+            newIdx = historyIndex.current - 1;
+          } else {
+            newIdx = 0;
           }
+
+          historyIndex.current = newIdx;
+          const cmd = history[newIdx] || "";
+          term.write('\x1b[2K\r$ ' + cmd);
+          currentCommand.current = cmd;
+          return;
         }
-        // Arrow Down
+
+        // Arrow Down (Recall next commands)
         else if (domEvent.key === 'ArrowDown') {
           domEvent.preventDefault();
-          if (activeTerminal.history && historyIndex.current < activeTerminal.history.length - 1) {
+          const history = activeTerminalRef.current?.history || [];
+          if (history.length === 0 || historyIndex.current === -1) return;
+
+          if (historyIndex.current < history.length - 1) {
             historyIndex.current++;
-            const command = activeTerminal.history[historyIndex.current] || "";
-            term.write('\x1b[2K\r$ ' + command);
-            currentCommand.current = command;
-          } else if (activeTerminal.history) {
-            historyIndex.current = activeTerminal.history.length;
+            const cmd = history[historyIndex.current] || "";
+            term.write('\x1b[2K\r$ ' + cmd);
+            currentCommand.current = cmd;
+          } else {
+            historyIndex.current = -1;
             term.write('\x1b[2K\r$ ');
             currentCommand.current = "";
           }
+          return;
         }
       });
 
@@ -152,13 +174,19 @@ function TerminalComponent() {
         if (!term) return;
 
         if (data === "\r") {
-          term.write('\r\n');
           const toExecute = currentCommand.current;
           currentCommand.current = "";
-          executeCommand(toExecute);
-          if (activeTerminal?.history) {
-            historyIndex.current = activeTerminal.history.length + 1;
+          historyIndex.current = -1;
+          if (!toExecute.trim()) {
+            term.write('\r\n$ ');
+            outputLines.current += 1;
+            executeCommand("");
+            return;
           }
+          term.write('\r\n');
+          // Advance outputLines by 1 so the command echo in activeTerminal.output is not printed twice!
+          outputLines.current += 1;
+          executeCommand(toExecute);
         } else if (data === "\x7f" || data === "\b") {
           if (currentCommand.current.length > 0) {
             term.write("\b \b");
@@ -166,7 +194,7 @@ function TerminalComponent() {
           }
         } else if (data === "\t") {
           const partial = currentCommand.current.toLowerCase();
-          const suggestions = ['run', 'runtimes', 'c', 'python', 'node', 'bash', 'react', 'gcc', 'ls', 'cat', 'clear', 'help', 'kill'];
+          const suggestions = ['run', 'runtimes', 'c', 'python', 'node', 'bash', 'react', 'gcc', 'ls', 'cat', 'clear', 'help', 'kill', 'pwd', 'cd'];
           const match = suggestions.find(s => s.startsWith(partial) && s !== partial);
           if (match) {
             const added = match.slice(partial.length);
@@ -179,7 +207,7 @@ function TerminalComponent() {
         }
       });
     }
-  }, [executeCommand, activeTerminal, terminateTask]);
+  }, [executeCommand, terminateTask]);
 
   // Synchronize terminal output buffer
   useEffect(() => {
@@ -196,6 +224,14 @@ function TerminalComponent() {
         }
       });
     };
+
+    if (lastTerminalId.current !== activeTerminal.id) {
+      lastTerminalId.current = activeTerminal.id;
+      term.clear();
+      writeOutput(activeTerminal.output);
+      outputLines.current = activeTerminal.output.length;
+      return;
+    }
 
     if (activeTerminal.output.length > outputLines.current) {
       const newLines = activeTerminal.output.slice(outputLines.current);
