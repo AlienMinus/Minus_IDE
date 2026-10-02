@@ -226,3 +226,71 @@ function executeBrowserJs(code) {
     executionTimeMs: Date.now() - startTime
   };
 }
+
+/**
+ * Ask backend to resolve the real host OS path for an opened folder
+ */
+export async function resolveWorkspacePath({ folderName, sampleFiles = [] }) {
+  try {
+    const res = await fetch(`${API_BASE}/workspace/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderName, sampleFiles })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.success ? data.path : null;
+  } catch (err) {
+    console.warn('Workspace path resolution failed:', err);
+    return null;
+  }
+}
+
+/**
+ * Validate whether a path exists on host OS
+ */
+export async function validateWorkspacePath(targetPath) {
+  try {
+    const res = await fetch(`${API_BASE}/workspace/validate?path=${encodeURIComponent(targetPath)}`);
+    if (!res.ok) return { exists: false };
+    return await res.json();
+  } catch (err) {
+    return { exists: false };
+  }
+}
+
+/**
+ * Trigger native folder dialog from host OS
+ */
+export async function pickNativeFolder() {
+  try {
+    const res = await fetch(`${API_BASE}/workspace/pick`, {
+      method: 'POST'
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.success ? data.path : null;
+  } catch (err) {
+    console.warn('Native folder picker failed:', err);
+    return null;
+  }
+}
+
+/**
+ * Load directory tree from host OS path
+ */
+export async function fetchWorkspaceTree(dirPath) {
+  try {
+    const res = await fetch(`${API_BASE}/workspace/tree`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: dirPath })
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.tree || [];
+  } catch (err) {
+    console.warn('Failed to load workspace tree from backend:', err);
+    return [];
+  }
+}

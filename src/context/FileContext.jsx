@@ -8,6 +8,11 @@ import {
   getStoredWorkspaceState,
   clearWorkspaceState
 } from "../services/workspacePersistence";
+import {
+  resolveWorkspacePath,
+  fetchWorkspaceTree,
+  validateWorkspacePath
+} from "../services/sandboxService";
 
 export const FileContext = createContext(null);
 
@@ -28,10 +33,29 @@ export function FileProvider({ children }) {
       if (cached && cached.workspaceTree && cached.workspaceTree.length > 0) {
         setWorkspaceTree(cached.workspaceTree);
         setFiles(flattenFiles(cached.workspaceTree));
+        const hasRealDiskPath =
+          cached.folderPath &&
+          cached.folderPath !== cached.folderName &&
+          (cached.folderPath.includes(":") || cached.folderPath.includes("/"));
+
         setPersistedFolderInfo({
           name: cached.folderName || cached.workspaceTree[0]?.name || "Workspace",
-          path: cached.folderPath || ""
+          path: hasRealDiskPath ? cached.folderPath : (cached.folderPath || "")
         });
+
+        // If path was only a folder name without drive/root, resolve host path
+        if (!hasRealDiskPath && (cached.folderName || cached.workspaceTree[0]?.name)) {
+          const topSamples = (cached.workspaceTree[0]?.children || []).map((c) => c.name);
+          resolveWorkspacePath({
+            folderName: cached.folderName || cached.workspaceTree[0]?.name,
+            sampleFiles: topSamples
+          }).then((resolved) => {
+            if (resolved && !isCancelled) {
+              setPersistedFolderInfo((prev) => ({ ...prev, path: resolved }));
+              saveWorkspaceState({ folderPath: resolved });
+            }
+          });
+        }
       }
 
       // 2. Query stored handle from IndexedDB
@@ -55,6 +79,14 @@ export function FileProvider({ children }) {
               children
             }
           ];
+
+          // Resolve actual OS disk path
+          const topLevelFiles = children.map((c) => c.name);
+          const resolvedDiskPath =
+            (await resolveWorkspacePath({ folderName: handle.name, sampleFiles: topLevelFiles })) ||
+            cached?.folderPath ||
+            handle.name;
+
           if (!isCancelled) {
             setWorkspaceTree(tree);
             const flat = flattenFiles(tree);
@@ -62,12 +94,12 @@ export function FileProvider({ children }) {
             setNeedsPermission(false);
             setPersistedFolderInfo({
               name: handle.name,
-              path: handle.name
+              path: resolvedDiskPath
             });
             // Update cached snapshot
             saveWorkspaceState({
               folderName: handle.name,
-              folderPath: handle.name,
+              folderPath: resolvedDiskPath,
               workspaceTree: tree
             });
           }
@@ -108,6 +140,12 @@ export function FileProvider({ children }) {
         }
       ];
 
+      // Resolve host OS path (e.g. E:\Portfolio\portfolio_v1)
+      const topLevelFiles = children.map((c) => c.name);
+      const resolvedDiskPath =
+        (await resolveWorkspacePath({ folderName: dirHandle.name, sampleFiles: topLevelFiles })) ||
+        dirHandle.name;
+
       setWorkspaceHandle(dirHandle);
       setWorkspaceTree(tree);
       const flat = flattenFiles(tree);
@@ -115,14 +153,14 @@ export function FileProvider({ children }) {
       setNeedsPermission(false);
       setPersistedFolderInfo({
         name: dirHandle.name,
-        path: dirHandle.name
+        path: resolvedDiskPath
       });
 
       // Persist handle in IndexedDB & snapshot in LocalStorage
       await saveDirectoryHandle(dirHandle);
       saveWorkspaceState({
         folderName: dirHandle.name,
-        folderPath: dirHandle.name,
+        folderPath: resolvedDiskPath,
         workspaceTree: tree
       });
     } catch (error) {
@@ -130,6 +168,58 @@ export function FileProvider({ children }) {
         console.error("Failed to open folder:", error);
       }
     }
+  }
+
+  async function openFolderByPath(targetPath) {
+    if (!targetPath) return;
+    try {
+      const valid = await validateWorkspacePath(targetPath);
+      if (!valid.exists) {
+        alert(`Directory not found: ${targetPath}`);
+        return false;
+      }
+
+      const folderName = valid.name || targetPath.split(/[\\/]/).pop() || "Workspace";
+      const treeNodes = await fetchWorkspaceTree(valid.path);
+      const tree = [
+        {
+          id: valid.path,
+          name: folderName,
+          type: "folder",
+          path: valid.path,
+          children: treeNodes
+        }
+      ];
+
+      setWorkspaceHandle(null);
+      setWorkspaceTree(tree);
+      const flat = flattenFiles(tree);
+      setFiles(flat);
+      setNeedsPermission(false);
+      setPersistedFolderInfo({
+        name: folderName,
+        path: valid.path
+      });
+
+      saveWorkspaceState({
+        folderName,
+        folderPath: valid.path,
+        workspaceTree: tree
+      });
+      return true;
+    } catch (err) {
+      console.error("Failed to open folder by path:", err);
+      return false;
+    }
+  }
+
+  function setWorkspacePath(newPath) {
+    if (!newPath) return;
+    setPersistedFolderInfo((prev) => ({
+      name: prev?.name || newPath.split(/[\\/]/).pop(),
+      path: newPath
+    }));
+    saveWorkspaceState({ folderPath: newPath });
   }
 
   async function reconnectFolder() {
@@ -299,6 +389,8 @@ export function FileProvider({ children }) {
       workspaceHandle,
       files,
       openFolder,
+      openFolderByPath,
+      setWorkspacePath,
       reconnectFolder,
       refreshWorkspace,
       createFile,
