@@ -9,7 +9,8 @@ import {
   PptxPreview,
   XlsxPreview,
   CsvPreview,
-  MarkdownPreview
+  MarkdownPreview,
+  ImagePreview
 } from "../Previews";
 import { getFileExtension } from "../../utils/fileIcons";
 import { checkClientSyntax, getCodeDiagnostics } from "../../utils/codeDiagnostics";
@@ -122,7 +123,7 @@ function Editor() {
       if (!previewUrl) {
         return <div className="editor-binary-state">Loading image...</div>;
       }
-      return <img alt={activeFile.name} src={previewUrl} className="image-preview" />;
+      return <ImagePreview src={previewUrl} fileName={activeFile.name} />;
     }
 
     if (extension === "mp3" || extension === "wav") {
