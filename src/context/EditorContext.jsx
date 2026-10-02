@@ -523,6 +523,60 @@ export function EditorProvider({ children }) {
     setActiveFile(previewTab);
   }
 
+  const [comparedFile, setComparedFile] = useState(null);
+
+  function openDiffTab(originalFile, modifiedFile) {
+    if (!originalFile || !modifiedFile) return;
+    const tabId = `diff-${originalFile.id || originalFile.name}-${modifiedFile.id || modifiedFile.name}`;
+    const name = `${originalFile.name} ↔ ${modifiedFile.name}`;
+
+    const diffTab = {
+      id: tabId,
+      name,
+      type: "diff",
+      isDiff: true,
+      originalFile,
+      modifiedFile
+    };
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      setActiveFile(diffTab);
+      return [...prev, diffTab];
+    });
+  }
+
+  function renameOpenFile(oldId, newName, newPath) {
+    setOpenFiles((prev) =>
+      prev.map((f) => {
+        if (f.id === oldId || f.name === oldId || f.path === oldId) {
+          return {
+            ...f,
+            name: newName,
+            path: newPath || f.path,
+            language: getLanguageFromFileName(newName)
+          };
+        }
+        return f;
+      })
+    );
+    setActiveFile((prev) => {
+      if (prev && (prev.id === oldId || prev.name === oldId || prev.path === oldId)) {
+        return {
+          ...prev,
+          name: newName,
+          path: newPath || prev.path,
+          language: getLanguageFromFileName(newName)
+        };
+      }
+      return prev;
+    });
+  }
+
   function openLiveBrowserTab(targetUrl, tabTitle) {
     if (!targetUrl) return null;
     let cleanUrl = targetUrl.trim();
