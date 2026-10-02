@@ -5,7 +5,10 @@ import {
   executeCommand as executeShellCommand,
   getSandboxStatus,
   detectLanguage,
-  validateWorkspacePath
+  validateWorkspacePath,
+  startReplSession,
+  evalReplCode,
+  exitReplSession
 } from "../services/sandboxService";
 import { EditorContext } from "./EditorContext";
 import { FileContext } from "./FileContext";
@@ -141,6 +144,10 @@ export function TerminalProvider({ children }) {
      */
     function killTerminal(idToKill) {
         const targetId = idToKill || activeTerminalId;
+        const termToKill = terminals.find(t => t.id === targetId);
+        if (termToKill?.replState?.active) {
+            exitReplSession(termToKill.replState.sessionId).catch(() => {});
+        }
         setIsRunning(false);
 
         setTerminals(prev => {
@@ -176,6 +183,19 @@ export function TerminalProvider({ children }) {
      * Terminate currently running task / process
      */
     function terminateTask() {
+        if (activeTerminal?.replState?.active) {
+            exitReplSession(activeTerminal.replState.sessionId).catch(() => {});
+            setTerminals(prev => prev.map(t => {
+                if (t.id !== activeTerminalId) return t;
+                return {
+                    ...t,
+                    replState: null,
+                    output: [...t.output, "\x1b[90m[KeyboardInterrupt: Exited REPL]\x1b[0m", "$ "]
+                };
+            }));
+            setIsRunning(false);
+            return;
+        }
         setIsRunning(false);
         appendToTerminal([
             "\x1b[31m[Terminated] Running task was terminated by user.\x1b[0m",
@@ -513,6 +533,102 @@ export function TerminalProvider({ children }) {
         if (!activeTerminal) return;
 
         const trimmed = command.trim();
+
+        // 1. If currently in an active REPL session, route input directly to REPL engine
+        if (activeTerminal?.replState?.active) {
+            const repl = activeTerminal.replState;
+            const currentPrompt = repl.prompt || (repl.runtime === 'node' ? '> ' : '>>> ');
+            const commandWithPrompt = `${currentPrompt}${command}`;
+            const newHistory = [...activeTerminal.history, command];
+
+            // If empty enter on single-line prompt, just reprint prompt
+            if (!trimmed && !repl.isMultiLine) {
+                setTerminals(prev => prev.map(t => {
+                    if (t.id !== activeTerminalId) return t;
+                    return {
+                        ...t,
+                        output: [...t.output, currentPrompt]
+                    };
+                }));
+                return;
+            }
+
+            setTerminals(prev => prev.map(t => {
+                if (t.id !== activeTerminalId) return t;
+                return {
+                    ...t,
+                    history: newHistory,
+                    output: [...t.output, commandWithPrompt]
+                };
+            }));
+
+            // Handle user typing exit
+            const isExit = trimmed === 'exit()' || trimmed === 'quit()' || trimmed === '.exit' ||
+                (trimmed === 'exit' && (repl.runtime === 'python' || repl.runtime === 'node'));
+
+            if (isExit) {
+                exitReplSession(repl.sessionId).catch(() => {});
+                setTerminals(prev => prev.map(t => {
+                    if (t.id !== activeTerminalId) return t;
+                    return {
+                        ...t,
+                        replState: null,
+                        output: [...t.output, `\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, "$ "]
+                    };
+                }));
+                return;
+            }
+
+            setIsRunning(true);
+            try {
+                const res = await evalReplCode({
+                    sessionId: repl.sessionId,
+                    code: command
+                });
+
+                if (res.exited) {
+                    setTerminals(prev => prev.map(t => {
+                        if (t.id !== activeTerminalId) return t;
+                        const outLines = [];
+                        if (res.output) {
+                            outLines.push(...res.output.replace(/\r\n/g, '\n').split('\n'));
+                        }
+                        outLines.push(`\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, "$ ");
+                        return {
+                            ...t,
+                            replState: null,
+                            output: [...t.output, ...outLines]
+                        };
+                    }));
+                } else {
+                    const outLines = [];
+                    if (res.output) {
+                        outLines.push(...res.output.replace(/\r\n/g, '\n').split('\n'));
+                    }
+                    const nextPrompt = res.prompt || (repl.runtime === 'node' ? '> ' : '>>> ');
+                    outLines.push(nextPrompt);
+
+                    setTerminals(prev => prev.map(t => {
+                        if (t.id !== activeTerminalId) return t;
+                        return {
+                            ...t,
+                            replState: {
+                                ...t.replState,
+                                prompt: nextPrompt,
+                                isMultiLine: !!res.isMultiLine
+                            },
+                            output: [...t.output, ...outLines]
+                        };
+                    }));
+                }
+            } catch (err) {
+                appendToTerminal([`\x1b[31mREPL evaluation error: ${err.message}\x1b[0m`, currentPrompt]);
+            } finally {
+                setIsRunning(false);
+            }
+            return;
+        }
+
         const commandWithPrompt = `$ ${command}`;
         const newHistory = [...activeTerminal.history, command];
 
@@ -541,12 +657,53 @@ export function TerminalProvider({ children }) {
         const argsStr = parts.slice(1).join(" ");
 
         if (cmd === "clear") {
-            setTerminalOutput(["$ "]);
+            const p = activeTerminal?.replState?.prompt || "$ ";
+            setTerminalOutput([p]);
             return;
         }
 
         if (cmd === "kill" || cmd === "exit") {
             killTerminal(activeTerminalId);
+            return;
+        }
+
+        // 2. Initiate REPL if typing python or node with no file/code arguments
+        const isPythonRepl = (cmd === "python" || cmd === "python3" || cmd === "py") && (!argsStr || argsStr === "-i");
+        const isNodeRepl = (cmd === "node" || cmd === "nodejs") && (!argsStr || argsStr === "-i");
+
+        if (isPythonRepl || isNodeRepl) {
+            const runtime = isPythonRepl ? 'python' : 'node';
+            const sessionId = `term-${activeTerminalId}`;
+            setIsRunning(true);
+            try {
+                const session = await startReplSession({
+                    sessionId,
+                    runtime,
+                    cwd: activeTerminal.cwd || currentWorkspacePath
+                });
+
+                const bannerLines = (session.banner || '').split(/\r?\n/).filter(Boolean);
+                const defaultPrompt = session.prompt || (runtime === 'node' ? '> ' : '>>> ');
+
+                setTerminals(prev => prev.map(t => {
+                    if (t.id !== activeTerminalId) return t;
+                    return {
+                        ...t,
+                        replState: {
+                            active: true,
+                            runtime,
+                            sessionId,
+                            prompt: defaultPrompt,
+                            isMultiLine: false
+                        },
+                        output: [...t.output, ...bannerLines, defaultPrompt]
+                    };
+                }));
+            } catch (err) {
+                appendToTerminal([`\x1b[31mFailed to start ${runtime} REPL: ${err.message}\x1b[0m`, "$ "]);
+            } finally {
+                setIsRunning(false);
+            }
             return;
         }
 

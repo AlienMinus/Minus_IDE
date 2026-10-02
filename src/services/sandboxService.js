@@ -294,3 +294,63 @@ export async function fetchWorkspaceTree(dirPath) {
     return [];
   }
 }
+
+/**
+ * Start Interactive REPL Session (Python, Node)
+ */
+export async function startReplSession({ sessionId, runtime = 'python', cwd }) {
+  try {
+    const res = await fetch(`${API_BASE}/repl/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, runtime, cwd })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data.data;
+  } catch (err) {
+    throw new Error(`Failed to start ${runtime} REPL: ${err.message}`);
+  }
+}
+
+/**
+ * Evaluate code line/block in active REPL session
+ */
+export async function evalReplCode({ sessionId, code }) {
+  try {
+    const res = await fetch(`${API_BASE}/repl/eval`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, code })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data.data;
+  } catch (err) {
+    throw new Error(`REPL eval error: ${err.message}`);
+  }
+}
+
+/**
+ * Exit active REPL session
+ */
+export async function exitReplSession(sessionId) {
+  try {
+    const res = await fetch(`${API_BASE}/repl/exit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId })
+    });
+    if (!res.ok) return { success: false };
+    return await res.json();
+  } catch {
+    return { success: false };
+  }
+}
+
