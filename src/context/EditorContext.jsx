@@ -238,6 +238,34 @@ export function EditorProvider({ children }) {
     setActiveFile(previewTab);
   }
 
+  function openLiveBrowserTab(targetUrl, tabTitle) {
+    if (!targetUrl) return null;
+    let cleanUrl = targetUrl.trim();
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      cleanUrl = "http://" + cleanUrl;
+    }
+    const tabId = `browser-${cleanUrl}`;
+    const name = tabTitle || `Preview: ${cleanUrl.replace(/^https?:\/\//, '')}`;
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId || f.url === cleanUrl);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name,
+        type: "browser",
+        isPreview: true,
+        isLiveUrl: true,
+        url: cleanUrl
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
   function setEditorInstance(editor) {
     editorRef.current = editor;
   }
@@ -421,6 +449,8 @@ export function EditorProvider({ children }) {
         replace,
         findInFiles,
         replaceInFiles,
+        openPreviewTab,
+        openLiveBrowserTab,
         toggleLineComment,
         toggleBlockComment,
         expandEmmet

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import MonacoEditor from "@monaco-editor/react";
 import useEditor from "../../hooks/useEditor";
 import Preview from "../Preview";
+import LiveBrowser from "../LiveBrowser/LiveBrowser";
 import {
   DocxPreview,
   PptxPreview,
@@ -13,7 +14,7 @@ import {
 import { getFileExtension } from "../../utils/fileIcons";
 
 function Editor() {
-  const { activeFile, updateContent, setEditorInstance } = useEditor();
+  const { activeFile, updateContent, setEditorInstance, closeFile } = useEditor();
   const [previewUrl, setPreviewUrl] = useState(null);
 
   function handleEditorChange(value) {
@@ -145,7 +146,20 @@ function Editor() {
     );
   }
 
-  // 1. Live preview tab (HTML / React live server preview)
+  // 1. Live Browser Preview tab (VS Code Simple Browser style)
+  if (activeFile.isLiveUrl || activeFile.type === "browser") {
+    return (
+      <div className="editor-container">
+        <LiveBrowser
+          initialUrl={activeFile.url}
+          title={activeFile.name}
+          onClose={() => closeFile(activeFile.id)}
+        />
+      </div>
+    );
+  }
+
+  // 2. Static HTML / React Live Sandbox Preview tab
   if (activeFile.isPreview) {
     return (
       <div className="editor-container">
