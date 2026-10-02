@@ -65,6 +65,9 @@
     width: 4px;
     background: #2d2d2d;
     transition: background 0.2s ease;
+    cursor: col-resize;
+    position: relative;
+    z-index: 10;
 }
 
 .resize-handle:hover,
@@ -77,6 +80,8 @@
     background: #2d2d2d;
     transition: background 0.2s ease;
     cursor: row-resize;
+    position: relative;
+    z-index: 10;
 }
 
 .resize-handle-horizontal:hover,

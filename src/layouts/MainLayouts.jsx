@@ -123,11 +123,14 @@ function MainLayout() {
         )}
 
         {/* Resizable Explorer / Editor / Chat */}
+        {/* Resizable Explorer / Editor / Chat */}
         <PanelGroup direction="horizontal" className="layout-body">
           {/* Explorer / Extensions / Search */}
           {!isZenMode && isSidebarVisible && (
             <>
               <Panel
+                id="explorer-panel"
+                order={1}
                 className="explorer-panel"
                 defaultSize={20}
                 minSize={12}
@@ -146,15 +149,15 @@ function MainLayout() {
                 )}
               </Panel>
 
-              <PanelResizeHandle className="resize-handle" />
+              <PanelResizeHandle id="explorer-resize-handle" className="resize-handle" />
             </>
           )}
 
           {/* Editor + Bottom Panel */}
-          <Panel className="editor-panel" defaultSize={80} minSize={40}>
+          <Panel id="editor-panel" order={2} className="editor-panel" defaultSize={80} minSize={40}>
             <PanelGroup direction="vertical">
               {/* Editor */}
-              <Panel defaultSize={!isZenMode && isBottomPanelOpen ? 72 : 100} minSize={30}>
+              <Panel id="editor-code-panel" order={1} defaultSize={!isZenMode && isBottomPanelOpen ? 72 : 100} minSize={30}>
                 <div className="editor-section">
                   <Tabs />
                   <Breadcrumb />
@@ -168,8 +171,8 @@ function MainLayout() {
               {/* Bottom Panel */}
               {!isZenMode && isBottomPanelOpen && (
                 <>
-                  <PanelResizeHandle className="resize-handle-horizontal" />
-                  <Panel defaultSize={28} minSize={15}>
+                  <PanelResizeHandle id="bottom-panel-resize-handle" className="resize-handle-horizontal" />
+                  <Panel id="bottom-panel" order={2} defaultSize={28} minSize={15}>
                     <BottomPanel />
                   </Panel>
                 </>
@@ -179,8 +182,8 @@ function MainLayout() {
 
           {!isZenMode && isChatOpen && (
             <>
-              <PanelResizeHandle className="resize-handle" />
-              <Panel className="chat-panel" defaultSize={20} minSize={15} maxSize={35}>
+              <PanelResizeHandle id="chat-resize-handle" className="resize-handle" />
+              <Panel id="chat-panel" order={3} className="chat-panel" defaultSize={20} minSize={15} maxSize={35}>
                 <Chat />
               </Panel>
             </>

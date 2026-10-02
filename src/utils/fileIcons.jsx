@@ -49,9 +49,29 @@ export function getFileExtension(filename = "") {
  * Return the appropriate React icon for a given file name or extension
  */
 export function getFileIcon(fileNameOrExt, options = {}) {
-  const { className = "", style = {}, size } = options;
+  const { className = "", style = {}, size = 16 } = options;
+  const iconSize = size || 16;
+
+  const renderIcon = (Component, color, customClass = "") => (
+    <Component
+      className={`file-icon ${customClass} ${className}`.trim()}
+      style={{
+        color,
+        flexShrink: 0,
+        width: iconSize,
+        height: iconSize,
+        minWidth: iconSize,
+        minHeight: iconSize,
+        display: "inline-block",
+        verticalAlign: "middle",
+        ...style
+      }}
+      size={iconSize}
+    />
+  );
+
   if (!fileNameOrExt) {
-    return <FaFileAlt className={`file-icon ${className}`} style={{ color: "#94a3b8", ...style }} size={size} />;
+    return renderIcon(FaFileAlt, "#94a3b8", "default-icon");
   }
 
   const str = String(fileNameOrExt).trim();
@@ -60,19 +80,19 @@ export function getFileIcon(fileNameOrExt, options = {}) {
 
   // Special names
   if (lowerName === ".gitignore" || lowerName === ".gitattributes") {
-    return <FaGitAlt className={`file-icon ${className}`} style={{ color: "#f05032", ...style }} size={size} />;
+    return renderIcon(FaGitAlt, "#f05032", "git-icon");
   }
   if (lowerName.startsWith(".env")) {
-    return <FaCog className={`file-icon ${className}`} style={{ color: "#eab308", ...style }} size={size} />;
+    return renderIcon(FaCog, "#eab308", "env-icon");
   }
   if (lowerName === "package.json" || lowerName === "tsconfig.json") {
-    return <FaFileCode className={`file-icon ${className}`} style={{ color: "#38bdf8", ...style }} size={size} />;
+    return renderIcon(FaFileCode, "#38bdf8", "config-icon");
   }
   if (lowerName === "dockerfile" || lowerName.startsWith("dockerfile.")) {
-    return <FaTerminal className={`file-icon ${className}`} style={{ color: "#0ea5e9", ...style }} size={size} />;
+    return renderIcon(FaTerminal, "#0ea5e9", "docker-icon");
   }
   if (lowerName === "preview") {
-    return <FaGlobe className={`file-icon ${className}`} style={{ color: "#60a5fa", ...style }} size={size} />;
+    return renderIcon(FaGlobe, "#60a5fa", "preview-icon");
   }
 
   switch (ext) {
@@ -81,68 +101,68 @@ export function getFileIcon(fileNameOrExt, options = {}) {
     case "docx":
     case "odt":
     case "rtf":
-      return <FaFileWord className={`file-icon docx-icon ${className}`} style={{ color: "#185abd", ...style }} size={size} />;
+      return renderIcon(FaFileWord, "#185abd", "docx-icon");
 
     // Microsoft Excel / Spreadsheets
     case "xls":
     case "xlsx":
     case "ods":
-      return <FaFileExcel className={`file-icon xlsx-icon ${className}`} style={{ color: "#107c41", ...style }} size={size} />;
+      return renderIcon(FaFileExcel, "#107c41", "xlsx-icon");
 
     // CSV / Delimited Data
     case "csv":
     case "tsv":
-      return <FaFileCsv className={`file-icon csv-icon ${className}`} style={{ color: "#0d9488", ...style }} size={size} />;
+      return renderIcon(FaFileCsv, "#0d9488", "csv-icon");
 
     // Microsoft PowerPoint / Presentations
     case "ppt":
     case "pptx":
     case "odp":
-      return <FaFilePowerpoint className={`file-icon pptx-icon ${className}`} style={{ color: "#d24726", ...style }} size={size} />;
+      return renderIcon(FaFilePowerpoint, "#d24726", "pptx-icon");
 
     // PDF Documents
     case "pdf":
-      return <FaFilePdf className={`file-icon pdf-icon ${className}`} style={{ color: "#ef4444", ...style }} size={size} />;
+      return renderIcon(FaFilePdf, "#ef4444", "pdf-icon");
 
     // Markdown
     case "md":
     case "markdown":
     case "mdown":
     case "mkd":
-      return <FaMarkdown className={`file-icon md-icon ${className}`} style={{ color: "#38bdf8", ...style }} size={size} />;
+      return renderIcon(FaMarkdown, "#38bdf8", "md-icon");
 
     // React
     case "jsx":
     case "tsx":
-      return <FaReact className={`file-icon react-icon ${className}`} style={{ color: "#61dafb", ...style }} size={size} />;
+      return renderIcon(FaReact, "#61dafb", "react-icon");
 
     // JavaScript
     case "js":
     case "mjs":
     case "cjs":
-      return <FaJsSquare className={`file-icon js-icon ${className}`} style={{ color: "#facc15", ...style }} size={size} />;
+      return renderIcon(FaJsSquare, "#facc15", "js-icon");
 
     // TypeScript
     case "ts":
-      return <FaFileCode className={`file-icon ts-icon ${className}`} style={{ color: "#3178c6", ...style }} size={size} />;
+      return renderIcon(FaFileCode, "#3178c6", "ts-icon");
 
     // HTML
     case "html":
     case "htm":
-      return <FaHtml5 className={`file-icon html-icon ${className}`} style={{ color: "#f97316", ...style }} size={size} />;
+      return renderIcon(FaHtml5, "#f97316", "html-icon");
 
     // CSS
     case "css":
     case "scss":
     case "sass":
     case "less":
-      return <FaCss3Alt className={`file-icon css-icon ${className}`} style={{ color: "#38bdf8", ...style }} size={size} />;
+      return renderIcon(FaCss3Alt, "#38bdf8", "css-icon");
 
     // Python
     case "py":
     case "pyw":
     case "ipynb":
-      return <FaPython className={`file-icon py-icon ${className}`} style={{ color: "#387eb8", ...style }} size={size} />;
+      return renderIcon(FaPython, "#387eb8", "py-icon");
 
     // C / C++
     case "c":
@@ -151,7 +171,7 @@ export function getFileIcon(fileNameOrExt, options = {}) {
     case "cxx":
     case "h":
     case "hpp":
-      return <FaFileCode className={`file-icon c-icon ${className}`} style={{ color: "#00599c", ...style }} size={size} />;
+      return renderIcon(FaFileCode, "#00599c", "c-icon");
 
     // Shell Scripts
     case "sh":
@@ -160,38 +180,38 @@ export function getFileIcon(fileNameOrExt, options = {}) {
     case "bat":
     case "cmd":
     case "ps1":
-      return <FaTerminal className={`file-icon sh-icon ${className}`} style={{ color: "#22c55e", ...style }} size={size} />;
+      return renderIcon(FaTerminal, "#22c55e", "sh-icon");
 
     // JSON
     case "json":
     case "jsonc":
-      return <FaFileCode className={`file-icon json-icon ${className}`} style={{ color: "#eab308", ...style }} size={size} />;
+      return renderIcon(FaFileCode, "#eab308", "json-icon");
 
     // YAML
     case "yaml":
     case "yml":
-      return <FaFileCode className={`file-icon yaml-icon ${className}`} style={{ color: "#c084fc", ...style }} size={size} />;
+      return renderIcon(FaFileCode, "#c084fc", "yaml-icon");
 
     // XML
     case "xml":
     case "svg":
-      return <FaFileCode className={`file-icon xml-icon ${className}`} style={{ color: "#fb923c", ...style }} size={size} />;
+      return renderIcon(FaFileCode, "#fb923c", "xml-icon");
 
     // SQL / Database
     case "sql":
     case "sqlite":
     case "db":
-      return <FaDatabase className={`file-icon sql-icon ${className}`} style={{ color: "#06b6d4", ...style }} size={size} />;
+      return renderIcon(FaDatabase, "#06b6d4", "sql-icon");
 
     // Java
     case "java":
     case "class":
     case "jar":
-      return <FaJava className={`file-icon java-icon ${className}`} style={{ color: "#ea580c", ...style }} size={size} />;
+      return renderIcon(FaJava, "#ea580c", "java-icon");
 
     // Rust
     case "rs":
-      return <FaRust className={`file-icon rust-icon ${className}`} style={{ color: "#dea584", ...style }} size={size} />;
+      return renderIcon(FaRust, "#dea584", "rust-icon");
 
     // Images
     case "png":
@@ -201,7 +221,7 @@ export function getFileIcon(fileNameOrExt, options = {}) {
     case "webp":
     case "ico":
     case "bmp":
-      return <FaFileImage className={`file-icon img-icon ${className}`} style={{ color: "#ec4899", ...style }} size={size} />;
+      return renderIcon(FaFileImage, "#ec4899", "img-icon");
 
     // Audio
     case "mp3":
@@ -209,7 +229,7 @@ export function getFileIcon(fileNameOrExt, options = {}) {
     case "ogg":
     case "flac":
     case "m4a":
-      return <FaFileAudio className={`file-icon audio-icon ${className}`} style={{ color: "#a855f7", ...style }} size={size} />;
+      return renderIcon(FaFileAudio, "#a855f7", "audio-icon");
 
     // Video
     case "mp4":
@@ -217,7 +237,15 @@ export function getFileIcon(fileNameOrExt, options = {}) {
     case "mkv":
     case "mov":
     case "avi":
-      return <FaFileVideo className={`file-icon video-icon ${className}`} style={{ color: "#f43f5e", ...style }} size={size} />;
+    case "wmv":
+    case "flv":
+    case "m4v":
+    case "3gp":
+    case "ts":
+    case "mpg":
+    case "mpeg":
+    case "ogv":
+      return renderIcon(FaFileVideo, "#f43f5e", "video-icon");
 
     // Archives
     case "zip":
@@ -225,17 +253,17 @@ export function getFileIcon(fileNameOrExt, options = {}) {
     case "7z":
     case "tar":
     case "gz":
-      return <FaFileArchive className={`file-icon archive-icon ${className}`} style={{ color: "#f59e0b", ...style }} size={size} />;
+      return renderIcon(FaFileArchive, "#f59e0b", "archive-icon");
 
     // Plain text & Logs
     case "txt":
     case "log":
     case "ini":
     case "conf":
-      return <FaFileAlt className={`file-icon txt-icon ${className}`} style={{ color: "#94a3b8", ...style }} size={size} />;
+      return renderIcon(FaFileAlt, "#94a3b8", "txt-icon");
 
     default:
-      return <FaFileAlt className={`file-icon default-icon ${className}`} style={{ color: "#94a3b8", ...style }} size={size} />;
+      return renderIcon(FaFileAlt, "#94a3b8", "default-icon");
   }
 }
 
