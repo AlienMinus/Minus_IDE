@@ -25,53 +25,35 @@
 }
 
 .tab{
-
-    min-width:170px;
-
+    min-width:140px;
+    max-width:220px;
     display:flex;
-
     align-items:center;
-
     justify-content:space-between;
-
-    gap:10px;
-
+    gap:8px;
     color:#cccccc;
-
     cursor:pointer;
-
-    padding:0 15px;
-
+    padding:0 12px;
     border-right:1px solid #3c3c3c;
-
     transition:.2s;
-
 }
 
 .tab:hover{
-
     background:#353535;
-
 }
 
 .active-tab{
-
     background:#1e1e1e;
-
     color:white;
-
     border-top:2px solid #007acc;
-
 }
 
 .tab span{
-
     flex:1;
-
-    font-size:14px;
-
+    font-size:13px;
     white-space:nowrap;
-
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .close-btn{
