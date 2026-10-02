@@ -572,6 +572,9 @@ export function streamCommand({
     }
   });
 
+  // Close stdin stream so batch scripts/cmd don't block waiting for input
+  child.stdin?.end();
+
   let timer = null;
   if (timeoutMs > 0) {
     timer = setTimeout(() => {
