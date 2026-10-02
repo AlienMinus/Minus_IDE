@@ -158,13 +158,14 @@
 .term-action-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    width: 28px;
+    height: 26px;
+    padding: 0;
     background: #2d2d30;
     border: 1px solid #3c3c3c;
     color: #d4d4d4;
-    padding: 3px 9px;
     border-radius: 4px;
-    font-size: 12px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
@@ -212,7 +213,7 @@
 }
 
 .action-icon {
-    font-size: 10px;
+    font-size: 11px;
 }
 
 .terminal-body-split-wrapper {

@@ -391,26 +391,29 @@ export default function Repl() {
             className="repl-btn eval-sel-btn"
             onClick={handleEvalSelection}
             disabled={isRunning}
-            title="Evaluate selected text from editor in REPL"
+            title="Evaluate Selected Code from Editor"
+            aria-label="Evaluate Selected Code"
           >
-            <FaPlay /> Eval Selection
+            <FaPlay />
           </button>
 
           <button
             className="repl-btn"
             onClick={handleRestart}
             disabled={isRunning}
-            title="Restart REPL session (clean environment)"
+            title="Restart REPL Session (Clean Environment)"
+            aria-label="Restart REPL Session"
           >
-            <FaRedo /> Restart
+            <FaRedo />
           </button>
 
           <button
             className="repl-btn"
             onClick={handleClear}
             title="Clear REPL Screen (Ctrl+L)"
+            aria-label="Clear REPL Screen"
           >
-            <FaTrash /> Clear
+            <FaTrash />
           </button>
         </div>
       </div>

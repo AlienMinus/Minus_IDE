@@ -338,9 +338,10 @@ function TerminalComponent() {
             className="term-action-btn run-action-btn"
             onClick={() => runActiveFile()}
             disabled={isRunning}
-            title="Execute Active File in Sandbox (F5)"
+            title="Run Active File (F5)"
+            aria-label="Run Active File"
           >
-            <FaPlay className="action-icon" /> Run Active File
+            <FaPlay className="action-icon" />
           </button>
 
           {isRunning && (
@@ -348,8 +349,9 @@ function TerminalComponent() {
               className="term-action-btn stop-action-btn"
               onClick={terminateTask}
               title="Terminate Running Process (Ctrl+C)"
+              aria-label="Terminate Process"
             >
-              <FaStop className="action-icon" /> Stop
+              <FaStop className="action-icon" />
             </button>
           )}
 
@@ -357,24 +359,27 @@ function TerminalComponent() {
             className="term-action-btn"
             onClick={splitTerminal}
             title="Split Terminal Side by Side (Ctrl+Shift+5)"
+            aria-label="Split Terminal"
           >
-            <FaColumns className="action-icon" /> Split
+            <FaColumns className="action-icon" />
           </button>
 
           <button
             className="term-action-btn kill-btn"
             onClick={() => killTerminal(activeTerminal?.id)}
             title="Kill Terminal Session"
+            aria-label="Kill Terminal"
           >
-            <FaTrashAlt className="action-icon" /> Kill Terminal
+            <FaTrashAlt className="action-icon" />
           </button>
 
           <button
             className="term-action-btn"
             onClick={() => executeCommand('clear')}
             title="Clear Terminal Screen (Ctrl+L)"
+            aria-label="Clear Terminal Screen"
           >
-            <FaTrash className="action-icon" /> Clear
+            <FaTrash className="action-icon" />
           </button>
         </div>
       </div>
