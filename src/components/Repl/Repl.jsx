@@ -51,7 +51,7 @@ export default function Repl() {
     term.clear();
     term.writeln(`\x1b[90mStarting ${selectedRuntime.toUpperCase()} interactive REPL session...\x1b[0m`);
 
-    const sessionId = `repl-panel-${selectedRuntime}`;
+    const sessionId = `repl-panel-${selectedRuntime}-${Date.now()}`;
     activeSessionIdRef.current = sessionId;
 
     try {
