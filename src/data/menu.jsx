@@ -6,9 +6,7 @@ import {
     FaSave,
     FaShareAlt,
     FaCog,
-    FaChevronRight,
-    FaDownload,
-    FaGitAlt
+    FaChevronRight
 } from "react-icons/fa";
 
 export const fileMenu = [
@@ -146,22 +144,6 @@ export const fileMenu = [
         type: "separator"
     },
 
-    // Import
-    {
-        id: "importRepo",
-        label: "Import",
-        submenu: true,
-        icon: <FaDownload />,
-        iconRight: <FaChevronRight />,
-        items: [
-            { id: "importClone", label: "Clone Git Repository...", icon: <FaGitAlt /> }
-        ]
-    },
-
-    {
-        type: "separator"
-    },
-
     // Share
     {
         id: "share",
@@ -170,7 +152,6 @@ export const fileMenu = [
         icon: <FaShareAlt />,
         iconRight: <FaChevronRight />,
         items: [
-            { id: "shareRepoUrl", label: "Share Repository URL", icon: <FaGitAlt /> },
             { id: "shareCopyLink", label: "Copy Workspace Link" },
             { id: "shareZip", label: "Export Workspace as ZIP..." },
             { id: "shareFile", label: "Export Active File..." }
