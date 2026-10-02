@@ -1,4 +1,4 @@
-import { executeCommand } from "./sandboxService";
+import { executeCommand } from "./sandboxService.js";
 
 export async function resolveEffectiveCwd(customCwd) {
   if (customCwd && (customCwd.includes(":") || customCwd.includes("/"))) {
