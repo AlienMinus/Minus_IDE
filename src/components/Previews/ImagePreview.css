@@ -8,7 +8,7 @@
   overflow: auto;
   background-color: #181818;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   user-select: none;
   box-sizing: border-box;
@@ -75,12 +75,12 @@
   white-space: nowrap;
 }
 
-/* Image Viewport */
+/* Image Viewport - sticks to top */
 .image-viewport-wrapper {
-  margin: auto;
-  padding: 40px;
+  margin: 0 auto;
+  padding: 20px 24px 40px 24px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   min-width: min-content;
   min-height: min-content;

@@ -138,7 +138,7 @@ export default function ImagePreview({ src, fileName }) {
           className="image-canvas-frame"
           style={{
             transform: `scale(${zoom})`,
-            transformOrigin: "center center"
+            transformOrigin: "top center"
           }}
         >
           <img
