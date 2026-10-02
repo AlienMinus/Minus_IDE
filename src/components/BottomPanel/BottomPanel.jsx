@@ -2,6 +2,7 @@ import "./BottomPanel.css";
 import { useState } from "react";
 import Terminal from "../Terminal";
 import Output from "../Output/Output";
+import Repl from "../Repl/Repl";
 
 function BottomPanel() {
 
@@ -10,7 +11,8 @@ function BottomPanel() {
         "Output",
         "Problems",
         "Debug Console",
-        "Ports"
+        "Ports",
+        "REPL"
     ];
 
     const [activeTab, setActiveTab] = useState("Terminal");
@@ -45,6 +47,9 @@ function BottomPanel() {
                         No forwarded ports.
                     </div>
                 );
+
+            case "REPL":
+                return <Repl />;
 
             default:
                 return null;
