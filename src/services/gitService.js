@@ -402,3 +402,33 @@ export async function getRepoRemoteUrl(cwd) {
   return "";
 }
 
+/**
+ * Get commit history for a specific file
+ */
+export async function getFileHistory(cwd, filePath, limit = 15) {
+  try {
+    const cleanPath = filePath ? filePath.replace(/\\/g, "/") : "";
+    const res = await runGit(
+      `git log -n ${limit} --pretty=format:"%h%x09%an%x09%ad%x09%s" --date=relative -- "${cleanPath}"`,
+      cwd
+    );
+    if (!res.success) return [];
+    return res.stdout
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        const clean = line.replace(/^"/, "").replace(/"$/, "");
+        const parts = clean.split("\t");
+        return {
+          hash: (parts[0] || "").replace(/^"/, "").trim(),
+          author: (parts[1] || "").trim(),
+          date: (parts[2] || "").trim(),
+          subject: (parts.slice(3).join("\t") || "").replace(/"$/, "").trim()
+        };
+      });
+  } catch {
+    return [];
+  }
+}
+
+

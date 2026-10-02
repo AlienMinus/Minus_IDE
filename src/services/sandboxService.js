@@ -457,3 +457,20 @@ export async function lintCode({ language, code, filename }) {
   }
 }
 
+/**
+ * Reveal file or folder in OS File Explorer / Finder
+ */
+export async function revealInExplorer(filePath) {
+  try {
+    const res = await fetch(`${API_BASE}/workspace/reveal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: filePath })
+    });
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+

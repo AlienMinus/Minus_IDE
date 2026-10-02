@@ -1,5 +1,5 @@
 import React, { forwardRef, useState } from 'react';
-import { FaChevronRight } from 'react-icons/fa';
+import { FaChevronRight, FaCheck } from 'react-icons/fa';
 import './DropdownMenu.css';
 
 const DropdownMenu = forwardRef(({ menu, position, onItemClick }, ref) => {
@@ -34,12 +34,20 @@ const DropdownMenu = forwardRef(({ menu, position, onItemClick }, ref) => {
               if (item.onClick) {
                 item.onClick();
               }
-              if (onItemClick) {
+              if (onItemClick && !item.preventClose) {
                 onItemClick();
               }
             }}
           >
-            {item.icon}
+            {item.checked !== undefined ? (
+              item.checked ? (
+                <FaCheck className="dropdown-check-icon" style={{ marginRight: '8px', fontSize: '13px', color: '#22c55e' }} />
+              ) : (
+                <span className="dropdown-check-placeholder" style={{ display: 'inline-block', width: '13px', marginRight: '8px' }} />
+              )
+            ) : (
+              item.icon
+            )}
             <span className="dropdown-label">{item.label}</span>
             {item.shortcut && <span className="shortcut">{item.shortcut}</span>}
             {hasSubmenu && <FaChevronRight className="submenu-arrow" />}

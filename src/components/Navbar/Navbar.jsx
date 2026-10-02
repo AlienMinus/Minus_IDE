@@ -619,10 +619,10 @@ function Navbar({ isChatOpen, toggleChat }) {
             case "autoSave":
                 return {
                     ...item,
-                    icon: <FaCheck style={{ opacity: isAutoSave ? 1 : 0 }} />,
+                    checked: isAutoSave,
+                    preventClose: true,
                     onClick: () => {
                         toggleAutoSave();
-                        setOpenMenu(null);
                     }
                 };
 

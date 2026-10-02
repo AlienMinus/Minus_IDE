@@ -34,6 +34,69 @@ router.get('/workspace/file', (req, res) => {
   }
 });
 
+// POST /workspace/reveal - Reveal file in host OS Explorer / Finder
+router.post('/workspace/reveal', (req, res) => {
+  try {
+    const { path: targetPath } = req.body;
+    if (!targetPath) return res.status(400).json({ error: 'path is required' });
+    const resolved = normalizePath(targetPath);
+    if (process.platform === 'win32') {
+      import('child_process').then(({ exec }) => {
+        exec(`explorer /select,"${resolved.replace(/\//g, '\\')}"`);
+      });
+    } else if (process.platform === 'darwin') {
+      import('child_process').then(({ exec }) => {
+        exec(`open -R "${resolved}"`);
+      });
+    } else {
+      import('child_process').then(({ exec }) => {
+        exec(`xdg-open "${resolved}"`);
+      });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /workspace/delete - Delete file or folder from disk
+router.post('/workspace/delete', (req, res) => {
+  try {
+    const { path: targetPath } = req.body;
+    if (!targetPath) return res.status(400).json({ error: 'path is required' });
+    const resolved = normalizePath(targetPath);
+    if (fs.existsSync(resolved)) {
+      const stat = fs.statSync(resolved);
+      if (stat.isDirectory()) {
+        fs.rmSync(resolved, { recursive: true, force: true });
+      } else {
+        fs.unlinkSync(resolved);
+      }
+      return res.json({ success: true });
+    }
+    res.json({ success: true, message: 'File did not exist on disk' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /workspace/rename - Rename file or folder on disk
+router.post('/workspace/rename', (req, res) => {
+  try {
+    const { oldPath, newPath } = req.body;
+    if (!oldPath || !newPath) return res.status(400).json({ error: 'oldPath and newPath are required' });
+    const resolvedOld = normalizePath(oldPath);
+    const resolvedNew = normalizePath(newPath);
+    if (fs.existsSync(resolvedOld)) {
+      fs.renameSync(resolvedOld, resolvedNew);
+      return res.json({ success: true });
+    }
+    res.json({ success: false, error: 'Source file does not exist' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /ports - Query active listening TCP ports
 router.get('/ports', (req, res) => {
   try {
