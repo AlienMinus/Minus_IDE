@@ -1,0 +1,149 @@
+.live-browser-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #1e1e1e;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.live-browser-toolbar {
+  height: 38px;
+  min-height: 38px;
+  background: #252526;
+  border-bottom: 1px solid #333333;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.live-browser-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.browser-btn {
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.15s ease;
+}
+
+.browser-btn:hover:not(:disabled) {
+  background: #37373d;
+  color: #ffffff;
+}
+
+.browser-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.browser-btn.spinning svg {
+  animation: browser-spin 1s linear infinite;
+}
+
+@keyframes browser-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.live-browser-address-bar {
+  flex: 1;
+  max-width: 700px;
+  height: 26px;
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 6px;
+  transition: border-color 0.15s ease;
+}
+
+.live-browser-address-bar:focus-within {
+  border-color: #007acc;
+}
+
+.address-bar-icon {
+  color: #858585;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+}
+
+.address-bar-icon .lock-icon {
+  color: #4ec9b0;
+}
+
+.address-bar-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-size: 12px;
+  outline: none;
+  width: 100%;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(46, 160, 67, 0.15);
+  color: #3fb950;
+  border: 1px solid rgba(46, 160, 67, 0.3);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.live-dot {
+  width: 5px;
+  height: 5px;
+  background: #3fb950;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #3fb950;
+}
+
+.live-browser-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.live-browser-body {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #ffffff;
+}
+
+.live-browser-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #ffffff;
+  display: block;
+}
