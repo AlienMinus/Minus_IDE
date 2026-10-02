@@ -241,7 +241,6 @@ export function getFileIcon(fileNameOrExt, options = {}) {
     case "flv":
     case "m4v":
     case "3gp":
-    case "ts":
     case "mpg":
     case "mpeg":
     case "ogv":
