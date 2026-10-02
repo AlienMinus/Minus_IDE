@@ -16,7 +16,7 @@ import { getFileExtension } from "../../utils/fileIcons";
 import { checkClientSyntax, getCodeDiagnostics } from "../../utils/codeDiagnostics";
 
 function Editor() {
-  const { activeFile, updateContent, setEditorInstance, closeFile, setProblems } = useEditor();
+  const { activeFile, updateContent, setEditorInstance, closeFile, setProblems, isWordWrapOn } = useEditor();
   const [previewUrl, setPreviewUrl] = useState(null);
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
@@ -343,7 +343,7 @@ function Editor() {
           automaticLayout: true,
           scrollBeyondLastLine: false,
           tabSize: 4,
-          wordWrap: "on",
+          wordWrap: isWordWrapOn ? "on" : "off",
           cursorBlinking: "smooth",
           smoothScrolling: true,
           mouseWheelZoom: true,

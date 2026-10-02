@@ -60,6 +60,105 @@ export function EditorProvider({ children }) {
   const [isReplaceOpen, setIsReplaceOpen] = useState(false);
   const [problems, setProblems] = useState([]);
 
+  // View & Layout states
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isBottomPanelOpen, setIsBottomPanelOpen] = useState(true);
+  const [bottomPanelTab, setBottomPanelTab] = useState("Terminal");
+  const [isStatusBarVisible, setIsStatusBarVisible] = useState(true);
+  const [isZenMode, setIsZenMode] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [commandPaletteMode, setCommandPaletteMode] = useState("commands"); // "commands" | "views"
+  const [isWordWrapOn, setIsWordWrapOn] = useState(true);
+
+  function toggleWordWrap() {
+    setIsWordWrapOn((prev) => {
+      const next = !prev;
+      if (editorRef.current) {
+        editorRef.current.updateOptions({ wordWrap: next ? "on" : "off" });
+      }
+      return next;
+    });
+  }
+
+  function toggleSidebar() {
+    setIsSidebarVisible((prev) => !prev);
+  }
+
+  function toggleBottomPanel() {
+    setIsBottomPanelOpen((prev) => !prev);
+  }
+
+  function toggleStatusBar() {
+    setIsStatusBarVisible((prev) => !prev);
+  }
+
+  function toggleZenMode() {
+    setIsZenMode((prev) => !prev);
+  }
+
+  function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  function openView(viewId) {
+    switch (viewId) {
+      case "explorer":
+        setSidebarActive("explorer");
+        setIsSidebarVisible(true);
+        break;
+      case "search":
+        setSidebarActive("search");
+        setIsSidebarVisible(true);
+        break;
+      case "git":
+      case "sourceControl":
+        setSidebarActive("git");
+        setIsSidebarVisible(true);
+        break;
+      case "run":
+        setSidebarActive("run");
+        setIsSidebarVisible(true);
+        break;
+      case "extensions":
+        setSidebarActive("extensions");
+        setIsSidebarVisible(true);
+        break;
+      case "problems":
+        setBottomPanelTab("Problems");
+        setIsBottomPanelOpen(true);
+        break;
+      case "output":
+        setBottomPanelTab("Output");
+        setIsBottomPanelOpen(true);
+        break;
+      case "debugConsole":
+        setBottomPanelTab("Debug Console");
+        setIsBottomPanelOpen(true);
+        break;
+      case "terminal":
+        setBottomPanelTab("Terminal");
+        setIsBottomPanelOpen(true);
+        break;
+      case "ports":
+        setBottomPanelTab("Ports");
+        setIsBottomPanelOpen(true);
+        break;
+      case "repl":
+        setBottomPanelTab("REPL");
+        setIsBottomPanelOpen(true);
+        break;
+      case "browser":
+        openLiveBrowserTab("http://localhost:5173", "Live Browser Preview");
+        break;
+      default:
+        break;
+    }
+  }
+
   function jumpToProblem(problem) {
     if (!problem) return;
     if (problem.fileId || problem.filename) {
@@ -478,7 +577,29 @@ export function EditorProvider({ children }) {
         expandEmmet,
         problems,
         setProblems,
-        jumpToProblem
+        jumpToProblem,
+        isSidebarVisible,
+        setIsSidebarVisible,
+        isBottomPanelOpen,
+        setIsBottomPanelOpen,
+        bottomPanelTab,
+        setBottomPanelTab,
+        isStatusBarVisible,
+        setIsStatusBarVisible,
+        isZenMode,
+        setIsZenMode,
+        isCommandPaletteOpen,
+        setIsCommandPaletteOpen,
+        commandPaletteMode,
+        setCommandPaletteMode,
+        isWordWrapOn,
+        toggleWordWrap,
+        toggleSidebar,
+        toggleBottomPanel,
+        toggleStatusBar,
+        toggleZenMode,
+        toggleFullScreen,
+        openView
       }}
     >
       {children}

@@ -341,13 +341,32 @@ export const viewMenu = [
     {
         id: "appearance",
         label: "Appearance",
-        submenu: true
+        submenu: true,
+        items: [
+            { id: "toggleFullScreen", label: "Toggle Full Screen", shortcut: "F11" },
+            { id: "toggleZenMode", label: "Toggle Zen Mode" },
+            { type: "separator" },
+            { id: "toggleSidebar", label: "Toggle Primary Side Bar", shortcut: "Ctrl+B" },
+            { id: "togglePanel", label: "Toggle Panel", shortcut: "Ctrl+J" },
+            { id: "toggleStatusBar", label: "Toggle Status Bar" },
+            { type: "separator" },
+            { id: "zoomIn", label: "Zoom In", shortcut: "Ctrl+=" },
+            { id: "zoomOut", label: "Zoom Out", shortcut: "Ctrl+-" },
+            { id: "resetZoom", label: "Reset Zoom", shortcut: "Ctrl+0" }
+        ]
     },
 
     {
         id: "editorLayout",
         label: "Editor Layout",
-        submenu: true
+        submenu: true,
+        items: [
+            { id: "layoutSingle", label: "Single (Default)" },
+            { id: "layoutSplitRight", label: "Two Columns (Split Right)" },
+            { id: "layoutSplitDown", label: "Two Rows (Split Down)" },
+            { type: "separator" },
+            { id: "toggleMaximized", label: "Toggle Maximize Editor/Panel" }
+        ]
     },
 
     {

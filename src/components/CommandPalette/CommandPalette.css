@@ -1,0 +1,168 @@
+/* ========================================================
+   VS Code Command Palette & View Switcher Styles
+   ======================================================== */
+.palette-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 40px;
+}
+
+.palette-container {
+  width: 580px;
+  max-width: 90vw;
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: paletteSlideDown 0.12s ease-out;
+}
+
+@keyframes paletteSlideDown {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.palette-input-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #333333;
+  gap: 10px;
+}
+
+.palette-search-icon {
+  color: #858585;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.palette-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+}
+
+.palette-input::placeholder {
+  color: #6e7681;
+}
+
+.palette-clear-btn {
+  background: none;
+  border: none;
+  color: #858585;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+}
+
+.palette-clear-btn:hover {
+  color: #ffffff;
+}
+
+.palette-list {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.palette-empty {
+  padding: 24px;
+  text-align: center;
+  color: #858585;
+  font-size: 12px;
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.08s ease;
+}
+
+.palette-item:hover,
+.palette-item.selected {
+  background: #094771;
+  color: #ffffff;
+}
+
+.palette-item-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-item-category {
+  font-weight: 600;
+  color: #858585;
+  font-size: 12px;
+}
+
+.palette-item:hover .palette-item-category,
+.palette-item.selected .palette-item-category {
+  color: #cccccc;
+}
+
+.palette-item-label {
+  font-size: 12px;
+  color: #cccccc;
+}
+
+.palette-item:hover .palette-item-label,
+.palette-item.selected .palette-item-label {
+  color: #ffffff;
+}
+
+.palette-item-desc {
+  font-size: 11px;
+  color: #717171;
+  margin-left: 6px;
+}
+
+.palette-item-shortcut {
+  font-size: 11px;
+  color: #858585;
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+.palette-item:hover .palette-item-shortcut,
+.palette-item.selected .palette-item-shortcut {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}

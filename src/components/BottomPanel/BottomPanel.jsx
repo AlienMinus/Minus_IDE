@@ -298,8 +298,6 @@ function BottomPanel() {
     "REPL"
   ];
 
-  const [activeTab, setActiveTab] = useState("Terminal");
-
   const {
     activeTerminal,
     terminals,
@@ -313,7 +311,20 @@ function BottomPanel() {
     setActiveTerminal
   } = useTerminal();
 
-  const { openLiveBrowserTab, problems = [], jumpToProblem } = useEditor();
+  const {
+    openLiveBrowserTab,
+    problems = [],
+    jumpToProblem,
+    bottomPanelTab,
+    setBottomPanelTab
+  } = useEditor();
+
+  const activeTab = bottomPanelTab || "Terminal";
+  const setActiveTab = (tab) => {
+    if (setBottomPanelTab) {
+      setBottomPanelTab(tab);
+    }
+  };
 
   const handleOpenBrowserPreview = () => {
     const outputText = (activeTerminal?.output || []).join("\n");
