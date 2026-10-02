@@ -1,5 +1,5 @@
 import "./Statusbar.css";
-
+import { useState, useEffect } from "react";
 import {
     FaCodeBranch,
     FaSyncAlt,
@@ -7,49 +7,85 @@ import {
     FaCheckCircle,
     FaBell
 } from "react-icons/fa";
+import useFile from "../../hooks/useFile";
+import useEditor from "../../hooks/useEditor";
+import { getCurrentBranch, getTrackingInfo, checkIsGitRepo } from "../../services/gitService";
 
 function StatusBar() {
+    const { persistedFolderInfo } = useFile();
+    const { openView, problems } = useEditor();
+    const [branch, setBranch] = useState("main");
+    const [tracking, setTracking] = useState({ ahead: 0, behind: 0 });
+    const [isRepo, setIsRepo] = useState(false);
+
+    const cwd = persistedFolderInfo?.path || "";
+
+    useEffect(() => {
+        let isMounted = true;
+        async function fetchGitInfo() {
+            try {
+                const repo = await checkIsGitRepo(cwd);
+                if (!isMounted) return;
+                setIsRepo(repo);
+                if (repo) {
+                    const [currBranch, track] = await Promise.all([
+                        getCurrentBranch(cwd),
+                        getTrackingInfo(cwd)
+                    ]);
+                    if (isMounted) {
+                        setBranch(currBranch || "main");
+                        setTracking(track || { ahead: 0, behind: 0 });
+                    }
+                }
+            } catch {}
+        }
+        fetchGitInfo();
+        const interval = setInterval(fetchGitInfo, 10000);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
+    }, [cwd]);
 
     return (
-
         <footer className="statusbar">
-
             {/* Left */}
-
             <div className="statusbar-left">
+                {isRepo && (
+                    <>
+                        <div
+                            className="status-item clickable"
+                            onClick={() => openView("git")}
+                            title={`Branch: ${branch} (Click to open Source Control)`}
+                        >
+                            <FaCodeBranch />
+                            <span>{branch}</span>
+                        </div>
 
-                <div className="status-item">
+                        <div
+                            className="status-item clickable"
+                            onClick={() => openView("git")}
+                            title="Synchronize branch with remote"
+                        >
+                            <FaSyncAlt />
+                            <span>{tracking.behind} ↓ {tracking.ahead} ↑</span>
+                        </div>
+                    </>
+                )}
 
-                    <FaCodeBranch />
-
-                    <span>main</span>
-
-                </div>
-
-                <div className="status-item">
-
-                    <FaSyncAlt />
-
-                    <span>0 ↓ 0 ↑</span>
-
-                </div>
-
-                <div className="status-item">
-
+                <div
+                    className="status-item clickable"
+                    onClick={() => openView("problems")}
+                    title={`${problems?.length || 0} Problems`}
+                >
                     <FaExclamationTriangle />
-
-                    <span>0</span>
-
+                    <span>{problems?.length || 0}</span>
                 </div>
 
                 <div className="status-item">
-
                     <FaCheckCircle />
-
                     <span>0</span>
-
                 </div>
-
             </div>
 
             {/* Right */}

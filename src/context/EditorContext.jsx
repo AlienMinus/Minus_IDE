@@ -570,7 +570,6 @@ export function EditorProvider({ children }) {
         replace,
         findInFiles,
         replaceInFiles,
-        openPreviewTab,
         openLiveBrowserTab,
         toggleLineComment,
         toggleBlockComment,
