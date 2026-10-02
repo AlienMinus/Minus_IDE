@@ -140,6 +140,7 @@ router.post('/command', async (req, res) => {
 // POST /stream - Real-time streaming command execution
 router.post('/stream', (req, res) => {
   const { command, cwd, virtualFiles, timeoutMs } = req.body;
+  console.log('[API] /stream invoked with command:', command);
 
   if (typeof command !== 'string') {
     return res.status(400).json({ error: 'Command string is required.' });
