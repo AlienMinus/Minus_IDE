@@ -6,7 +6,9 @@ import {
     FaSave,
     FaShareAlt,
     FaCog,
-    FaChevronRight
+    FaChevronRight,
+    FaDownload,
+    FaGitAlt
 } from "react-icons/fa";
 
 export const fileMenu = [
