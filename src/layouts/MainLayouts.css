@@ -71,3 +71,15 @@
 .resize-handle[data-resize-handle-active] {
     background: #007acc;
 }
+
+.resize-handle-horizontal {
+    height: 4px;
+    background: #2d2d2d;
+    transition: background 0.2s ease;
+    cursor: row-resize;
+}
+
+.resize-handle-horizontal:hover,
+.resize-handle-horizontal[data-resize-handle-active] {
+    background: #007acc;
+}
