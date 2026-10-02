@@ -85,7 +85,7 @@ export function TerminalProvider({ children }) {
                     "\x1b[1;36m========================================================\x1b[0m",
                     "\x1b[32m✔ Sandbox Engine: Online\x1b[0m",
                     initialCwd && initialCwd !== "~/HyperionIDE"
-                        ? `\x1b[34m📁 Workspace Directory:\x1b[0m \x1b[1m${initialCwd}\x1b[0m`
+                        ? `\x1b[34m📁  Workspace Directory:\x1b[0m \x1b[1m${initialCwd}\x1b[0m`
                         : "\x1b[90mTip: Open a folder to bind the terminal to that directory.\x1b[0m",
                     "\x1b[90mSupported Runtimes: C (GCC), Python 3.12, Node.js, Bash, React 19\x1b[0m",
                     "\x1b[90mType '\x1b[33mhelp\x1b[90m' for command list, '\x1b[33mruntimes\x1b[90m' to check compilers, or '\x1b[33mpwd\x1b[90m' for directory.\x1b[0m",
