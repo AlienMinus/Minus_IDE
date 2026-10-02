@@ -149,6 +149,9 @@ router.post('/stream', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
+  if (typeof res.flushHeaders === 'function') res.flushHeaders();
+
+  let finished = false;
 
   const runner = streamCommand({
     command,
@@ -156,17 +159,23 @@ router.post('/stream', (req, res) => {
     virtualFiles,
     timeoutMs: timeoutMs !== undefined ? timeoutMs : 0,
     onChunk: (chunk) => {
+      if (finished) return;
       res.write(`data: ${JSON.stringify({ type: 'output', data: chunk })}\n\n`);
-      if (res.flush) res.flush();
+      if (typeof res.flush === 'function') res.flush();
     },
     onExit: (exitCode) => {
+      if (finished) return;
+      finished = true;
       res.write(`data: ${JSON.stringify({ type: 'exit', code: exitCode })}\n\n`);
       res.end();
     }
   });
 
   req.on('close', () => {
-    runner.kill();
+    if (!finished) {
+      finished = true;
+      runner.kill();
+    }
   });
 });
 
