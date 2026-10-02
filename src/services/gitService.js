@@ -1,10 +1,28 @@
 import { executeCommand } from "./sandboxService";
 
+export async function resolveEffectiveCwd(customCwd) {
+  if (customCwd && (customCwd.includes(":") || customCwd.includes("/"))) {
+    return customCwd;
+  }
+  const folderName = customCwd || "WebIDE";
+  try {
+    const res = await fetch("/api/sandbox/workspace/resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folderName })
+    });
+    const data = await res.json();
+    if (data.success && data.path) return data.path;
+  } catch {}
+  return customCwd || "D:/Rough/WebIDE";
+}
+
 /**
  * Helper to execute git command in given working directory
  */
 async function runGit(command, cwd) {
-  return await executeCommand(command, { cwd, timeoutMs: 30000 });
+  const effectiveCwd = await resolveEffectiveCwd(cwd);
+  return await executeCommand(command, { cwd: effectiveCwd, timeoutMs: 30000 });
 }
 
 /**
