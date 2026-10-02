@@ -8,7 +8,9 @@ import {
   resolveWorkspacePath,
   validatePath,
   readWorkspaceTree,
-  pickNativeFolder
+  pickNativeFolder,
+  getActivePorts,
+  lintCode
 } from './server/sandboxEngine.js';
 import { replManager } from './server/replEngine.js';
 
@@ -127,6 +129,19 @@ function hyperionSandboxPlugin() {
         if (subPath === '/command' && req.method === 'POST') {
           const body = await parseBody();
           const result = await executeCommand(body);
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify(result));
+        }
+
+        if (subPath === '/ports' && req.method === 'GET') {
+          const ports = getActivePorts();
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ success: true, ports }));
+        }
+
+        if (subPath === '/lint' && req.method === 'POST') {
+          const body = await parseBody();
+          const result = lintCode(body);
           res.setHeader('Content-Type', 'application/json');
           return res.end(JSON.stringify(result));
         }

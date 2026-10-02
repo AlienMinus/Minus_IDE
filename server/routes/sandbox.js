@@ -8,10 +8,33 @@ import {
   resolveWorkspacePath,
   validatePath,
   readWorkspaceTree,
-  pickNativeFolder
+  pickNativeFolder,
+  getActivePorts,
+  lintCode
 } from '../sandboxEngine.js';
 
 const router = express.Router();
+
+// GET /ports - Query active listening TCP ports
+router.get('/ports', (req, res) => {
+  try {
+    const ports = getActivePorts();
+    res.json({ success: true, ports });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message, ports: [] });
+  }
+});
+
+// POST /lint - Run intelligent compiler/interpreter syntax diagnostic
+router.post('/lint', (req, res) => {
+  try {
+    const { language, code, filename } = req.body;
+    const result = lintCode({ language, code, filename });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message, markers: [] });
+  }
+});
 
 // GET /status - Sandbox health & available runtimes
 router.get('/status', (req, res) => {
