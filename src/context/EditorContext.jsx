@@ -1,9 +1,9 @@
 import { createContext, useState, useRef, useContext, useEffect } from "react";
 import fileTree from "../data/fileTree";
-import { traverseDirectory, flattenFiles } from "../services/fileService";
+import { traverseDirectory, flattenFiles, readFileContent, writeFileContent, getLanguageFromFileName } from "../services/fileService";
 import { loadEditorFile, saveEditorFile, refreshEditorContent } from "../services/editorService";
 import { FileContext } from "./FileContext";
-import { saveWorkspaceState, getStoredWorkspaceState } from "../services/workspacePersistence";
+import { saveWorkspaceState, getStoredWorkspaceState, clearWorkspaceState } from "../services/workspacePersistence";
 
 const initialFiles = flattenFiles(fileTree);
 
@@ -69,6 +69,10 @@ export function EditorProvider({ children }) {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [commandPaletteMode, setCommandPaletteMode] = useState("commands"); // "commands" | "views"
   const [isWordWrapOn, setIsWordWrapOn] = useState(true);
+  const [isAutoSave, setIsAutoSave] = useState(() => {
+    const saved = localStorage.getItem("hyperion_autosave");
+    return saved !== null ? saved === "true" : true;
+  });
 
   function toggleWordWrap() {
     setIsWordWrapOn((prev) => {
@@ -79,6 +83,44 @@ export function EditorProvider({ children }) {
       return next;
     });
   }
+
+  function toggleAutoSave() {
+    setIsAutoSave((prev) => {
+      const next = !prev;
+      localStorage.setItem("hyperion_autosave", String(next));
+      return next;
+    });
+  }
+
+  // Debounced auto-save effect when isAutoSave is enabled
+  const autoSaveTimerRef = useRef(null);
+  useEffect(() => {
+    if (!isAutoSave || !activeFile) return;
+    if (activeFile.isBinary || activeFile.isPreview || activeFile.isLiveUrl) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      let targetHandle = activeFile.handle;
+      if (!targetHandle && fileContext?.files) {
+        const match = fileContext.files.find((f) => f.id === activeFile.id || f.path === activeFile.path);
+        if (match?.handle) {
+          targetHandle = match.handle;
+        }
+      }
+      if (targetHandle) {
+        try {
+          await saveEditorFile({ ...activeFile, handle: targetHandle });
+        } catch {}
+      }
+    }, 1500);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [activeFile?.content, isAutoSave, activeFile?.id]);
 
   function toggleSidebar() {
     setIsSidebarVisible((prev) => !prev);
@@ -286,8 +328,30 @@ export function EditorProvider({ children }) {
     setActiveFile(loadedFile);
   }
 
+  function createNewTextFile() {
+    const existingNums = openFiles
+      .map((f) => {
+        const m = f.name?.match(/^Untitled-(\d+)\.txt$/i);
+        return m ? parseInt(m[1], 10) : 0;
+      })
+      .filter(Boolean);
+    const nextNum = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+    const filename = `Untitled-${nextNum}.txt`;
+    const newFile = {
+      id: `untitled_${Date.now()}_${nextNum}`,
+      name: filename,
+      path: filename,
+      language: "plaintext",
+      content: ""
+    };
+    setFiles((prev) => [...prev, newFile]);
+    setOpenFiles((prev) => [...prev, newFile]);
+    setActiveFile(newFile);
+    return newFile;
+  }
+
   async function saveActiveFile() {
-    if (!activeFile) return;
+    if (!activeFile) return false;
 
     let targetHandle = activeFile.handle;
     if (!targetHandle && fileContext?.files) {
@@ -298,17 +362,117 @@ export function EditorProvider({ children }) {
       }
     }
 
-    if (!targetHandle) {
-      alert("Unable to save this file. Open a folder first.");
-      return;
+    if (targetHandle) {
+      try {
+        await saveEditorFile({ ...activeFile, handle: targetHandle });
+        return true;
+      } catch (error) {
+        console.error("Save failed:", error);
+      }
     }
 
-    try {
-      await saveEditorFile({ ...activeFile, handle: targetHandle });
-      alert(`Saved ${activeFile.name}`);
-    } catch (error) {
-      console.error("Save failed:", error);
-      alert("Failed to save file.");
+    // If no direct handle (in-memory or untitled file), allow native save dialog if available
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({ suggestedName: activeFile.name });
+        await writeFileContent(handle, activeFile.content || "");
+        activeFile.handle = handle;
+        return true;
+      } catch (e) {
+        if (e.name === "AbortError") return false;
+      }
+    }
+
+    // Fallback: Export as downloadable file
+    const blob = new Blob([activeFile.content || ""], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = activeFile.name;
+    a.click();
+    URL.revokeObjectURL(url);
+    return true;
+  }
+
+  async function saveAsFile() {
+    if (!activeFile) return false;
+
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({ suggestedName: activeFile.name });
+        await writeFileContent(handle, activeFile.content || "");
+        const cloned = {
+          id: handle.name + "_" + Date.now(),
+          name: handle.name,
+          path: handle.name,
+          handle,
+          content: activeFile.content || "",
+          language: getLanguageFromFileName(handle.name)
+        };
+        setFiles((prev) => [...prev, cloned]);
+        setOpenFiles((prev) => [...prev, cloned]);
+        setActiveFile(cloned);
+        return true;
+      } catch (e) {
+        if (e.name === "AbortError") return false;
+      }
+    }
+
+    const newName = window.prompt("Save File As:", activeFile.name);
+    if (newName && newName.trim()) {
+      const trimmed = newName.trim();
+      const blob = new Blob([activeFile.content || ""], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = trimmed;
+      a.click();
+      URL.revokeObjectURL(url);
+      createOrOpenFile(trimmed, activeFile.content || "");
+      return true;
+    }
+    return false;
+  }
+
+  async function saveAllFiles() {
+    let savedCount = 0;
+    for (const file of openFiles) {
+      if (file.handle) {
+        try {
+          await saveEditorFile(file);
+          savedCount++;
+        } catch (err) {
+          console.warn(`Failed to save ${file.name}:`, err);
+        }
+      }
+    }
+    return savedCount;
+  }
+
+  async function revertActiveFile() {
+    if (!activeFile) return false;
+    if (activeFile.handle) {
+      try {
+        const diskContent = await readFileContent(activeFile.handle);
+        if (diskContent !== null) {
+          updateContent(diskContent);
+          return true;
+        }
+      } catch (err) {
+        console.warn("Revert file failed:", err);
+      }
+    }
+    return false;
+  }
+
+  function closeWorkspace() {
+    setOpenFiles([]);
+    setActiveFile(null);
+    setWorkspaceTree([]);
+    setFiles([]);
+    clearWorkspaceState();
+    if (fileContext?.closeFolder) {
+      fileContext.closeFolder();
     }
   }
 
@@ -548,6 +712,16 @@ export function EditorProvider({ children }) {
         closeFile,
         updateContent,
         saveActiveFile,
+        saveAsFile,
+        saveAllFiles,
+        revertActiveFile,
+        createNewTextFile,
+        closeWorkspace,
+        isAutoSave,
+        toggleAutoSave,
+        setOpenFiles,
+        setFiles,
+        setWorkspaceTree,
         setActiveFile,
         editorRef,
         setEditorInstance,

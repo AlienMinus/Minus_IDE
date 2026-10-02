@@ -6,7 +6,8 @@ import {
   verifyHandlePermission,
   saveWorkspaceState,
   getStoredWorkspaceState,
-  clearWorkspaceState
+  clearWorkspaceState,
+  recordRecentWorkspace
 } from "../services/workspacePersistence";
 import {
   resolveWorkspacePath,
@@ -163,6 +164,7 @@ export function FileProvider({ children }) {
         folderPath: resolvedDiskPath,
         workspaceTree: tree
       });
+      recordRecentWorkspace(resolvedDiskPath || dirHandle.name);
     } catch (error) {
       if (error.name !== "AbortError") {
         console.error("Failed to open folder:", error);
@@ -206,9 +208,72 @@ export function FileProvider({ children }) {
         folderPath: valid.path,
         workspaceTree: tree
       });
+      recordRecentWorkspace(valid.path);
       return true;
     } catch (err) {
       console.error("Failed to open folder by path:", err);
+      return false;
+    }
+  }
+
+  function closeFolder() {
+    setWorkspaceHandle(null);
+    setWorkspaceTree([]);
+    setFiles([]);
+    setPersistedFolderInfo(null);
+    clearWorkspaceState();
+  }
+
+  async function addDirectoryToWorkspace() {
+    if (window.showDirectoryPicker) {
+      try {
+        const dirHandle = await window.showDirectoryPicker();
+        const children = await traverseDirectory(dirHandle, dirHandle.name);
+        const newNode = {
+          id: dirHandle.name + "_" + Date.now(),
+          name: dirHandle.name,
+          type: "folder",
+          path: dirHandle.name,
+          handle: dirHandle,
+          children
+        };
+        setWorkspaceTree((prev) => {
+          const updated = [...prev, newNode];
+          setFiles(flattenFiles(updated));
+          return updated;
+        });
+        recordRecentWorkspace(dirHandle.name);
+        return true;
+      } catch (err) {
+        if (err.name === "AbortError") return false;
+      }
+    }
+    const targetPath = window.prompt("Enter local directory path to add to workspace:");
+    if (!targetPath || !targetPath.trim()) return false;
+    try {
+      const valid = await validateWorkspacePath(targetPath.trim());
+      if (!valid.exists) {
+        alert(`Directory not found: ${targetPath}`);
+        return false;
+      }
+      const folderName = valid.name || targetPath.trim().split(/[\\/]/).pop() || "Workspace";
+      const treeNodes = await fetchWorkspaceTree(valid.path);
+      const newNode = {
+        id: valid.path,
+        name: folderName,
+        type: "folder",
+        path: valid.path,
+        children: treeNodes
+      };
+      setWorkspaceTree((prev) => {
+        const updated = [...prev, newNode];
+        setFiles(flattenFiles(updated));
+        return updated;
+      });
+      recordRecentWorkspace(valid.path);
+      return true;
+    } catch (err) {
+      console.error("Failed to add directory to workspace:", err);
       return false;
     }
   }
@@ -398,7 +463,9 @@ export function FileProvider({ children }) {
       loadFileContent,
       saveFile,
       needsPermission,
-      persistedFolderInfo
+      persistedFolderInfo,
+      closeFolder,
+      addDirectoryToWorkspace
     }),
     [workspaceTree, workspaceHandle, files, needsPermission, persistedFolderInfo]
   );
