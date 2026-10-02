@@ -17,8 +17,9 @@ import {
 import { TbMessageChatbot } from "react-icons/tb";
 
 import { fileMenu, editMenu, viewMenu, terminalMenu, helpMenu } from "../../data/menu.jsx";
-import { getLanguageFromFileName, readFileContent } from "../../services/fileService";
+import { getLanguageFromFileName, readFileContent, flattenFiles } from "../../services/fileService";
 import { getRecentWorkspaces, clearRecentWorkspaces } from "../../services/workspacePersistence";
+import { cloneRepository, getRepoRemoteUrl } from "../../services/gitService";
 
 function Navbar({ isChatOpen, toggleChat }) {
     const fileRef = useRef(null);
@@ -200,42 +201,521 @@ function Navbar({ isChatOpen, toggleChat }) {
 
     const allowedMenuKeys = new Set(menuButtons.map((item) => item.key));
 
-    const fileMenuItems = fileMenu.map((item) => {
-        if (item.id === "openFolder") {
-            return {
-                ...item,
-                onClick: async () => {
-                    await openFolder();
-                    setOpenMenu(null);
-                }
-            };
-        }
+    const handleGitClone = async () => {
+        const repoUrl = window.prompt("Enter Git repository URL to clone (e.g., https://github.com/user/repo.git):");
+        if (!repoUrl || !repoUrl.trim()) return;
 
-        if (item.id === "openFolderPath") {
-            return {
-                ...item,
-                onClick: async () => {
-                    const defaultPath = persistedFolderInfo?.path || "E:\\Portfolio\\portfolio_v1";
-                    const inputPath = window.prompt("Enter local directory path to open as workspace:", defaultPath);
-                    if (inputPath && inputPath.trim()) {
-                        await openFolderByPath(inputPath.trim());
+        const trimmedUrl = repoUrl.trim();
+        let defaultTargetName = "";
+        try {
+            const cleanUrl = trimmedUrl.replace(/\.git$/, "").replace(/\/+$/, "");
+            const parts = cleanUrl.split("/");
+            defaultTargetName = parts[parts.length - 1] || "";
+        } catch {}
+
+        const targetDir = window.prompt("Enter target folder name (or leave blank for default):", defaultTargetName);
+        const chosenTarget = (targetDir !== null && targetDir.trim()) ? targetDir.trim() : (defaultTargetName || null);
+        const currentCwd = persistedFolderInfo?.path || null;
+
+        try {
+            alert(`Cloning ${trimmedUrl}... Please wait.`);
+            const res = await cloneRepository(trimmedUrl, chosenTarget, currentCwd);
+            if (res.success) {
+                alert(`Successfully cloned ${trimmedUrl}!`);
+                const effectiveDir = chosenTarget || defaultTargetName;
+                if (res.targetPath) {
+                    await openFolderByPath(res.targetPath);
+                } else if (res.cwd && effectiveDir) {
+                    const normalizedCwd = res.cwd.replace(/\\/g, "/").replace(/\/+$/, "");
+                    await openFolderByPath(`${normalizedCwd}/${effectiveDir}`);
+                } else if (currentCwd && effectiveDir) {
+                    const normalizedParent = currentCwd.replace(/\\/g, "/").replace(/\/+$/, "");
+                    await openFolderByPath(`${normalizedParent}/${effectiveDir}`);
+                } else if (effectiveDir) {
+                    await openFolderByPath(effectiveDir);
+                }
+            } else {
+                alert(`Git clone failed:\n${res.stderr || res.stdout || res.error || "Unknown error"}`);
+            }
+        } catch (err) {
+            alert(`Error running git clone: ${err.message}`);
+        }
+    };
+
+    const handleShareRepoUrl = async () => {
+        const cwd = persistedFolderInfo?.path || "";
+        try {
+            const url = await getRepoRemoteUrl(cwd);
+            if (url) {
+                await navigator.clipboard.writeText(url);
+                alert(`Repository URL copied to clipboard:\n${url}`);
+            } else {
+                alert("No Git remote URL found for this repository.");
+            }
+        } catch (err) {
+            alert("Failed to get repository URL: " + err.message);
+        }
+    };
+
+    const handleExportZip = async () => {
+        try {
+            const JSZipModule = await import("jszip");
+            const JSZip = JSZipModule.default || JSZipModule;
+            const zip = new JSZip();
+
+            if (files && files.length > 0) {
+                for (const file of files) {
+                    if (file.isBinary) continue;
+                    let content = file.content;
+                    if (content === undefined && file.handle) {
+                        try {
+                            content = await readFileContent(file.handle);
+                        } catch {}
                     }
-                    setOpenMenu(null);
+                    const filePath = file.path || file.name;
+                    zip.file(filePath, content || "");
                 }
-            };
-        }
+            }
 
-        if (item.id === "save") {
-            return {
-                ...item,
+            const blob = await zip.generateAsync({ type: "blob" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${persistedFolderInfo?.name || "workspace"}.zip`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("ZIP export failed:", err);
+            alert("Failed to export workspace as ZIP: " + err.message);
+        }
+    };
+
+    const recentWorkspaces = getRecentWorkspaces() || [];
+    const recentItems = recentWorkspaces.length > 0
+        ? [
+            ...recentWorkspaces.map((r) => ({
+                id: `recent_${r.path || r.name}`,
+                label: r.name || r.path,
                 onClick: async () => {
-                    await saveActiveFile();
+                    if (r.path) await openFolderByPath(r.path);
                     setOpenMenu(null);
                 }
-            };
-        }
+            })),
+            { type: "separator" },
+            {
+                id: "clearRecent",
+                label: "Clear Recently Opened",
+                onClick: () => {
+                    clearRecentWorkspaces();
+                    setOpenMenu(null);
+                }
+            }
+        ]
+        : [{ id: "noRecent", label: "No Recent Workspaces", disabled: true }];
 
-        return item;
+    const fileMenuItems = fileMenu.map((item) => {
+        switch (item.id) {
+            case "newTextFile":
+                return {
+                    ...item,
+                    onClick: () => {
+                        createNewTextFile();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "newFile":
+                return {
+                    ...item,
+                    onClick: () => {
+                        const name = window.prompt("Enter new file name (e.g. index.js):");
+                        if (name && name.trim()) {
+                            createFile(name.trim());
+                        }
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "newWindow":
+                return {
+                    ...item,
+                    onClick: () => {
+                        window.open(window.location.origin, "_blank");
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "newWindowProfile":
+                return {
+                    ...item,
+                    items: (item.items || []).map((subItem) => {
+                        switch (subItem.id) {
+                            case "profileDefault":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        window.open(window.location.origin, "_blank");
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "profileEmpty":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        window.open(`${window.location.origin}?empty=true`, "_blank");
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "profileDuplicate":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        window.open(window.location.href, "_blank");
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            default:
+                                return subItem;
+                        }
+                    })
+                };
+
+            case "openFile":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        setOpenMenu(null);
+                        if (window.showOpenFilePicker) {
+                            try {
+                                const [fileHandle] = await window.showOpenFilePicker();
+                                const file = await fileHandle.getFile();
+                                const content = await file.text();
+                                createOrOpenFile(file.name, content);
+                            } catch (e) {
+                                if (e.name !== "AbortError") console.error(e);
+                            }
+                        } else {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.onchange = async (e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const content = await file.text();
+                                    createOrOpenFile(file.name, content);
+                                }
+                            };
+                            input.click();
+                        }
+                    }
+                };
+
+            case "openFolder":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        await openFolder();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "openFolderPath":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        const defaultPath = persistedFolderInfo?.path || "E:\\Portfolio\\portfolio_v1";
+                        const inputPath = window.prompt("Enter local directory path to open as workspace:", defaultPath);
+                        if (inputPath && inputPath.trim()) {
+                            await openFolderByPath(inputPath.trim());
+                        }
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "openWorkspace":
+                return {
+                    ...item,
+                    onClick: () => {
+                        setOpenMenu(null);
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = ".json,.code-workspace";
+                        input.onchange = async (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                                try {
+                                    const text = await file.text();
+                                    const ws = JSON.parse(text);
+                                    if (ws.folderPath) await openFolderByPath(ws.folderPath);
+                                    else if (ws.workspaceTree) {
+                                        setWorkspaceTree(ws.workspaceTree);
+                                        setFiles(flattenFiles(ws.workspaceTree));
+                                    }
+                                } catch (err) {
+                                    alert("Failed to load workspace: " + err.message);
+                                }
+                            }
+                        };
+                        input.click();
+                    }
+                };
+
+            case "openRecent":
+                return {
+                    ...item,
+                    items: recentItems
+                };
+
+            case "addFolder":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        setOpenMenu(null);
+                        if (window.showDirectoryPicker) {
+                            try {
+                                const dirHandle = await window.showDirectoryPicker();
+                                if (addDirectoryToWorkspace) await addDirectoryToWorkspace(dirHandle);
+                            } catch (err) {
+                                if (err.name !== "AbortError") console.error(err);
+                            }
+                        } else {
+                            const path = window.prompt("Enter directory path to add to workspace:");
+                            if (path && path.trim()) await openFolderByPath(path.trim());
+                        }
+                    }
+                };
+
+            case "saveWorkspaceAs":
+                return {
+                    ...item,
+                    onClick: () => {
+                        setOpenMenu(null);
+                        const wsData = {
+                            name: persistedFolderInfo?.name || "Workspace",
+                            folderPath: persistedFolderInfo?.path || "",
+                            openFiles: openFiles.map((f) => ({ name: f.name, path: f.path })),
+                            timestamp: new Date().toISOString()
+                        };
+                        const blob = new Blob([JSON.stringify(wsData, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `${persistedFolderInfo?.name || "workspace"}.code-workspace`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }
+                };
+
+            case "duplicateWorkspace":
+                return {
+                    ...item,
+                    onClick: () => {
+                        window.open(window.location.href, "_blank");
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "save":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        await saveActiveFile();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "saveAs":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        await saveAsFile();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "saveAll":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        await saveAllFiles();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "importRepo":
+                return {
+                    ...item,
+                    items: (item.items || []).map((subItem) => {
+                        if (subItem.id === "importClone") {
+                            return {
+                                ...subItem,
+                                onClick: async () => {
+                                    setOpenMenu(null);
+                                    await handleGitClone();
+                                }
+                            };
+                        }
+                        return subItem;
+                    })
+                };
+
+            case "share":
+                return {
+                    ...item,
+                    items: (item.items || []).map((subItem) => {
+                        switch (subItem.id) {
+                            case "shareRepoUrl":
+                                return {
+                                    ...subItem,
+                                    onClick: async () => {
+                                        setOpenMenu(null);
+                                        await handleShareRepoUrl();
+                                    }
+                                };
+                            case "shareCopyLink":
+                                return {
+                                    ...subItem,
+                                    onClick: async () => {
+                                        setOpenMenu(null);
+                                        try {
+                                            await navigator.clipboard.writeText(window.location.href);
+                                            alert("Workspace link copied to clipboard!");
+                                        } catch (err) {
+                                            alert("Failed to copy link: " + err.message);
+                                        }
+                                    }
+                                };
+                            case "shareZip":
+                                return {
+                                    ...subItem,
+                                    onClick: async () => {
+                                        setOpenMenu(null);
+                                        await handleExportZip();
+                                    }
+                                };
+                            case "shareFile":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        setOpenMenu(null);
+                                        if (activeFile) {
+                                            const blob = new Blob([activeFile.content || ""], { type: "text/plain;charset=utf-8" });
+                                            const url = URL.createObjectURL(blob);
+                                            const a = document.createElement("a");
+                                            a.href = url;
+                                            a.download = activeFile.name;
+                                            a.click();
+                                            URL.revokeObjectURL(url);
+                                        } else {
+                                            alert("No active file selected to export.");
+                                        }
+                                    }
+                                };
+                            default:
+                                return subItem;
+                        }
+                    })
+                };
+
+            case "autoSave":
+                return {
+                    ...item,
+                    icon: <FaCheck style={{ opacity: isAutoSave ? 1 : 0 }} />,
+                    onClick: () => {
+                        toggleAutoSave();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "preferences":
+                return {
+                    ...item,
+                    items: (item.items || []).map((subItem) => {
+                        switch (subItem.id) {
+                            case "prefSettings":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        openView("settings");
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "prefShortcuts":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        setCommandPaletteMode("commands");
+                                        setIsCommandPaletteOpen(true);
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            case "prefTheme":
+                                return {
+                                    ...subItem,
+                                    onClick: () => {
+                                        setCommandPaletteMode("views");
+                                        setIsCommandPaletteOpen(true);
+                                        setOpenMenu(null);
+                                    }
+                                };
+                            default:
+                                return subItem;
+                        }
+                    })
+                };
+
+            case "revertFile":
+                return {
+                    ...item,
+                    onClick: async () => {
+                        await revertActiveFile();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "closeEditor":
+                return {
+                    ...item,
+                    onClick: () => {
+                        if (activeFile) {
+                            closeFile(activeFile.id || activeFile.name);
+                        }
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "closeFolder":
+                return {
+                    ...item,
+                    onClick: () => {
+                        closeFolder();
+                        closeWorkspace();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "closeWindow":
+                return {
+                    ...item,
+                    onClick: () => {
+                        window.close();
+                        setOpenMenu(null);
+                    }
+                };
+
+            case "exit":
+                return {
+                    ...item,
+                    onClick: () => {
+                        closeFolder();
+                        closeWorkspace();
+                        window.close();
+                        setOpenMenu(null);
+                    }
+                };
+
+            default:
+                return item;
+        }
     });
 
     const editMenuItems = editMenu.map((item) => {
