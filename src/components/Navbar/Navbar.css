@@ -160,6 +160,45 @@
     color: white;
 }
 
+/* Layout Controls (VS Code top-right green toggles) */
+.layout-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 2px;
+}
+
+.layout-btn {
+    border: none;
+    background: transparent;
+    color: #00e676; /* Vibrant neon green matching the user's reference image */
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.layout-btn:hover {
+    background: rgba(0, 230, 118, 0.16);
+    color: #00ff88;
+    box-shadow: 0 0 8px rgba(0, 230, 118, 0.3);
+}
+
+.layout-btn.active {
+    color: #00e676;
+    background: rgba(0, 230, 118, 0.14);
+}
+
+.layout-btn:active {
+    transform: scale(0.94);
+}
+
 .run-btn {
     background: transparent; /* Remove the green background */
     color: #d4d4d4; /* Default icon color from .icon-btn */

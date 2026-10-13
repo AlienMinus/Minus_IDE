@@ -14,7 +14,15 @@ import {
     FaSpinner
 } from "react-icons/fa";
 
-import { TbMessageChatbot } from "react-icons/tb";
+import {
+    VscLayout,
+    VscLayoutSidebarLeft,
+    VscLayoutSidebarLeftOff,
+    VscLayoutPanel,
+    VscLayoutPanelOff,
+    VscLayoutSidebarRight,
+    VscLayoutSidebarRightOff
+} from "react-icons/vsc";
 
 import { fileMenu, editMenu, viewMenu, terminalMenu, helpMenu } from "../../data/menu.jsx";
 import { getLanguageFromFileName, readFileContent, flattenFiles } from "../../services/fileService";
@@ -71,7 +79,9 @@ function Navbar({ isChatOpen, toggleChat }) {
         expandEmmet,
         openView,
         toggleWordWrap,
+        isSidebarVisible,
         toggleSidebar,
+        isBottomPanelOpen,
         toggleBottomPanel,
         toggleStatusBar,
         toggleZenMode,
@@ -1280,13 +1290,42 @@ function Navbar({ isChatOpen, toggleChat }) {
                     {isRunning ? <FaSpinner className="run-icon spin-icon" /> : <FaPlay className="run-icon" />}
                 </button>
 
-                <button
-                    className={`icon-btn ${isChatOpen ? "active" : ""}`}
-                    onClick={toggleChat}
-                    title="Toggle Chat"
-                >
-                    <TbMessageChatbot />
-                </button>
+                <div className="layout-controls">
+                    <button
+                        className="layout-btn"
+                        onClick={() => {
+                            setCommandPaletteMode("views");
+                            setIsCommandPaletteOpen(true);
+                        }}
+                        title="Customize Layout"
+                    >
+                        <VscLayout />
+                    </button>
+
+                    <button
+                        className={`layout-btn ${isSidebarVisible ? "active" : ""}`}
+                        onClick={toggleSidebar}
+                        title={isSidebarVisible ? "Hide Primary Side Bar (Ctrl+B)" : "Show Primary Side Bar (Ctrl+B)"}
+                    >
+                        {isSidebarVisible ? <VscLayoutSidebarLeft /> : <VscLayoutSidebarLeftOff />}
+                    </button>
+
+                    <button
+                        className={`layout-btn ${isBottomPanelOpen ? "active" : ""}`}
+                        onClick={toggleBottomPanel}
+                        title={isBottomPanelOpen ? "Hide Panel (Ctrl+J)" : "Show Panel (Ctrl+J)"}
+                    >
+                        {isBottomPanelOpen ? <VscLayoutPanel /> : <VscLayoutPanelOff />}
+                    </button>
+
+                    <button
+                        className={`layout-btn ${isChatOpen ? "active" : ""}`}
+                        onClick={toggleChat}
+                        title={isChatOpen ? "Hide Cypher Chat" : "Show Cypher Chat"}
+                    >
+                        {isChatOpen ? <VscLayoutSidebarRight /> : <VscLayoutSidebarRightOff />}
+                    </button>
+                </div>
 
             </div>
             
