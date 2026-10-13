@@ -52,13 +52,30 @@ function TerminalComponent({ hideToolbar = false }) {
   const openLiveBrowserTabRef = useRef(openLiveBrowserTab);
   openLiveBrowserTabRef.current = openLiveBrowserTab;
 
+  const splitSession = isSplit
+    ? (terminals.find(t => t.title?.includes('(Split)')) || (terminals.length > 1 ? terminals[terminals.length - 1] : null))
+    : null;
+  const mainSession = isSplit
+    ? (terminals.find(t => t.id !== splitSession?.id) || terminals[0])
+    : activeTerminal;
+
+  const splitSessionRef = useRef(splitSession);
+  splitSessionRef.current = splitSession;
+  const mainSessionRef = useRef(mainSession);
+  mainSessionRef.current = mainSession;
+
   const activeTerminalRef = useRef(activeTerminal);
   activeTerminalRef.current = activeTerminal;
 
   const currentCommand = useRef("");
   const outputLines = useRef(0);
   const historyIndex = useRef(-1);
-  const lastTerminalId = useRef(activeTerminal?.id);
+  const lastTerminalId = useRef(mainSession?.id);
+
+  const splitCurrentCommand = useRef("");
+  const splitOutputLines = useRef(0);
+  const splitHistoryIndex = useRef(-1);
+  const lastSplitTerminalId = useRef(splitSession?.id);
 
   // Initialize main xterm
   useEffect(() => {
@@ -124,12 +141,12 @@ function TerminalComponent({ hideToolbar = false }) {
       });
       resizeObserver.observe(terminalRef.current);
 
-      // Keyboard navigation and shortcuts
+      // Keyboard navigation and shortcuts for main terminal
       terminal.onKey(({ domEvent }) => {
         const term = xtermRef.current;
         if (!term) return;
 
-        const currentPrompt = activeTerminalRef.current?.replState?.prompt || '$ ';
+        const currentPrompt = mainSessionRef.current?.replState?.prompt || '$ ';
 
         // Ctrl+C (Interrupt / Cancel)
         if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c') {
@@ -144,7 +161,9 @@ function TerminalComponent({ hideToolbar = false }) {
         // Ctrl+L (Clear screen)
         if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'l') {
           domEvent.preventDefault();
-          executeCommandRef.current('clear');
+          if (mainSessionRef.current) {
+            executeCommandRef.current('clear', mainSessionRef.current.id);
+          }
           currentCommand.current = "";
           historyIndex.current = -1;
           return;
@@ -153,7 +172,7 @@ function TerminalComponent({ hideToolbar = false }) {
         // Arrow Up (Recall previous commands)
         if (domEvent.key === 'ArrowUp') {
           domEvent.preventDefault();
-          const history = activeTerminalRef.current?.history || [];
+          const history = mainSessionRef.current?.history || [];
           if (history.length === 0) return;
 
           let newIdx;
@@ -175,7 +194,7 @@ function TerminalComponent({ hideToolbar = false }) {
         // Arrow Down (Recall next commands)
         else if (domEvent.key === 'ArrowDown') {
           domEvent.preventDefault();
-          const history = activeTerminalRef.current?.history || [];
+          const history = mainSessionRef.current?.history || [];
           if (history.length === 0 || historyIndex.current === -1) return;
 
           if (historyIndex.current < history.length - 1) {
@@ -192,26 +211,34 @@ function TerminalComponent({ hideToolbar = false }) {
         }
       });
 
-      // Data handler
+      // Data handler for main terminal
       terminal.onData((data) => {
         const term = xtermRef.current;
         if (!term) return;
+
+        if (mainSessionRef.current && activeTerminalRef.current?.id !== mainSessionRef.current.id) {
+          setActiveTerminal(mainSessionRef.current);
+        }
 
         if (data === "\r") {
           const toExecute = currentCommand.current;
           currentCommand.current = "";
           historyIndex.current = -1;
-          const currentPrompt = activeTerminalRef.current?.replState?.prompt || '$ ';
-          if (!toExecute.trim() && !activeTerminalRef.current?.replState?.isMultiLine) {
+          const currentPrompt = mainSessionRef.current?.replState?.prompt || '$ ';
+          if (!toExecute.trim() && !mainSessionRef.current?.replState?.isMultiLine) {
             term.write('\r\n' + currentPrompt);
             outputLines.current += 1;
-            executeCommandRef.current("");
+            if (mainSessionRef.current) {
+              executeCommandRef.current("", mainSessionRef.current.id);
+            }
             return;
           }
           term.write('\r\n');
           // Advance outputLines by 1 so the command echo in activeTerminal.output is not printed twice!
           outputLines.current += 1;
-          executeCommandRef.current(toExecute);
+          if (mainSessionRef.current) {
+            executeCommandRef.current(toExecute, mainSessionRef.current.id);
+          }
         } else if (data === "\x7f" || data === "\b") {
           if (currentCommand.current.length > 0) {
             term.write("\b \b");
@@ -234,10 +261,10 @@ function TerminalComponent({ hideToolbar = false }) {
     }
   }, [executeCommand, terminateTask]);
 
-  // Synchronize terminal output buffer
+  // Synchronize main terminal output buffer
   useEffect(() => {
     const term = xtermRef.current;
-    if (!term || !activeTerminal) return;
+    if (!term || !mainSession) return;
 
     const writeOutput = (lines) => {
       lines.forEach((line, index) => {
@@ -256,51 +283,283 @@ function TerminalComponent({ hideToolbar = false }) {
       });
     };
 
-    if (lastTerminalId.current !== activeTerminal.id) {
-      lastTerminalId.current = activeTerminal.id;
+    if (lastTerminalId.current !== mainSession.id) {
+      lastTerminalId.current = mainSession.id;
       term.clear();
-      writeOutput(activeTerminal.output);
-      outputLines.current = activeTerminal.output.length;
+      writeOutput(mainSession.output);
+      outputLines.current = mainSession.output.length;
       return;
     }
 
-    if (activeTerminal.output.length > outputLines.current) {
-      const newLines = activeTerminal.output.slice(outputLines.current);
+    if (mainSession.output.length > outputLines.current) {
+      const newLines = mainSession.output.slice(outputLines.current);
       writeOutput(newLines);
-      outputLines.current = activeTerminal.output.length;
-    } else if (activeTerminal.output.length < outputLines.current) {
+      outputLines.current = mainSession.output.length;
+    } else if (mainSession.output.length < outputLines.current) {
       term.clear();
-      writeOutput(activeTerminal.output);
-      outputLines.current = activeTerminal.output.length;
+      writeOutput(mainSession.output);
+      outputLines.current = mainSession.output.length;
     }
-  }, [activeTerminal, activeTerminal?.output]);
+  }, [mainSession, mainSession?.output]);
 
-  // Secondary split terminal initialization
+  // Secondary split terminal initialization & interaction
   useEffect(() => {
-    if (!isSplit || !splitTerminalRef.current) return;
+    if (!isSplit) {
+      if (splitXtermRef.current) {
+        try { splitXtermRef.current.dispose(); } catch {}
+        splitXtermRef.current = null;
+        splitFitAddonRef.current = null;
+        splitOutputLines.current = 0;
+        splitCurrentCommand.current = "";
+      }
+      return;
+    }
+
+    if (!splitTerminalRef.current) return;
 
     if (!splitXtermRef.current) {
       const splitTerm = new XtermTerminal({
         cursorBlink: true,
-        fontSize: 13,
-        fontFamily: "'Cascadia Code', Consolas, monospace",
+        cursorStyle: "block",
+        fontSize: 14,
+        fontFamily: "'Cascadia Code', Consolas, 'Fira Code', monospace",
+        lineHeight: 1.25,
         theme: {
-          background: "#161616",
-          foreground: "#cccccc",
-          cursor: "#ffffff"
+          background: "#181818",
+          foreground: "#d4d4d4",
+          cursor: "#ffffff",
+          selectionBackground: "#264f78",
+          black: "#1e1e1e",
+          brightBlack: "#808080",
+          red: "#f44747",
+          brightRed: "#f44747",
+          green: "#6a9955",
+          brightGreen: "#b5cea8",
+          yellow: "#dcdcaa",
+          brightYellow: "#d7ba7d",
+          blue: "#569cd6",
+          brightBlue: "#9cdcfe",
+          magenta: "#c586c0",
+          brightMagenta: "#d16969",
+          cyan: "#4ec9b0",
+          brightCyan: "#4fc1ff",
+          white: "#d4d4d4",
+          brightWhite: "#ffffff"
         }
       });
       const splitFit = new FitAddon();
       splitTerm.loadAddon(splitFit);
+      const splitWebLinks = new WebLinksAddon((event, uri) => {
+        if (uri.includes('localhost') || uri.includes('127.0.0.1') || uri.includes('0.0.0.0')) {
+          event?.preventDefault?.();
+          const clean = uri.replace('0.0.0.0', 'localhost');
+          if (openLiveBrowserTabRef.current) {
+            openLiveBrowserTabRef.current(clean, `Preview: ${clean}`);
+            return;
+          }
+        }
+        window.open(uri, '_blank', 'noopener,noreferrer');
+      });
+      splitTerm.loadAddon(splitWebLinks);
+      splitTerm.loadAddon(new SearchAddon());
+
       splitTerm.open(splitTerminalRef.current);
       splitFit.fit();
+
       splitXtermRef.current = splitTerm;
       splitFitAddonRef.current = splitFit;
 
-      splitTerm.writeln("\x1b[36m[Split Pane Active]\x1b[0m");
-      splitTerm.write("$ ");
+      const resizeObserver = new ResizeObserver(() => {
+        try {
+          splitFit.fit();
+        } catch {}
+      });
+      resizeObserver.observe(splitTerminalRef.current);
+
+      // Keyboard navigation & shortcuts for split terminal
+      splitTerm.onKey(({ domEvent }) => {
+        const term = splitXtermRef.current;
+        if (!term) return;
+
+        const currentPrompt = splitSessionRef.current?.replState?.prompt || '$ ';
+
+        // Ctrl+C (Interrupt / Cancel)
+        if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c') {
+          domEvent.preventDefault();
+          term.write('^C\r\n' + currentPrompt);
+          splitCurrentCommand.current = "";
+          splitHistoryIndex.current = -1;
+          terminateTaskRef.current();
+          return;
+        }
+
+        // Ctrl+L (Clear screen)
+        if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'l') {
+          domEvent.preventDefault();
+          if (splitSessionRef.current) {
+            executeCommandRef.current('clear', splitSessionRef.current.id);
+          }
+          splitCurrentCommand.current = "";
+          splitHistoryIndex.current = -1;
+          return;
+        }
+
+        // Arrow Up (Recall previous commands)
+        if (domEvent.key === 'ArrowUp') {
+          domEvent.preventDefault();
+          const history = splitSessionRef.current?.history || [];
+          if (history.length === 0) return;
+
+          let newIdx;
+          if (splitHistoryIndex.current === -1) {
+            newIdx = history.length - 1;
+          } else if (splitHistoryIndex.current > 0) {
+            newIdx = splitHistoryIndex.current - 1;
+          } else {
+            newIdx = 0;
+          }
+
+          splitHistoryIndex.current = newIdx;
+          const cmd = history[newIdx] || "";
+          term.write('\x1b[2K\r' + currentPrompt + cmd);
+          splitCurrentCommand.current = cmd;
+          return;
+        }
+
+        // Arrow Down (Recall next commands)
+        else if (domEvent.key === 'ArrowDown') {
+          domEvent.preventDefault();
+          const history = splitSessionRef.current?.history || [];
+          if (history.length === 0 || splitHistoryIndex.current === -1) return;
+
+          if (splitHistoryIndex.current < history.length - 1) {
+            splitHistoryIndex.current++;
+            const cmd = history[splitHistoryIndex.current] || "";
+            term.write('\x1b[2K\r' + currentPrompt + cmd);
+            splitCurrentCommand.current = cmd;
+          } else {
+            splitHistoryIndex.current = -1;
+            term.write('\x1b[2K\r' + currentPrompt);
+            splitCurrentCommand.current = "";
+          }
+          return;
+        }
+      });
+
+      // Data handler for split terminal typing
+      splitTerm.onData((data) => {
+        const term = splitXtermRef.current;
+        if (!term) return;
+
+        if (splitSessionRef.current && activeTerminalRef.current?.id !== splitSessionRef.current.id) {
+          setActiveTerminal(splitSessionRef.current);
+        }
+
+        if (data === "\r") {
+          const toExecute = splitCurrentCommand.current;
+          splitCurrentCommand.current = "";
+          splitHistoryIndex.current = -1;
+          const currentPrompt = splitSessionRef.current?.replState?.prompt || '$ ';
+
+          if (!toExecute.trim() && !splitSessionRef.current?.replState?.isMultiLine) {
+            term.write('\r\n' + currentPrompt);
+            splitOutputLines.current += 1;
+            if (splitSessionRef.current) {
+              executeCommandRef.current("", splitSessionRef.current.id);
+            }
+            return;
+          }
+
+          term.write('\r\n');
+          splitOutputLines.current += 1;
+          if (splitSessionRef.current) {
+            executeCommandRef.current(toExecute, splitSessionRef.current.id);
+          }
+        } else if (data === "\x7f" || data === "\b") {
+          if (splitCurrentCommand.current.length > 0) {
+            term.write("\b \b");
+            splitCurrentCommand.current = splitCurrentCommand.current.slice(0, -1);
+          }
+        } else if (data === "\t") {
+          const partial = splitCurrentCommand.current.toLowerCase();
+          const suggestions = ['run', 'runtimes', 'c', 'python', 'node', 'bash', 'react', 'gcc', 'ls', 'cat', 'clear', 'help', 'kill', 'pwd', 'cd'];
+          const match = suggestions.find(s => s.startsWith(partial) && s !== partial);
+          if (match) {
+            const added = match.slice(partial.length);
+            splitCurrentCommand.current += added;
+            term.write(added);
+          }
+        } else if (data.length > 0 && !data.includes('\x1b')) {
+          splitCurrentCommand.current += data;
+          term.write(data);
+        }
+      });
+
+      // Write initial output
+      if (splitSessionRef.current?.output) {
+        splitSessionRef.current.output.forEach((line, index) => {
+          const formatted = String(line).replace(/\r?\n/g, '\r\n');
+          const isPrompt = index === splitSessionRef.current.output.length - 1 && (
+            formatted.endsWith('$ ') ||
+            formatted.endsWith('>>> ') ||
+            formatted.endsWith('... ') ||
+            formatted.endsWith('> ')
+          );
+          if (isPrompt) {
+            splitTerm.write(formatted);
+          } else {
+            splitTerm.writeln(formatted);
+          }
+        });
+        splitOutputLines.current = splitSessionRef.current.output.length;
+      }
+
+      setTimeout(() => {
+        try { splitTerm.focus(); } catch {}
+      }, 50);
     }
   }, [isSplit]);
+
+  // Synchronize split terminal output buffer
+  useEffect(() => {
+    const term = splitXtermRef.current;
+    if (!term || !splitSession || !isSplit) return;
+
+    const writeSplitOutput = (lines) => {
+      lines.forEach((line, index) => {
+        const formatted = String(line).replace(/\r?\n/g, '\r\n');
+        const isPromptLine = index === lines.length - 1 && (
+          formatted.endsWith('$ ') ||
+          formatted.endsWith('>>> ') ||
+          formatted.endsWith('... ') ||
+          formatted.endsWith('> ')
+        );
+        if (isPromptLine) {
+          term.write(formatted);
+        } else {
+          term.writeln(formatted);
+        }
+      });
+    };
+
+    if (lastSplitTerminalId.current !== splitSession.id) {
+      lastSplitTerminalId.current = splitSession.id;
+      term.clear();
+      writeSplitOutput(splitSession.output);
+      splitOutputLines.current = splitSession.output.length;
+      return;
+    }
+
+    if (splitSession.output.length > splitOutputLines.current) {
+      const newLines = splitSession.output.slice(splitOutputLines.current);
+      writeSplitOutput(newLines);
+      splitOutputLines.current = splitSession.output.length;
+    } else if (splitSession.output.length < splitOutputLines.current) {
+      term.clear();
+      writeSplitOutput(splitSession.output);
+      splitOutputLines.current = splitSession.output.length;
+    }
+  }, [splitSession, splitSession?.output, isSplit]);
 
   return (
     <div className="terminal-container">
@@ -409,9 +668,22 @@ function TerminalComponent({ hideToolbar = false }) {
       )}
 
       <div className={`terminal-body-split-wrapper ${isSplit ? 'split' : ''}`}>
-        <div ref={terminalRef} className="terminal main-pane" />
+        <div
+          ref={terminalRef}
+          className={`terminal main-pane ${activeTerminal?.id === mainSession?.id ? 'active-focus' : ''}`}
+          onClick={() => {
+            if (mainSession) setActiveTerminal(mainSession);
+            xtermRef.current?.focus();
+          }}
+        />
         {isSplit && (
-          <div className="split-pane-container">
+          <div
+            className={`split-pane-container ${activeTerminal?.id === splitSession?.id ? 'active-focus' : ''}`}
+            onClick={() => {
+              if (splitSession) setActiveTerminal(splitSession);
+              splitXtermRef.current?.focus();
+            }}
+          >
             <div ref={splitTerminalRef} className="terminal split-pane" />
           </div>
         )}

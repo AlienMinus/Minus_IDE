@@ -45,3 +45,36 @@ export async function getAiStatus() {
     return { success: false, hfConfigured: false, models: [] };
   }
 }
+
+export async function getCodebaseFiles(workspacePath = null) {
+  try {
+    const url = workspacePath
+      ? `${API_BASE}/codebase-files?workspacePath=${encodeURIComponent(workspacePath)}`
+      : `${API_BASE}/codebase-files`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message, files: [] };
+  }
+}
+
+export async function scanCodebaseFile(filePath, workspacePath = null, code = null, filename = null) {
+  try {
+    const res = await fetch(`${API_BASE}/scan-codebase-file`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filePath, workspacePath, code, filename })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    return {
+      success: false,
+      error: err.message,
+      findings: [],
+      riskLevel: 'LOW',
+      counts: { critical: 0, high: 0, medium: 0, low: 0, total: 0 }
+    };
+  }
+}

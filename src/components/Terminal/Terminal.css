@@ -231,6 +231,11 @@
 .terminal-body-split-wrapper.split .main-pane {
     width: 50%;
     border-right: 1px solid #2d2d2d;
+    transition: box-shadow 0.15s ease;
+}
+
+.terminal-body-split-wrapper.split .main-pane.active-focus {
+    box-shadow: inset 0 0 0 1px #0e639c;
 }
 
 .split-pane-container {
@@ -239,6 +244,11 @@
     background: #181818;
     border: none;
     outline: none;
+    transition: box-shadow 0.15s ease;
+}
+
+.split-pane-container.active-focus {
+    box-shadow: inset 0 0 0 1px #0e639c;
 }
 
 .terminal {

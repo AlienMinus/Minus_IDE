@@ -121,6 +121,9 @@ export function TerminalProvider({ children }) {
 
     const lastActionRef = useRef(null);
 
+    const activeTerminalIdRef = useRef(activeTerminalId);
+    activeTerminalIdRef.current = activeTerminalId;
+
     const activeTerminal = terminals.find(t => t.id === activeTerminalId) || terminals[0];
 
     const activeTerminalRef = useRef(activeTerminal);
@@ -163,6 +166,7 @@ export function TerminalProvider({ children }) {
             return updated;
         });
         setActiveTerminalId(newId);
+        activeTerminalIdRef.current = newId;
     }
 
     /**
@@ -221,6 +225,8 @@ export function TerminalProvider({ children }) {
                 activeTerminalRef.current = freshTerm;
                 terminalsRef.current = [freshTerm];
                 setActiveTerminalId(freshId);
+                activeTerminalIdRef.current = freshId;
+                setIsSplit(false);
                 return [freshTerm];
             }
 
@@ -228,14 +234,16 @@ export function TerminalProvider({ children }) {
                 const nextActive = updated[0];
                 activeTerminalRef.current = nextActive;
                 setActiveTerminalId(nextActive.id);
+                activeTerminalIdRef.current = nextActive.id;
             }
             terminalsRef.current = updated;
+
+            const remainingHasSplit = updated.some(t => t.title?.includes('(Split)'));
+            if (!remainingHasSplit) {
+                setIsSplit(false);
+            }
             return updated;
         });
-
-        if (isSplit && terminals.length <= 2) {
-            setIsSplit(false);
-        }
     }
 
     /**
@@ -273,6 +281,15 @@ export function TerminalProvider({ children }) {
      * Split terminal side by side
      */
     function splitTerminal() {
+        if (isSplit) {
+            const existingSplit = terminals.find(t => t.title?.includes('(Split)'));
+            if (existingSplit) {
+                killTerminal(existingSplit.id);
+                setIsSplit(false);
+                return;
+            }
+        }
+
         const newId = Date.now();
         const cached = getStoredWorkspaceState();
         const workspacePath = fileCtx?.persistedFolderInfo?.path || cached?.folderPath;
@@ -311,26 +328,28 @@ export function TerminalProvider({ children }) {
         setIsMaximized(prev => !prev);
     }
 
-    const appendToTerminal = useCallback((textOrLines) => {
+    const appendToTerminal = useCallback((textOrLines, targetTermId = null) => {
         setTerminals(prev => prev.map(t => {
-            if (t.id !== activeTerminalId) return t;
+            const destId = targetTermId ?? activeTerminalIdRef.current;
+            if (t.id !== destId) return t;
             const newLines = Array.isArray(textOrLines) ? textOrLines : [textOrLines];
             return {
                 ...t,
                 output: [...t.output, ...newLines]
             };
         }));
-    }, [activeTerminalId]);
+    }, []);
 
-    const setTerminalOutput = useCallback((newOutput) => {
+    const setTerminalOutput = useCallback((newOutput, targetTermId = null) => {
         setTerminals(prev => prev.map(t => {
-            if (t.id !== activeTerminalId) return t;
+            const destId = targetTermId ?? activeTerminalIdRef.current;
+            if (t.id !== destId) return t;
             return {
                 ...t,
                 output: newOutput
             };
         }));
-    }, [activeTerminalId]);
+    }, []);
 
     /**
      * Run Code in the Sandbox
@@ -611,22 +630,24 @@ export function TerminalProvider({ children }) {
     /**
      * Execute Terminal Command
      */
-    const executeCommand = useCallback(async (command) => {
-        if (!activeTerminal) return;
+    const executeCommand = useCallback(async (command, targetTermId = null) => {
+        const targetId = targetTermId ?? activeTerminalIdRef.current;
+        const targetTerm = terminalsRef.current.find(t => t.id === targetId) || terminals.find(t => t.id === targetId) || activeTerminal;
+        if (!targetTerm) return;
 
         const trimmed = command.trim();
 
         // 1. If currently in an active REPL session, route input directly to REPL engine
-        if (activeTerminal?.replState?.active) {
-            const repl = activeTerminal.replState;
+        if (targetTerm?.replState?.active) {
+            const repl = targetTerm.replState;
             const currentPrompt = repl.prompt || (repl.runtime === 'node' ? '> ' : '>>> ');
             const commandWithPrompt = `${currentPrompt}${command}`;
-            const newHistory = [...activeTerminal.history, command];
+            const newHistory = [...targetTerm.history, command];
 
             // If empty enter on single-line prompt, just reprint prompt
             if (!trimmed && !repl.isMultiLine) {
                 setTerminals(prev => prev.map(t => {
-                    if (t.id !== activeTerminalId) return t;
+                    if (t.id !== targetId) return t;
                     return {
                         ...t,
                         output: [...t.output, currentPrompt]
@@ -636,7 +657,7 @@ export function TerminalProvider({ children }) {
             }
 
             setTerminals(prev => prev.map(t => {
-                if (t.id !== activeTerminalId) return t;
+                if (t.id !== targetId) return t;
                 return {
                     ...t,
                     history: newHistory,
@@ -651,7 +672,7 @@ export function TerminalProvider({ children }) {
             if (isExit) {
                 exitReplSession(repl.sessionId).catch(() => {});
                 setTerminals(prev => prev.map(t => {
-                    if (t.id !== activeTerminalId) return t;
+                    if (t.id !== targetId) return t;
                     return {
                         ...t,
                         replState: null,
@@ -670,7 +691,7 @@ export function TerminalProvider({ children }) {
 
                 if (res.exited) {
                     setTerminals(prev => prev.map(t => {
-                        if (t.id !== activeTerminalId) return t;
+                        if (t.id !== targetId) return t;
                         const outLines = [];
                         if (res.output) {
                             outLines.push(...res.output.replace(/\r\n/g, '\n').split('\n'));
@@ -691,7 +712,7 @@ export function TerminalProvider({ children }) {
                     outLines.push(nextPrompt);
 
                     setTerminals(prev => prev.map(t => {
-                        if (t.id !== activeTerminalId) return t;
+                        if (t.id !== targetId) return t;
                         return {
                             ...t,
                             replState: {
@@ -704,7 +725,7 @@ export function TerminalProvider({ children }) {
                     }));
                 }
             } catch (err) {
-                appendToTerminal([`\x1b[31mREPL evaluation error: ${err.message}\x1b[0m`, currentPrompt]);
+                appendToTerminal([`\x1b[31mREPL evaluation error: ${err.message}\x1b[0m`, currentPrompt], targetId);
             } finally {
                 setIsRunning(false);
             }
@@ -712,11 +733,11 @@ export function TerminalProvider({ children }) {
         }
 
         const commandWithPrompt = `$ ${command}`;
-        const newHistory = [...activeTerminal.history, command];
+        const newHistory = [...targetTerm.history, command];
 
         if (!trimmed) {
             setTerminals(prev => prev.map(t => {
-                if (t.id !== activeTerminalId) return t;
+                if (t.id !== targetId) return t;
                 return {
                     ...t,
                     output: [...t.output, "$ "]
@@ -726,7 +747,7 @@ export function TerminalProvider({ children }) {
         }
 
         setTerminals(prev => prev.map(t => {
-            if (t.id !== activeTerminalId) return t;
+            if (t.id !== targetId) return t;
             return {
                 ...t,
                 history: newHistory,
@@ -739,13 +760,13 @@ export function TerminalProvider({ children }) {
         const argsStr = parts.slice(1).join(" ");
 
         if (cmd === "clear") {
-            const p = activeTerminal?.replState?.prompt || "$ ";
-            setTerminalOutput([p]);
+            const p = targetTerm?.replState?.prompt || "$ ";
+            setTerminalOutput([p], targetId);
             return;
         }
 
         if (cmd === "kill" || cmd === "exit") {
-            killTerminal(activeTerminalId);
+            killTerminal(targetId);
             return;
         }
 
@@ -755,20 +776,20 @@ export function TerminalProvider({ children }) {
 
         if (isPythonRepl || isNodeRepl) {
             const runtime = isPythonRepl ? 'python' : 'node';
-            const sessionId = `term-${activeTerminalId}`;
+            const sessionId = `term-${targetId}`;
             setIsRunning(true);
             try {
                 const session = await startReplSession({
                     sessionId,
                     runtime,
-                    cwd: activeTerminal.cwd || currentWorkspacePath
+                    cwd: targetTerm?.cwd || currentWorkspacePath
                 });
 
                 const bannerLines = (session.banner || '').split(/\r?\n/).filter(Boolean);
                 const defaultPrompt = session.prompt || (runtime === 'node' ? '> ' : '>>> ');
 
                 setTerminals(prev => prev.map(t => {
-                    if (t.id !== activeTerminalId) return t;
+                    if (t.id !== targetId) return t;
                     return {
                         ...t,
                         replState: {
@@ -782,7 +803,7 @@ export function TerminalProvider({ children }) {
                     };
                 }));
             } catch (err) {
-                appendToTerminal([`\x1b[31mFailed to start ${runtime} REPL: ${err.message}\x1b[0m`, "$ "]);
+                appendToTerminal([`\x1b[31mFailed to start ${runtime} REPL: ${err.message}\x1b[0m`, "$ "], targetId);
             } finally {
                 setIsRunning(false);
             }
@@ -816,12 +837,12 @@ export function TerminalProvider({ children }) {
                 "\x1b[90mTip: You can also click the ▶ Run button in the top navbar to execute the active file.\x1b[0m",
                 "$ "
             ];
-            appendToTerminal(helpLines);
+            appendToTerminal(helpLines, targetId);
             return;
         }
 
         if (cmd === "runtimes" || cmd === "sandboxes" || cmd === "status") {
-            appendToTerminal(["\x1b[34m[Hyperion]\x1b[0m Checking sandbox compilers and runtimes..."]);
+            appendToTerminal(["\x1b[34m[Hyperion]\x1b[0m Checking sandbox compilers and runtimes..."], targetId);
             try {
                 const info = await getSandboxStatus();
                 const runtimes = info.data?.runtimes || {};
@@ -839,9 +860,9 @@ export function TerminalProvider({ children }) {
                     "--------------------------------------------------",
                     "$ "
                 ];
-                appendToTerminal(lines);
+                appendToTerminal(lines, targetId);
             } catch (err) {
-                appendToTerminal([`\x1b[31mFailed to retrieve status: ${err.message}\x1b[0m`, "$ "]);
+                appendToTerminal([`\x1b[31mFailed to retrieve status: ${err.message}\x1b[0m`, "$ "], targetId);
             }
             return;
         }
@@ -859,13 +880,13 @@ export function TerminalProvider({ children }) {
                 const targetLang = detectLanguage(targetFilename);
                 appendToTerminal([
                     `\x1b[34m[Sandbox]\x1b[0m Executing '${targetFilename}' (${targetLang.toUpperCase()}) via shell...`
-                ]);
+                ], targetId);
                 const shellRes = await executeShellCommand(`run ${targetFilename}`, { virtualFiles: files });
                 appendToTerminal([
                     shellRes.stdout || '',
                     shellRes.stderr ? `\x1b[31m${shellRes.stderr}\x1b[0m` : '',
                     "$ "
-                ].filter(Boolean));
+                ].filter(Boolean), targetId);
                 return;
             }
 
@@ -892,40 +913,40 @@ export function TerminalProvider({ children }) {
             if (foundFile) {
                 await runCodeSnippet({ language: 'react', code: foundFile.content || '', filename: foundFile.name, targetFile: foundFile });
             } else {
-                appendToTerminal([`\x1b[31mFile '${argsStr}' not found in workspace.\x1b[0m`, "$ "]);
+                appendToTerminal([`\x1b[31mFile '${argsStr}' not found in workspace.\x1b[0m`, "$ "], targetId);
             }
             return;
         }
 
         if (cmd === "date") {
-            appendToTerminal([new Date().toLocaleDateString(), "$ "]);
+            appendToTerminal([new Date().toLocaleDateString(), "$ "], targetId);
             return;
         }
 
         if (cmd === "time") {
-            appendToTerminal([new Date().toLocaleTimeString(), "$ "]);
+            appendToTerminal([new Date().toLocaleTimeString(), "$ "], targetId);
             return;
         }
 
         if (cmd === "history") {
-            appendToTerminal([...newHistory, "$ "]);
+            appendToTerminal([...newHistory, "$ "], targetId);
             return;
         }
 
         if (cmd === "color") {
             document.documentElement.style.setProperty('--text-color', argsStr);
-            appendToTerminal([`Text color changed to ${argsStr}`, "$ "]);
+            appendToTerminal([`Text color changed to ${argsStr}`, "$ "], targetId);
             return;
         }
 
         if (cmd === "resetcolor") {
             document.documentElement.style.setProperty('--text-color', '#0f0');
-            appendToTerminal(["Text color reset to default", "$ "]);
+            appendToTerminal(["Text color reset to default", "$ "], targetId);
             return;
         }
 
         if (cmd === "cd") {
-            const currentCwd = activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
+            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "~/HyperionIDE";
             const target = argsStr.trim();
             if (!target || target === "~") {
                 const cached = getStoredWorkspaceState();
@@ -933,11 +954,11 @@ export function TerminalProvider({ children }) {
                 const homeOrRoot = (workspacePath && workspacePath !== "~/HyperionIDE" && workspacePath !== "portfolio_v1")
                     ? workspacePath
                     : (currentWorkspacePath || "~/HyperionIDE");
-                if (activeTerminalRef.current) activeTerminalRef.current.cwd = homeOrRoot;
+                if (targetTerm) targetTerm.cwd = homeOrRoot;
                 setTerminals((prev) =>
-                    prev.map((t) => (t.id === activeTerminalId ? { ...t, cwd: homeOrRoot } : t))
+                    prev.map((t) => (t.id === targetId ? { ...t, cwd: homeOrRoot } : t))
                 );
-                appendToTerminal([`\x1b[32m✔ Directory: ${homeOrRoot}\x1b[0m`, "$ "]);
+                appendToTerminal([`\x1b[32m✔ Directory: ${homeOrRoot}\x1b[0m`, "$ "], targetId);
                 return;
             }
 
@@ -960,28 +981,28 @@ export function TerminalProvider({ children }) {
                 const check = await validateWorkspacePath(candidate);
                 if (check.exists && check.isDirectory) {
                     const finalPath = check.path;
-                    if (activeTerminalRef.current) activeTerminalRef.current.cwd = finalPath;
+                    if (targetTerm) targetTerm.cwd = finalPath;
                     setTerminals((prev) =>
-                        prev.map((t) => (t.id === activeTerminalId ? { ...t, cwd: finalPath } : t))
+                        prev.map((t) => (t.id === targetId ? { ...t, cwd: finalPath } : t))
                     );
                     if (fileCtx?.setWorkspacePath) {
                         fileCtx.setWorkspacePath(finalPath);
                     }
                     saveWorkspaceState({ folderPath: finalPath });
-                    appendToTerminal([`\x1b[32m✔ Directory changed to: ${finalPath}\x1b[0m`, "$ "]);
+                    appendToTerminal([`\x1b[32m✔ Directory changed to: ${finalPath}\x1b[0m`, "$ "], targetId);
                 } else {
-                    appendToTerminal([`\x1b[31mcd: no such file or directory: ${target}\x1b[0m`, "$ "]);
+                    appendToTerminal([`\x1b[31mcd: no such file or directory: ${target}\x1b[0m`, "$ "], targetId);
                 }
             } catch (err) {
-                appendToTerminal([`\x1b[31mcd error: ${err.message}\x1b[0m`, "$ "]);
+                appendToTerminal([`\x1b[31mcd error: ${err.message}\x1b[0m`, "$ "], targetId);
             }
             return;
         }
 
         if (cmd === "pwd" || cmd === "cwd") {
-            const currentCwd = activeTerminalRef.current?.cwd || currentWorkspacePath || "~/HyperionIDE";
+            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "~/HyperionIDE";
             if (currentCwd === "~/HyperionIDE") {
-                appendToTerminal([currentCwd, "$ "]);
+                appendToTerminal([currentCwd, "$ "], targetId);
                 return;
             }
             const isPhysical = currentCwd && (currentCwd.includes(':') || currentCwd.startsWith('/'));
@@ -999,14 +1020,14 @@ export function TerminalProvider({ children }) {
                     outLines.push(currentCwd);
                 }
                 outLines.push("$ ");
-                appendToTerminal(outLines);
+                appendToTerminal(outLines, targetId);
             } catch {
-                appendToTerminal([currentCwd, "$ "]);
+                appendToTerminal([currentCwd, "$ "], targetId);
             }
             return;
         }
 
-        const targetCwd = activeTerminalRef.current?.cwd || currentWorkspacePath;
+        const targetCwd = targetTerm?.cwd || currentWorkspacePath;
         const isPhysical = targetCwd && (targetCwd.includes(':') || targetCwd.startsWith('/'));
 
         // Check if command is a dev server or long-running command (vite, npm run dev, npm start, etc.)
@@ -1037,7 +1058,7 @@ export function TerminalProvider({ children }) {
                     onChunk: (chunk) => {
                         collectedOutput += chunk;
                         const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
-                        appendToTerminal(chunkLines);
+                        appendToTerminal(chunkLines, targetId);
 
                         // Scan for local dev server URLs (e.g. http://localhost:5173, http://127.0.0.1:5175)
                         const urlRegex = /(https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?(?:\/[^\s\x1b"'\)\]>]*)*)/gi;
@@ -1049,7 +1070,7 @@ export function TerminalProvider({ children }) {
                                 appendToTerminal([
                                     `\r\n\x1b[1;32m✔ Local Dev Server detected:\x1b[0m \x1b[1;36m${detectedUrl}\x1b[0m`,
                                     `\x1b[90m➜ Opening Live Preview in Editor...\x1b[0m\r\n`
-                                ]);
+                                ], targetId);
                                 if (editorCtx?.openLiveBrowserTab) {
                                     editorCtx.openLiveBrowserTab(detectedUrl, `Preview: ${detectedUrl}`);
                                 }
@@ -1059,12 +1080,12 @@ export function TerminalProvider({ children }) {
                     onExit: (code) => {
                         activeProcessAbortCtrl.current = null;
                         setIsRunning(false);
-                        appendToTerminal(["$ "]);
+                        appendToTerminal(["$ "], targetId);
                     }
                 });
             } catch (err) {
                 if (err.name !== 'AbortError') {
-                    appendToTerminal([`\x1b[31mStream error: ${err.message}\x1b[0m`, "$ "]);
+                    appendToTerminal([`\x1b[31mStream error: ${err.message}\x1b[0m`, "$ "], targetId);
                 }
             } finally {
                 activeProcessAbortCtrl.current = null;
@@ -1108,13 +1129,13 @@ export function TerminalProvider({ children }) {
             }
 
             outLines.push("$ ");
-            appendToTerminal(outLines);
+            appendToTerminal(outLines, targetId);
 
         } catch (err) {
             appendToTerminal([
                 `\x1b[31mCommand execution error: ${err.message}\x1b[0m`,
                 "$ "
-            ]);
+            ], targetId);
         } finally {
             setIsRunning(false);
         }

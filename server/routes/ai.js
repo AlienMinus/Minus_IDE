@@ -1,4 +1,190 @@
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/**
+ * Directories that must NEVER be traversed during security scans
+ */
+const ALWAYS_IGNORED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  '.svn',
+  '.hg',
+  'dist',
+  'dist-ssr',
+  'build',
+  '.next',
+  '.nuxt',
+  '.turbo',
+  'coverage',
+  '.vscode',
+  '.idea',
+  'logs',
+  'tmp',
+  'temp',
+  'scratch'
+]);
+
+/**
+ * File extensions that should NEVER be scanned (binaries, media, fonts, locks)
+ */
+const ALWAYS_IGNORED_EXTS = new Set([
+  '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.webp', '.avif',
+  '.mp4', '.mp3', '.wav', '.ogg', '.mov', '.avi',
+  '.pdf', '.zip', '.tar', '.gz', '.7z', '.rar',
+  '.exe', '.dll', '.so', '.dylib', '.bin', '.iso',
+  '.woff', '.woff2', '.ttf', '.eot', '.otf',
+  '.map', '.lock', '.pyc', '.class', '.o', '.obj'
+]);
+
+/**
+ * Scannable text and code file extensions
+ */
+const SCANNABLE_EXTS = new Set([
+  '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs',
+  '.py', '.c', '.cpp', '.h', '.hpp',
+  '.html', '.htm', '.css', '.scss', '.sass', '.less',
+  '.json', '.yaml', '.yml', '.md', '.sql', '.sh', '.bash',
+  '.env.example'
+]);
+
+/**
+ * Parse .gitignore rules into an array of clean patterns
+ */
+function parseGitignore(gitignorePath) {
+  if (!fs.existsSync(gitignorePath)) return [];
+  try {
+    const raw = fs.readFileSync(gitignorePath, 'utf8');
+    return raw
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#'));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Check whether a relative path should be ignored according to gitignore rules & defaults
+ */
+function isPathIgnored(relPath, gitignoreRules) {
+  const normalized = relPath.replace(/\\/g, '/').replace(/^\//, '');
+  const segments = normalized.split('/');
+
+  // 1. Check if any ancestor folder or file is in ALWAYS_IGNORED_DIRS
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    if (ALWAYS_IGNORED_DIRS.has(seg)) return true;
+  }
+
+  const fileName = segments[segments.length - 1];
+
+  // 2. Ignore non-example .env files (e.g. .env, .env.local, .env.production)
+  if (fileName.startsWith('.env') && !fileName.includes('example')) {
+    return true;
+  }
+
+  // 3. Extension check
+  const ext = path.extname(fileName).toLowerCase();
+  if (ALWAYS_IGNORED_EXTS.has(ext)) {
+    return true;
+  }
+
+  // 4. Test against .gitignore rules
+  for (const rule of gitignoreRules) {
+    let pat = rule.trim().replace(/\\/g, '/');
+    if (!pat) continue;
+
+    const isNegation = pat.startsWith('!');
+    if (isNegation) pat = pat.slice(1);
+
+    const isDirOnly = pat.endsWith('/');
+    const cleanPat = isDirOnly ? pat.slice(0, -1) : pat;
+
+    if (!cleanPat.includes('/')) {
+      // Pattern without slash matches any folder name or filename
+      if (cleanPat.startsWith('*.')) {
+        const suffix = cleanPat.slice(1).toLowerCase();
+        if (fileName.toLowerCase().endsWith(suffix)) {
+          return !isNegation;
+        }
+      } else if (cleanPat.includes('*')) {
+        const regexStr = '^' + cleanPat.replace(/[-[\]{}()+.,^$|#\s]/g, '\\$&').replace(/\*/g, '.*') + '$';
+        const regex = new RegExp(regexStr, 'i');
+        if (regex.test(fileName) || segments.some(s => regex.test(s))) {
+          return !isNegation;
+        }
+      } else {
+        if (fileName.toLowerCase() === cleanPat.toLowerCase() ||
+            segments.some(s => s.toLowerCase() === cleanPat.toLowerCase())) {
+          return !isNegation;
+        }
+      }
+    } else {
+      // Pattern with slash matches relative path
+      const matchTarget = cleanPat.startsWith('/') ? cleanPat.slice(1) : cleanPat;
+      if (normalized.toLowerCase() === matchTarget.toLowerCase() ||
+          normalized.toLowerCase().startsWith(matchTarget.toLowerCase() + '/') ||
+          normalized.toLowerCase().endsWith('/' + matchTarget.toLowerCase())) {
+        return !isNegation;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Traverse codebase recursively and return all eligible files
+ */
+function discoverCodebaseFiles(workspaceRoot, gitignoreRules) {
+  const fileList = [];
+
+  function walk(currentDir, relDir = '') {
+    let entries;
+    try {
+      entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const ent of entries) {
+      const relPath = relDir ? `${relDir}/${ent.name}` : ent.name;
+
+      if (ent.isDirectory()) {
+        if (ALWAYS_IGNORED_DIRS.has(ent.name)) continue;
+        if (isPathIgnored(relPath + '/', gitignoreRules)) continue;
+        walk(path.join(currentDir, ent.name), relPath);
+      } else if (ent.isFile()) {
+        if (isPathIgnored(relPath, gitignoreRules)) continue;
+
+        const ext = path.extname(ent.name).toLowerCase();
+        if (!SCANNABLE_EXTS.has(ext)) continue;
+
+        try {
+          const fullPath = path.join(currentDir, ent.name);
+          const stat = fs.statSync(fullPath);
+          if (stat.size > 500 * 1024) continue; // Skip files > 500KB
+
+          fileList.push({
+            path: relPath,
+            name: ent.name,
+            size: stat.size,
+            ext,
+            language: ext.replace(/^\./, '')
+          });
+        } catch {}
+      }
+    }
+  }
+
+  walk(workspaceRoot);
+  return fileList.sort((a, b) => a.path.localeCompare(b.path));
+}
 
 const router = express.Router();
 
@@ -488,6 +674,85 @@ router.post('/security-scan', (req, res) => {
     success: true,
     ...analysis
   });
+});
+
+/**
+ * GET /api/ai/codebase-files - Discover codebase files respecting .gitignore
+ */
+router.get('/codebase-files', (req, res) => {
+  try {
+    const defaultRoot = path.resolve(__dirname, '../..');
+    const workspaceRoot = req.query.workspacePath ? path.resolve(req.query.workspacePath) : defaultRoot;
+
+    const gitignorePath = path.join(workspaceRoot, '.gitignore');
+    const gitignoreRules = parseGitignore(gitignorePath);
+    const files = discoverCodebaseFiles(workspaceRoot, gitignoreRules);
+
+    res.json({
+      success: true,
+      workspacePath: workspaceRoot,
+      totalFiles: files.length,
+      ignoredRulesCount: gitignoreRules.length,
+      files
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/ai/scan-codebase-file - Scan single codebase file one-by-one
+ */
+router.post('/scan-codebase-file', (req, res) => {
+  try {
+    const { filePath, workspacePath, code } = req.body;
+    let fileContent = code;
+    let fileName = req.body.filename || path.basename(filePath || 'file');
+
+    if (!fileContent && filePath) {
+      const defaultRoot = path.resolve(__dirname, '../..');
+      const root = workspacePath ? path.resolve(workspacePath) : defaultRoot;
+      const fullPath = path.isAbsolute(filePath) ? filePath : path.resolve(root, filePath);
+
+      // Verify file is within root to prevent directory traversal
+      const normalizedRoot = root.replace(/\\/g, '/').toLowerCase();
+      const normalizedFull = fullPath.replace(/\\/g, '/').toLowerCase();
+      if (!normalizedFull.startsWith(normalizedRoot)) {
+        return res.status(403).json({ error: 'Access denied: File outside workspace' });
+      }
+
+      if (!fs.existsSync(fullPath)) {
+        return res.status(404).json({ error: `File not found: ${filePath}` });
+      }
+
+      fileContent = fs.readFileSync(fullPath, 'utf8');
+      fileName = path.basename(fullPath);
+    }
+
+    const analysis = runSecurityAnalysis(fileContent || '', fileName);
+
+    const counts = {
+      critical: analysis.findings.filter(f => f.severity === 'CRITICAL').length,
+      high: analysis.findings.filter(f => f.severity === 'HIGH').length,
+      medium: analysis.findings.filter(f => f.severity === 'MEDIUM').length,
+      low: analysis.findings.filter(f => f.severity === 'LOW').length,
+      total: analysis.findings.length
+    };
+
+    res.json({
+      success: true,
+      file: {
+        path: filePath || fileName,
+        name: fileName,
+        lines: (fileContent || '').split('\n').length
+      },
+      riskLevel: analysis.riskLevel,
+      findings: analysis.findings,
+      counts
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 /**
