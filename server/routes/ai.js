@@ -191,14 +191,14 @@ function runSecurityAnalysis(code, filename = 'Active Code') {
  * Cypher AI Expert Security & Programming Intelligence Engine
  * Dynamically answers questions with contextual knowledge rather than static responses.
  */
-function generateCypherIntelligenceResponse(prompt, rawCodeSnippet, model, hasHfToken) {
+function generateCypherIntelligenceResponse(prompt, rawCodeSnippet, model, hasHfToken, filename = 'Active Code') {
   const p = prompt.toLowerCase();
 
   // If code is provided in the prompt, run SAST analysis and contextualize
   if (rawCodeSnippet && rawCodeSnippet.trim().length > 0) {
     const isSecretsQuery = /secret|password|key|credential|token|leak/i.test(prompt);
     const isOwaspQuery = /owasp|top.?10/i.test(prompt);
-    const analysis = runSecurityAnalysis(rawCodeSnippet, 'Active Code Snippet');
+    const analysis = runSecurityAnalysis(rawCodeSnippet, filename);
 
     let response = `> 💡 *Analyzed by Cypher AI Security Engine (${hasHfToken ? 'Hugging Face Service: Connected' : 'Local SAST Mode'}).*\n\n`;
     response += analysis.markdown;
@@ -495,7 +495,7 @@ router.post('/security-scan', (req, res) => {
  */
 router.post('/chat', async (req, res) => {
   try {
-    const { messages, model = 'meta-llama/Llama-3.1-8B-Instruct' } = req.body;
+    const { messages, model = 'meta-llama/Llama-3.1-8B-Instruct', file, code } = req.body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages array is required' });
@@ -504,9 +504,10 @@ router.post('/chat', async (req, res) => {
     const lastMessage = messages[messages.length - 1];
     const userPrompt = lastMessage?.content || lastMessage?.text || '';
 
-    // Extract any code blocks from the user's prompt
+    // Extract any code blocks from the user's prompt or attached file fragment
     const codeBlockMatch = userPrompt.match(/```(?:\w+)?\n([\s\S]*?)```/);
-    const rawCodeSnippet = codeBlockMatch ? codeBlockMatch[1] : '';
+    const rawCodeSnippet = file?.content || code || lastMessage?.fileFragment?.content || (codeBlockMatch ? codeBlockMatch[1] : '');
+    const targetFileName = file?.name || lastMessage?.fileFragment?.name || 'Active Code';
 
     const token = (process.env.HF_TOKEN || '').trim().replace(/^["']|["']$/g, '');
     const hasToken = Boolean(token && token.length > 10);
@@ -524,10 +525,17 @@ When evaluating code or answering questions:
 
         const hfMessages = [
           { role: 'system', content: systemPrompt },
-          ...messages.map((m) => ({
-            role: m.sender === 'assistant' ? 'assistant' : 'user',
-            content: m.text || m.content
-          }))
+          ...messages.map((m, idx) => {
+            let content = m.text || m.content || '';
+            // If code snippet is attached as fragment, append it for LLM context
+            if (idx === messages.length - 1 && rawCodeSnippet && !content.includes(rawCodeSnippet)) {
+              content += `\n\n[Attached Code File: \`${targetFileName}\`]\n\`\`\`\n${rawCodeSnippet}\n\`\`\``;
+            }
+            return {
+              role: m.sender === 'assistant' ? 'assistant' : 'user',
+              content
+            };
+          })
         ];
 
         const hfResponse = await fetch('https://router.huggingface.co/v1/chat/completions', {
@@ -564,7 +572,7 @@ When evaluating code or answering questions:
     }
 
     // 2. Cypher Intelligence Engine (Context-aware responses tailored to prompt and code)
-    const cypherMessage = generateCypherIntelligenceResponse(userPrompt, rawCodeSnippet, model, hasToken);
+    const cypherMessage = generateCypherIntelligenceResponse(userPrompt, rawCodeSnippet, model, hasToken, targetFileName);
 
     return res.json({
       success: true,

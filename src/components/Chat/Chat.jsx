@@ -12,7 +12,10 @@ import {
   FaShieldAlt,
   FaKey,
   FaBug,
-  FaSpinner
+  FaSpinner,
+  FaFileCode,
+  FaPaperclip,
+  FaTimes
 } from "react-icons/fa";
 import { sendChatMessage, getAiStatus } from "../../services/aiService";
 import useEditor from "../../hooks/useEditor";
@@ -48,6 +51,7 @@ function Chat() {
 
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [attachedFile, setAttachedFile] = useState(null);
 
   const [selectedModel, setSelectedModel] = useState(() => {
     try {
@@ -145,14 +149,13 @@ function Chat() {
     const handleAddToChat = (e) => {
       const targetFile = e.detail?.file;
       if (targetFile) {
-        const snippet = targetFile.content
-          ? `\nAnalyze the security of file \`${targetFile.name}\`:\n\`\`\`${targetFile.language || ""}\n${targetFile.content}\n\`\`\`\n`
-          : `\nPlease review security for file: \`${targetFile.name}\`\n`;
-        setMessage((prev) => (prev ? `${prev}\n${snippet}` : snippet));
-        setTimeout(() => {
-          resizeTextarea();
-          if (textareaRef.current) textareaRef.current.focus();
-        }, 50);
+        setAttachedFile({
+          name: targetFile.name,
+          language: targetFile.language || "javascript",
+          content: targetFile.content || "",
+          lineCount: (targetFile.content || "").split("\n").length
+        });
+        if (textareaRef.current) textareaRef.current.focus();
       }
     };
     window.addEventListener("hyperion:add-to-chat", handleAddToChat);
@@ -176,9 +179,12 @@ function Chat() {
     }, 15);
   };
 
-  const handleSend = async (customPrompt = null) => {
+  const handleSend = async (customPrompt = null, fragment = null) => {
     const textToSend = typeof customPrompt === "string" ? customPrompt : message;
-    if (!textToSend.trim() || isLoading) return;
+    const fileFragmentToSend = fragment || attachedFile;
+
+    if (!textToSend.trim() && !fileFragmentToSend) return;
+    if (isLoading) return;
 
     if (editingMessageId) {
       setMessages((prev) =>
@@ -197,24 +203,32 @@ function Chat() {
       return;
     }
 
+    const displayText = textToSend.trim() || (fileFragmentToSend ? `Analyze security for \`${fileFragmentToSend.name}\`` : "");
+
     const userMessage = {
       id: Date.now(),
       sender: "user",
-      text: textToSend.trim(),
+      text: displayText,
+      fileFragment: fileFragmentToSend ? {
+        name: fileFragmentToSend.name,
+        language: fileFragmentToSend.language || "code",
+        lineCount: fileFragmentToSend.lineCount || (fileFragmentToSend.content || "").split("\n").length
+      } : null,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     };
 
     const updatedHistory = [...messages, userMessage];
     setMessages(updatedHistory);
     setMessage("");
+    setAttachedFile(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = "54px";
     }
 
-    // Call Cypher AI Backend
+    // Call Cypher AI Backend with the attached file fragment
     setIsLoading(true);
     try {
-      const response = await sendChatMessage(updatedHistory, selectedModel, "security");
+      const response = await sendChatMessage(updatedHistory, selectedModel, "security", fileFragmentToSend);
       const assistantText = response.message || response.error || "No response received from Cypher.";
 
       const assistantMessage = {
@@ -243,14 +257,24 @@ function Chat() {
       handleSend("Please provide a comprehensive code security checklist and guide for securing files in this workspace.");
       return;
     }
-    const prompt = `Please perform a comprehensive code security analysis on \`${activeFile.name}\`:\n\n\`\`\`${activeFile.language || "javascript"}\n${activeFile.content || ""}\n\`\`\``;
-    handleSend(prompt);
+    const fragment = {
+      name: activeFile.name,
+      language: activeFile.language || "javascript",
+      content: activeFile.content || "",
+      lineCount: (activeFile.content || "").split("\n").length
+    };
+    handleSend("Scan active file for code security vulnerabilities", fragment);
   };
 
   const handleOwaspAudit = () => {
     if (activeFile && activeFile.content) {
-      const prompt = `Perform an OWASP Top 10 security audit on \`${activeFile.name}\`:\n\n\`\`\`${activeFile.language || "javascript"}\n${activeFile.content || ""}\n\`\`\``;
-      handleSend(prompt);
+      const fragment = {
+        name: activeFile.name,
+        language: activeFile.language || "javascript",
+        content: activeFile.content,
+        lineCount: activeFile.content.split("\n").length
+      };
+      handleSend("Perform an OWASP Top 10 security audit on active file", fragment);
     } else {
       handleSend("Perform an OWASP Top 10 security audit. What are the key application vulnerabilities and how should we mitigate them?");
     }
@@ -258,8 +282,13 @@ function Chat() {
 
   const handleSecretsCheck = () => {
     if (activeFile && activeFile.content) {
-      const prompt = `Scan \`${activeFile.name}\` for leaked secrets, hardcoded passwords, AWS credentials, and API keys:\n\n\`\`\`${activeFile.language || "javascript"}\n${activeFile.content || ""}\n\`\`\``;
-      handleSend(prompt);
+      const fragment = {
+        name: activeFile.name,
+        language: activeFile.language || "javascript",
+        content: activeFile.content,
+        lineCount: activeFile.content.split("\n").length
+      };
+      handleSend("Scan active file for leaked secrets, hardcoded passwords, and API keys", fragment);
     } else {
       handleSend("Scan code for leaked secrets, hardcoded passwords, AWS credentials, and API keys. Explain detection patterns and remediation.");
     }
@@ -386,6 +415,19 @@ function Chat() {
               )}
 
               <div className="chat-message-body">
+                {item.fileFragment && (
+                  <div className="chat-file-fragment-card">
+                    <div className="fragment-card-icon-wrap">
+                      <FaFileCode className="fragment-card-icon" />
+                    </div>
+                    <div className="fragment-card-info">
+                      <span className="fragment-card-name">{item.fileFragment.name}</span>
+                      <span className="fragment-card-meta">
+                        {item.fileFragment.language || "code"} • {item.fileFragment.lineCount || 1} lines
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="chat-message-text">
                   {item.sender === "assistant" ? (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -501,8 +543,48 @@ function Chat() {
         </button>
       </div>
 
+      {/* Attached File Chip above textarea */}
+      {attachedFile && (
+        <div className="chat-attached-file-bar">
+          <div className="attached-file-chip">
+            <FaFileCode className="attached-chip-icon" />
+            <span className="attached-chip-name">{attachedFile.name}</span>
+            <span className="attached-chip-meta">({attachedFile.lineCount} lines)</span>
+            <button
+              type="button"
+              className="attached-chip-remove"
+              onClick={() => setAttachedFile(null)}
+              title="Remove attachment"
+            >
+              <FaTimes />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="chat-input-area">
+        {activeFile && (
+          <button
+            type="button"
+            className={`chat-attach-btn ${attachedFile ? "active" : ""}`}
+            onClick={() => {
+              if (attachedFile) {
+                setAttachedFile(null);
+              } else {
+                setAttachedFile({
+                  name: activeFile.name,
+                  language: activeFile.language || "javascript",
+                  content: activeFile.content || "",
+                  lineCount: (activeFile.content || "").split("\n").length
+                });
+              }
+            }}
+            title={attachedFile ? `Remove ${attachedFile.name}` : `Attach ${activeFile.name}`}
+          >
+            <FaPaperclip />
+          </button>
+        )}
         <textarea
           ref={textareaRef}
           value={message}
@@ -512,7 +594,7 @@ function Chat() {
           }}
           onInput={resizeTextarea}
           onKeyDown={handleKeyDown}
-          placeholder="Ask Cypher or paste code to analyze security..."
+          placeholder={attachedFile ? `Ask Cypher about ${attachedFile.name}...` : "Ask Cypher or paste code to analyze security..."}
           className="chat-input"
           disabled={isLoading}
         />

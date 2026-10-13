@@ -1,11 +1,11 @@
 const API_BASE = typeof window !== 'undefined' ? '/api/ai' : 'http://localhost:3000/api/ai';
 
-export async function sendChatMessage(messages, model = 'meta-llama/Llama-3.1-8B-Instruct', mode = 'security') {
+export async function sendChatMessage(messages, model = 'meta-llama/Llama-3.1-8B-Instruct', mode = 'security', file = null) {
   try {
     const res = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, model, mode })
+      body: JSON.stringify({ messages, model, mode, file })
     });
     if (!res.ok) {
       const errText = await res.text();
