@@ -332,9 +332,27 @@ function BottomPanel() {
   };
 
   const handleOpenBrowserPreview = () => {
-    const outputText = (activeTerminal?.output || []).join("\n");
-    const match = outputText.match(/https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/[^\s\x1b"'\)\]>]*)*/i);
-    const targetUrl = match ? match[0] : "http://localhost:5173";
+    let foundUrl = null;
+    const terminalList = [
+      activeTerminal,
+      ...(terminals || []).filter(t => t?.id !== activeTerminal?.id)
+    ].filter(Boolean);
+
+    for (const t of terminalList) {
+      const rawOutput = (t.output || []).join("\n");
+      const cleanOutput = String(rawOutput)
+        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+
+      const portMatch = cleanOutput.match(/https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/i);
+      if (portMatch) {
+        foundUrl = portMatch[0].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
+        break;
+      }
+    }
+
+    const targetUrl = foundUrl || "http://localhost:5173";
+
     if (openLiveBrowserTab) {
       openLiveBrowserTab(targetUrl, `Preview: ${targetUrl}`);
     }

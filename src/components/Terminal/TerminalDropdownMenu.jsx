@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import "./TerminalDropdownMenu.css";
 import useTerminal from "../../hooks/useTerminal";
 import useEditor from "../../hooks/useEditor";
@@ -34,7 +35,42 @@ export default function TerminalDropdownMenu({ isOpen, onClose, anchorRef }) {
   const [hoverSubmenu, setHoverSubmenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, openSubmenuLeft: false });
   const menuRef = useRef(null);
+
+  // Position calculation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updatePosition = () => {
+      if (!anchorRef?.current) return;
+      const rect = anchorRef.current.getBoundingClientRect();
+      const menuWidth = 280;
+      const menuHeight = 360;
+
+      let left = rect.right - menuWidth;
+      if (left < 10) left = rect.left;
+      if (left + menuWidth > window.innerWidth - 10) {
+        left = Math.max(10, window.innerWidth - menuWidth - 10);
+      }
+
+      let top = rect.bottom + 4;
+      if (top + menuHeight > window.innerHeight && rect.top > menuHeight) {
+        top = Math.max(10, rect.top - menuHeight - 4);
+      }
+
+      const openSubmenuLeft = left + menuWidth + 210 > window.innerWidth;
+      setCoords({ top, left, openSubmenuLeft });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isOpen, anchorRef]);
 
   // Close when clicking outside
   useEffect(() => {
@@ -93,9 +129,18 @@ export default function TerminalDropdownMenu({ isOpen, onClose, anchorRef }) {
     }
   };
 
-  return (
+  const menuElement = (
     <>
-      <div className="terminal-dropdown-menu" ref={menuRef}>
+      <div
+        className="terminal-dropdown-menu"
+        ref={menuRef}
+        style={{
+          position: "fixed",
+          top: `${coords.top}px`,
+          left: `${coords.left}px`,
+          zIndex: 999999
+        }}
+      >
         {/* Top actions */}
         <div
           className="term-dropdown-item"
@@ -201,7 +246,7 @@ export default function TerminalDropdownMenu({ isOpen, onClose, anchorRef }) {
           <FaChevronRight className="term-submenu-arrow" />
 
           {hoverSubmenu && (
-            <div className="term-sub-dropdown-menu">
+            <div className={`term-sub-dropdown-menu ${coords.openSubmenuLeft ? "open-left" : ""}`}>
               <div
                 className="term-dropdown-item"
                 onClick={() => handleAction(() => splitTerminal("powershell"))}
@@ -334,5 +379,7 @@ export default function TerminalDropdownMenu({ isOpen, onClose, anchorRef }) {
       )}
     </>
   );
+
+  return createPortal(menuElement, document.body);
 }
 

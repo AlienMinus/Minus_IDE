@@ -439,6 +439,22 @@ export async function executeCommand({
     };
   }
 
+  // Fast-path echo command
+  if (trimmed === 'echo' || trimmed.startsWith('echo ')) {
+    let text = trimmed === 'echo' ? '' : trimmed.slice(5).trim();
+    if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+      text = text.slice(1, -1);
+    }
+    return {
+      success: true,
+      stdout: text,
+      stderr: '',
+      exitCode: 0,
+      executionTimeMs: Date.now() - startTime,
+      cwd: workDir
+    };
+  }
+
   if (!workDir || !fs.existsSync(workDir)) {
     workDir = createTempDir('hyp_cmd_');
     isTemp = true;
@@ -578,6 +594,7 @@ export function streamCommand({
   const child = spawn(runner, runnerArgs, {
     cwd: workDir,
     windowsHide: true,
+    windowsVerbatimArguments: isWindows,
     env: {
       ...process.env,
       TERM: 'xterm-256color',
@@ -636,9 +653,11 @@ function runProcess(cmd, args, { cwd, stdin = '', timeoutMs = 15000, env = proce
     let stderr = '';
     let timedOut = false;
 
+    const isWindows = process.platform === 'win32';
     const child = spawn(cmd, args, {
       cwd,
       windowsHide: true,
+      windowsVerbatimArguments: isWindows,
       env
     });
 

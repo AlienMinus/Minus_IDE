@@ -416,54 +416,43 @@ export function TerminalProvider({ children }) {
         const prof = profileName || defaultProfile || 'powershell';
         let title = `Terminal ${terminals.length + 1} (Split)`;
         let prompt = "$ ";
-        let output = [
-            "\x1b[36m[Split Terminal Pane]\x1b[0m",
-            `Directory: ${termCwd}`,
-            "$ "
-        ];
+        let output = [prompt];
 
         if (prof === 'powershell') {
             title = `pwsh (Split)`;
             prompt = `PS ${termCwd}> `;
             output = [
-                "\x1b[36m[Split Terminal Pane - PowerShell]\x1b[0m",
-                "Windows PowerShell",
                 prompt
             ];
         } else if (prof === 'bash') {
             title = `bash (Split)`;
             prompt = "$ ";
             output = [
-                "\x1b[36m[Split Terminal Pane - Git Bash]\x1b[0m",
-                `Directory: ${termCwd}`,
                 prompt
             ];
         } else if (prof === 'cmd') {
             title = `cmd (Split)`;
             prompt = `${termCwd}> `;
             output = [
-                "\x1b[36m[Split Terminal Pane - Command Prompt]\x1b[0m",
                 prompt
             ];
         } else if (prof === 'node') {
             title = `node (Split)`;
             prompt = "> ";
             output = [
-                "\x1b[36m[Split Terminal Pane - JavaScript Debug Terminal]\x1b[0m",
                 prompt
             ];
         } else if (prof === 'python') {
             title = `python (Split)`;
             prompt = ">>> ";
             output = [
-                "\x1b[36m[Split Terminal Pane - Python Interactive Terminal]\x1b[0m",
                 prompt
             ];
         } else if (prof === 'cypher') {
             title = `Cypher (Split)`;
             prompt = "cypher> ";
             output = [
-                "\x1b[35m[Split Terminal Pane - Cypher AI Security]\x1b[0m",
+                "\x1b[35m[Cypher AI Security Terminal]\x1b[0m",
                 prompt
             ];
         }
@@ -957,6 +946,15 @@ export function TerminalProvider({ children }) {
             return;
         }
 
+        if (cmd === "echo") {
+            let text = argsStr;
+            if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+                text = text.slice(1, -1);
+            }
+            appendToTerminal([text, activePrompt], targetId);
+            return;
+        }
+
         // Cypher Security CLI commands
         if (targetTerm?.profile === 'cypher') {
             if (cmd === 'scan' || cmd === 'scanner') {
@@ -1285,11 +1283,16 @@ export function TerminalProvider({ children }) {
                         const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
                         appendToTerminal(chunkLines, targetId);
 
-                        // Scan for local dev server URLs (e.g. http://localhost:5173, http://127.0.0.1:5175)
-                        const urlRegex = /(https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?(?:\/[^\s\x1b"'\)\]>]*)*)/gi;
+                        // Strip ANSI color/style escape codes before extracting URLs
+                        const cleanCollected = String(collectedOutput)
+                            .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+                            .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+
+                        // Scan for local dev server URLs WITH explicit port (e.g. http://localhost:5174, http://127.0.0.1:3000)
+                        const portUrlRegex = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/gi;
                         let match;
-                        while ((match = urlRegex.exec(chunk)) !== null) {
-                            let detectedUrl = match[1].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
+                        while ((match = portUrlRegex.exec(cleanCollected)) !== null) {
+                            let detectedUrl = match[0].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
                             if (!detectedUrlsRef.current.has(detectedUrl)) {
                                 detectedUrlsRef.current.add(detectedUrl);
                                 appendToTerminal([
@@ -1330,11 +1333,15 @@ export function TerminalProvider({ children }) {
                 const stdoutFormatted = res.stdout.replace(/\r\n/g, '\n').split('\n');
                 outLines.push(...stdoutFormatted);
 
-                // Detect URLs if any
-                const urlRegex = /(https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?(?:\/[^\s\x1b"'\)\]>]*)*)/gi;
+                // Detect URLs if any with explicit port
+                const cleanStdout = String(res.stdout)
+                    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+                    .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+
+                const portUrlRegex = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/gi;
                 let match;
-                while ((match = urlRegex.exec(res.stdout)) !== null) {
-                    let detectedUrl = match[1].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
+                while ((match = portUrlRegex.exec(cleanStdout)) !== null) {
+                    let detectedUrl = match[0].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
                     if (!detectedUrlsRef.current.has(detectedUrl)) {
                         detectedUrlsRef.current.add(detectedUrl);
                         outLines.push(

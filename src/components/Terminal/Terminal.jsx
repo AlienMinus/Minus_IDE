@@ -21,6 +21,23 @@ import {
   FaGlobe,
   FaChevronDown
 } from "react-icons/fa";
+import {
+  VscSplitHorizontal,
+  VscTrash,
+  VscEllipsis,
+  VscScreenFull,
+  VscClose
+} from "react-icons/vsc";
+
+function redrawLine(term, prompt, command, cursorIndex) {
+  if (!term) return;
+  const backSteps = command.length - cursorIndex;
+  if (backSteps > 0) {
+    term.write(`\r\x1b[2K${prompt}${command}\x1b[${backSteps}D`);
+  } else {
+    term.write(`\r\x1b[2K${prompt}${command}`);
+  }
+}
 
 function TerminalComponent({ hideToolbar = false }) {
   const terminalRef = useRef(null);
@@ -30,6 +47,13 @@ function TerminalComponent({ hideToolbar = false }) {
   const splitTerminalRef = useRef(null);
   const splitXtermRef = useRef(null);
   const splitFitAddonRef = useRef(null);
+
+  const terminalContainerRef = useRef(null);
+  const [sidebarWidth, setSidebarWidth] = useState(150);
+  const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
+  const isDraggingSidebarRef = useRef(false);
+  const [isSidebarDropdownOpen, setIsSidebarDropdownOpen] = useState(false);
+  const sidebarDropdownAnchorRef = useRef(null);
 
   const {
     activeTerminal,
@@ -42,10 +66,16 @@ function TerminalComponent({ hideToolbar = false }) {
     splitTerminal,
     isSplit,
     isRunning,
-    setActiveTerminal
+    setActiveTerminal,
+    toggleMaximizeTerminal,
+    isMaximized
   } = useTerminal();
 
-  const { openLiveBrowserTab } = useEditor();
+  const {
+    openLiveBrowserTab,
+    toggleBottomPanel,
+    setIsBottomPanelOpen
+  } = useEditor();
 
   const executeCommandRef = useRef(executeCommand);
   executeCommandRef.current = executeCommand;
@@ -70,11 +100,13 @@ function TerminalComponent({ hideToolbar = false }) {
   activeTerminalRef.current = activeTerminal;
 
   const currentCommand = useRef("");
+  const cursorPos = useRef(0);
   const outputLines = useRef(0);
   const historyIndex = useRef(-1);
   const lastTerminalId = useRef(mainSession?.id);
 
   const splitCurrentCommand = useRef("");
+  const splitCursorPos = useRef(0);
   const splitOutputLines = useRef(0);
   const splitHistoryIndex = useRef(-1);
   const lastSplitTerminalId = useRef(splitSession?.id);
@@ -157,6 +189,53 @@ function TerminalComponent({ hideToolbar = false }) {
     }, 40);
   };
 
+  // Handle separator dragging between terminal panes and rightmost tabs sidebar
+  const handleSidebarResizerMouseDown = (e) => {
+    e.preventDefault();
+    isDraggingSidebarRef.current = true;
+    setIsDraggingSidebar(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (moveEvent) => {
+      if (!isDraggingSidebarRef.current || !terminalContainerRef.current) return;
+      const rect = terminalContainerRef.current.getBoundingClientRect();
+      const newWidth = rect.right - moveEvent.clientX;
+      const clamped = Math.min(Math.max(newWidth, 100), 280);
+      setSidebarWidth(clamped);
+
+      requestAnimationFrame(() => {
+        try { fitAddonRef.current?.fit(); } catch {}
+        try { splitFitAddonRef.current?.fit(); } catch {}
+      });
+    };
+
+    const handleMouseUp = () => {
+      isDraggingSidebarRef.current = false;
+      setIsDraggingSidebar(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      setTimeout(() => {
+        try { fitAddonRef.current?.fit(); } catch {}
+        try { splitFitAddonRef.current?.fit(); } catch {}
+      }, 40);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Re-fit xterm buffers whenever split ratio, split state, or sidebar width changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try { fitAddonRef.current?.fit(); } catch {}
+      try { splitFitAddonRef.current?.fit(); } catch {}
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [isSplit, splitRatio, sidebarWidth]);
+
   // Initialize main xterm
   useEffect(() => {
     if (!terminalRef.current) return;
@@ -226,13 +305,14 @@ function TerminalComponent({ hideToolbar = false }) {
         const term = xtermRef.current;
         if (!term) return;
 
-        const currentPrompt = mainSessionRef.current?.replState?.prompt || '$ ';
+        const currentPrompt = mainSessionRef.current?.replState?.prompt || mainSessionRef.current?.prompt || '$ ';
 
         // Ctrl+C (Interrupt / Cancel)
         if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c') {
           domEvent.preventDefault();
           term.write('^C\r\n' + currentPrompt);
           currentCommand.current = "";
+          cursorPos.current = 0;
           historyIndex.current = -1;
           terminateTaskRef.current();
           return;
@@ -245,7 +325,55 @@ function TerminalComponent({ hideToolbar = false }) {
             executeCommandRef.current('clear', mainSessionRef.current.id);
           }
           currentCommand.current = "";
+          cursorPos.current = 0;
           historyIndex.current = -1;
+          return;
+        }
+
+        // Arrow Left (Move cursor back / inside quotes)
+        if (domEvent.key === 'ArrowLeft') {
+          domEvent.preventDefault();
+          if (cursorPos.current > 0) {
+            cursorPos.current--;
+            term.write('\x1b[1D');
+          }
+          return;
+        }
+
+        // Arrow Right (Move cursor forward)
+        if (domEvent.key === 'ArrowRight') {
+          domEvent.preventDefault();
+          if (cursorPos.current < currentCommand.current.length) {
+            cursorPos.current++;
+            term.write('\x1b[1C');
+          }
+          return;
+        }
+
+        // Home or Ctrl+A (Jump to beginning of command)
+        if (domEvent.key === 'Home' || (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'a')) {
+          domEvent.preventDefault();
+          cursorPos.current = 0;
+          redrawLine(term, currentPrompt, currentCommand.current, 0);
+          return;
+        }
+
+        // End or Ctrl+E (Jump to end of command)
+        if (domEvent.key === 'End' || (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'e')) {
+          domEvent.preventDefault();
+          cursorPos.current = currentCommand.current.length;
+          redrawLine(term, currentPrompt, currentCommand.current, currentCommand.current.length);
+          return;
+        }
+
+        // Delete (Delete character ahead of cursor)
+        if (domEvent.key === 'Delete') {
+          domEvent.preventDefault();
+          if (cursorPos.current < currentCommand.current.length) {
+            const prev = currentCommand.current;
+            currentCommand.current = prev.slice(0, cursorPos.current) + prev.slice(cursorPos.current + 1);
+            redrawLine(term, currentPrompt, currentCommand.current, cursorPos.current);
+          }
           return;
         }
 
@@ -266,8 +394,9 @@ function TerminalComponent({ hideToolbar = false }) {
 
           historyIndex.current = newIdx;
           const cmd = history[newIdx] || "";
-          term.write('\x1b[2K\r' + currentPrompt + cmd);
           currentCommand.current = cmd;
+          cursorPos.current = cmd.length;
+          redrawLine(term, currentPrompt, cmd, cmd.length);
           return;
         }
 
@@ -280,12 +409,14 @@ function TerminalComponent({ hideToolbar = false }) {
           if (historyIndex.current < history.length - 1) {
             historyIndex.current++;
             const cmd = history[historyIndex.current] || "";
-            term.write('\x1b[2K\r' + currentPrompt + cmd);
             currentCommand.current = cmd;
+            cursorPos.current = cmd.length;
+            redrawLine(term, currentPrompt, cmd, cmd.length);
           } else {
             historyIndex.current = -1;
-            term.write('\x1b[2K\r' + currentPrompt);
             currentCommand.current = "";
+            cursorPos.current = 0;
+            redrawLine(term, currentPrompt, "", 0);
           }
           return;
         }
@@ -300,11 +431,13 @@ function TerminalComponent({ hideToolbar = false }) {
           setActiveTerminal(mainSessionRef.current);
         }
 
+        const currentPrompt = mainSessionRef.current?.replState?.prompt || mainSessionRef.current?.prompt || '$ ';
+
         if (data === "\r") {
           const toExecute = currentCommand.current;
           currentCommand.current = "";
+          cursorPos.current = 0;
           historyIndex.current = -1;
-          const currentPrompt = mainSessionRef.current?.replState?.prompt || '$ ';
           if (!toExecute.trim() && !mainSessionRef.current?.replState?.isMultiLine) {
             term.write('\r\n' + currentPrompt);
             outputLines.current += 1;
@@ -320,22 +453,32 @@ function TerminalComponent({ hideToolbar = false }) {
             executeCommandRef.current(toExecute, mainSessionRef.current.id);
           }
         } else if (data === "\x7f" || data === "\b") {
-          if (currentCommand.current.length > 0) {
-            term.write("\b \b");
-            currentCommand.current = currentCommand.current.slice(0, -1);
+          if (cursorPos.current > 0) {
+            const prev = currentCommand.current;
+            currentCommand.current = prev.slice(0, cursorPos.current - 1) + prev.slice(cursorPos.current);
+            cursorPos.current--;
+            redrawLine(term, currentPrompt, currentCommand.current, cursorPos.current);
           }
         } else if (data === "\t") {
-          const partial = currentCommand.current.toLowerCase();
-          const suggestions = ['run', 'runtimes', 'c', 'python', 'node', 'bash', 'react', 'gcc', 'ls', 'cat', 'clear', 'help', 'kill', 'pwd', 'cd'];
+          const partial = currentCommand.current.slice(0, cursorPos.current).toLowerCase();
+          const suggestions = ['echo', 'run', 'runtimes', 'c', 'python', 'node', 'bash', 'react', 'gcc', 'ls', 'cat', 'clear', 'help', 'kill', 'pwd', 'cd', 'scan', 'audit', 'secrets'];
           const match = suggestions.find(s => s.startsWith(partial) && s !== partial);
           if (match) {
             const added = match.slice(partial.length);
-            currentCommand.current += added;
-            term.write(added);
+            const prev = currentCommand.current;
+            currentCommand.current = prev.slice(0, cursorPos.current) + added + prev.slice(cursorPos.current);
+            cursorPos.current += added.length;
+            redrawLine(term, currentPrompt, currentCommand.current, cursorPos.current);
           }
         } else if (data.length > 0 && !data.includes('\x1b')) {
-          currentCommand.current += data;
-          term.write(data);
+          const prev = currentCommand.current;
+          currentCommand.current = prev.slice(0, cursorPos.current) + data + prev.slice(cursorPos.current);
+          cursorPos.current += data.length;
+          if (cursorPos.current === currentCommand.current.length) {
+            term.write(data);
+          } else {
+            redrawLine(term, currentPrompt, currentCommand.current, cursorPos.current);
+          }
         }
       });
     }
@@ -465,6 +608,7 @@ function TerminalComponent({ hideToolbar = false }) {
           domEvent.preventDefault();
           term.write('^C\r\n' + currentPrompt);
           splitCurrentCommand.current = "";
+          splitCursorPos.current = 0;
           splitHistoryIndex.current = -1;
           terminateTaskRef.current();
           return;
@@ -477,7 +621,55 @@ function TerminalComponent({ hideToolbar = false }) {
             executeCommandRef.current('clear', splitSessionRef.current.id);
           }
           splitCurrentCommand.current = "";
+          splitCursorPos.current = 0;
           splitHistoryIndex.current = -1;
+          return;
+        }
+
+        // Arrow Left (Cursor Left)
+        if (domEvent.key === 'ArrowLeft') {
+          domEvent.preventDefault();
+          if (splitCursorPos.current > 0) {
+            splitCursorPos.current -= 1;
+            term.write('\x1b[1D');
+          }
+          return;
+        }
+
+        // Arrow Right (Cursor Right)
+        if (domEvent.key === 'ArrowRight') {
+          domEvent.preventDefault();
+          if (splitCursorPos.current < splitCurrentCommand.current.length) {
+            splitCursorPos.current += 1;
+            term.write('\x1b[1C');
+          }
+          return;
+        }
+
+        // Home / Ctrl+A (Move cursor to start of line)
+        if (domEvent.key === 'Home' || (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'a')) {
+          domEvent.preventDefault();
+          splitCursorPos.current = 0;
+          redrawLine(term, currentPrompt, splitCurrentCommand.current, splitCursorPos.current);
+          return;
+        }
+
+        // End / Ctrl+E (Move cursor to end of line)
+        if (domEvent.key === 'End' || (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'e')) {
+          domEvent.preventDefault();
+          splitCursorPos.current = splitCurrentCommand.current.length;
+          redrawLine(term, currentPrompt, splitCurrentCommand.current, splitCursorPos.current);
+          return;
+        }
+
+        // Delete (Delete character at cursor)
+        if (domEvent.key === 'Delete') {
+          domEvent.preventDefault();
+          const prev = splitCurrentCommand.current;
+          if (splitCursorPos.current < prev.length) {
+            splitCurrentCommand.current = prev.slice(0, splitCursorPos.current) + prev.slice(splitCursorPos.current + 1);
+            redrawLine(term, currentPrompt, splitCurrentCommand.current, splitCursorPos.current);
+          }
           return;
         }
 
@@ -498,8 +690,9 @@ function TerminalComponent({ hideToolbar = false }) {
 
           splitHistoryIndex.current = newIdx;
           const cmd = history[newIdx] || "";
-          term.write('\x1b[2K\r' + currentPrompt + cmd);
           splitCurrentCommand.current = cmd;
+          splitCursorPos.current = cmd.length;
+          redrawLine(term, currentPrompt, cmd, splitCursorPos.current);
           return;
         }
 
@@ -512,12 +705,14 @@ function TerminalComponent({ hideToolbar = false }) {
           if (splitHistoryIndex.current < history.length - 1) {
             splitHistoryIndex.current++;
             const cmd = history[splitHistoryIndex.current] || "";
-            term.write('\x1b[2K\r' + currentPrompt + cmd);
             splitCurrentCommand.current = cmd;
+            splitCursorPos.current = cmd.length;
+            redrawLine(term, currentPrompt, cmd, splitCursorPos.current);
           } else {
             splitHistoryIndex.current = -1;
-            term.write('\x1b[2K\r' + currentPrompt);
             splitCurrentCommand.current = "";
+            splitCursorPos.current = 0;
+            redrawLine(term, currentPrompt, "", 0);
           }
           return;
         }
@@ -532,11 +727,13 @@ function TerminalComponent({ hideToolbar = false }) {
           setActiveTerminal(splitSessionRef.current);
         }
 
+        const currentPrompt = splitSessionRef.current?.replState?.prompt || '$ ';
+
         if (data === "\r") {
           const toExecute = splitCurrentCommand.current;
           splitCurrentCommand.current = "";
+          splitCursorPos.current = 0;
           splitHistoryIndex.current = -1;
-          const currentPrompt = splitSessionRef.current?.replState?.prompt || '$ ';
 
           if (!toExecute.trim() && !splitSessionRef.current?.replState?.isMultiLine) {
             term.write('\r\n' + currentPrompt);
@@ -553,26 +750,53 @@ function TerminalComponent({ hideToolbar = false }) {
             executeCommandRef.current(toExecute, splitSessionRef.current.id);
           }
         } else if (data === "\x7f" || data === "\b") {
-          if (splitCurrentCommand.current.length > 0) {
-            term.write("\b \b");
-            splitCurrentCommand.current = splitCurrentCommand.current.slice(0, -1);
+          if (splitCursorPos.current > 0) {
+            const prev = splitCurrentCommand.current;
+            splitCurrentCommand.current = prev.slice(0, splitCursorPos.current - 1) + prev.slice(splitCursorPos.current);
+            splitCursorPos.current -= 1;
+            redrawLine(term, currentPrompt, splitCurrentCommand.current, splitCursorPos.current);
           }
         } else if (data === "\t") {
-          const partial = splitCurrentCommand.current.toLowerCase();
+          const partial = splitCurrentCommand.current.slice(0, splitCursorPos.current).toLowerCase();
           const suggestions = ['run', 'runtimes', 'c', 'python', 'node', 'bash', 'react', 'gcc', 'ls', 'cat', 'clear', 'help', 'kill', 'pwd', 'cd'];
           const match = suggestions.find(s => s.startsWith(partial) && s !== partial);
           if (match) {
             const added = match.slice(partial.length);
-            splitCurrentCommand.current += added;
-            term.write(added);
+            const prev = splitCurrentCommand.current;
+            splitCurrentCommand.current = prev.slice(0, splitCursorPos.current) + added + prev.slice(splitCursorPos.current);
+            splitCursorPos.current += added.length;
+            redrawLine(term, currentPrompt, splitCurrentCommand.current, splitCursorPos.current);
           }
         } else if (data.length > 0 && !data.includes('\x1b')) {
-          splitCurrentCommand.current += data;
-          term.write(data);
+          const prev = splitCurrentCommand.current;
+          const insertPos = splitCursorPos.current;
+          splitCurrentCommand.current = prev.slice(0, insertPos) + data + prev.slice(insertPos);
+          splitCursorPos.current += data.length;
+
+          if (splitCursorPos.current === splitCurrentCommand.current.length) {
+            term.write(data);
+          } else {
+            redrawLine(term, currentPrompt, splitCurrentCommand.current, splitCursorPos.current);
+          }
         }
       });
 
-      splitOutputLines.current = 0;
+      // Write initial output on mount
+      if (splitSessionRef.current) {
+        lastSplitTerminalId.current = splitSessionRef.current.id;
+        splitTerm.reset();
+        const initialLines = splitSessionRef.current.output || [];
+        initialLines.forEach((line, index) => {
+          const formatted = String(line).replace(/\r?\n/g, '\r\n');
+          const isPrompt = /(?:\$ |>>> |\.\.\. |> |cypher> |agent> )$/.test(formatted);
+          if (index === initialLines.length - 1 && isPrompt) {
+            splitTerm.write(formatted);
+          } else {
+            splitTerm.writeln(formatted);
+          }
+        });
+        splitOutputLines.current = initialLines.length;
+      }
 
       setTimeout(() => {
         try { splitTerm.focus(); } catch {}
@@ -618,7 +842,10 @@ function TerminalComponent({ hideToolbar = false }) {
   }, [splitSession, splitSession?.output, isSplit]);
 
   return (
-    <div className="terminal-container">
+    <div
+      ref={terminalContainerRef}
+      className={`terminal-container ${isMaximized ? 'terminal-maximized' : ''}`}
+    >
       {!hideToolbar && (
         <div className="terminal-toolbar">
           <div className="terminal-toolbar-left">
@@ -747,40 +974,179 @@ function TerminalComponent({ hideToolbar = false }) {
         </div>
       )}
 
-      <div
-        ref={splitWrapperRef}
-        className={`terminal-body-split-wrapper ${isSplit ? 'split' : ''} ${isDraggingSplit ? 'resizing' : ''}`}
-      >
+      <div className="terminal-main-workspace">
         <div
-          ref={terminalRef}
-          className={`terminal main-pane ${activeTerminal?.id === mainSession?.id ? 'active-focus' : ''}`}
-          style={isSplit ? { width: `${splitRatio}%`, flex: 'none' } : { width: '100%', flex: '1' }}
-          onClick={() => {
-            if (mainSession) setActiveTerminal(mainSession);
-            xtermRef.current?.focus();
+          ref={splitWrapperRef}
+          className={`terminal-body-split-wrapper ${isSplit ? 'split' : ''} ${isDraggingSplit ? 'resizing' : ''}`}
+        >
+          <div
+            className={`terminal-pane-wrapper main-pane ${activeTerminal?.id === mainSession?.id ? 'active-focus' : ''}`}
+            style={isSplit ? { width: `${splitRatio}%`, flex: 'none' } : { width: '100%', flex: '1' }}
+            onClick={() => {
+              if (mainSession) setActiveTerminal(mainSession);
+              xtermRef.current?.focus();
+            }}
+          >
+            <div ref={terminalRef} className="terminal-xterm-render" />
+          </div>
+          {isSplit && (
+            <>
+              <div
+                className="terminal-split-resizer"
+                onMouseDown={handleResizerMouseDown}
+                onDoubleClick={handleResizerDoubleClick}
+                title="Drag to adjust split widths. Double-click to reset (50/50)."
+              />
+              <div
+                className={`terminal-pane-wrapper split-pane ${activeTerminal?.id === splitSession?.id ? 'active-focus' : ''}`}
+                style={{ width: `calc(${100 - splitRatio}% - 5px)`, flex: 'none' }}
+                onClick={() => {
+                  if (splitSession) setActiveTerminal(splitSession);
+                  splitXtermRef.current?.focus();
+                }}
+              >
+                <div ref={splitTerminalRef} className="terminal-xterm-render" />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Resizer for Rightmost Sidebar */}
+        <div
+          className="terminal-sidebar-resizer"
+          onMouseDown={handleSidebarResizerMouseDown}
+          onDoubleClick={() => {
+            setSidebarWidth(150);
+            setTimeout(() => {
+              try { fitAddonRef.current?.fit(); } catch {}
+              try { splitFitAddonRef.current?.fit(); } catch {}
+            }, 40);
           }}
+          title="Drag to adjust terminal tabs sidebar width. Double-click to reset (150px)."
         />
-        {isSplit && (
-          <>
-            <div
-              className="terminal-split-resizer"
-              onMouseDown={handleResizerMouseDown}
-              onDoubleClick={handleResizerDoubleClick}
-              title="Drag to adjust split widths. Double-click to reset (50/50)."
-            />
-            <div
-              className={`split-pane-container ${activeTerminal?.id === splitSession?.id ? 'active-focus' : ''}`}
-              style={{ width: `calc(${100 - splitRatio}% - 5px)`, flex: 'none' }}
-              onClick={() => {
-                if (splitSession) setActiveTerminal(splitSession);
-                splitXtermRef.current?.focus();
-              }}
-            >
-              <div ref={splitTerminalRef} className="terminal split-pane" />
+
+        {/* Rightmost Terminal Tabs Sidebar (matching Image 2) */}
+        <div className="terminal-tabs-sidebar" style={{ width: `${sidebarWidth}px` }}>
+          <div className="terminal-tabs-sidebar-header">
+            <div className="sidebar-header-left">
+              <button
+                className="sidebar-tool-btn"
+                onClick={() => splitTerminal()}
+                title="Split Terminal (Ctrl+Shift+5)"
+                aria-label="Split Terminal"
+              >
+                <VscSplitHorizontal />
+              </button>
+              <button
+                className="sidebar-tool-btn"
+                onClick={() => killTerminal(activeTerminal?.id)}
+                title="Kill Terminal"
+                aria-label="Kill Terminal"
+              >
+                <VscTrash />
+              </button>
+              <div className="sidebar-dropdown-anchor" ref={sidebarDropdownAnchorRef}>
+                <button
+                  className={`sidebar-tool-btn ${isSidebarDropdownOpen ? 'active' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsSidebarDropdownOpen(prev => !prev);
+                  }}
+                  title="More Actions..."
+                  aria-label="More Actions"
+                >
+                  <VscEllipsis />
+                </button>
+                <TerminalDropdownMenu
+                  isOpen={isSidebarDropdownOpen}
+                  onClose={() => setIsSidebarDropdownOpen(false)}
+                  anchorRef={sidebarDropdownAnchorRef}
+                />
+              </div>
             </div>
-          </>
-        )}
+
+            <div className="sidebar-header-divider">|</div>
+
+            <div className="sidebar-header-right">
+              <button
+                className="sidebar-tool-btn"
+                onClick={() => toggleMaximizeTerminal && toggleMaximizeTerminal()}
+                title={isMaximized ? "Restore Panel Size" : "Maximize Panel Size"}
+                aria-label="Toggle Maximize Panel"
+              >
+                <VscScreenFull />
+              </button>
+              <button
+                className="sidebar-tool-btn"
+                onClick={() => {
+                  if (setIsBottomPanelOpen) setIsBottomPanelOpen(false);
+                  else if (toggleBottomPanel) toggleBottomPanel();
+                }}
+                title="Close Panel (Ctrl+J)"
+                aria-label="Close Panel"
+              >
+                <VscClose />
+              </button>
+            </div>
+          </div>
+
+          <div className="terminal-tabs-sidebar-list">
+            {terminals.map((t) => {
+              const isActive = activeTerminal?.id === t.id;
+              const isSplitSession = isSplit && t.title?.includes('(Split)');
+              const isMainWithSplit = isSplit && (t.id === mainSession?.id);
+
+              return (
+                <div
+                  key={t.id}
+                  className={`terminal-sidebar-tab-row ${isActive ? 'active' : ''} ${isMainWithSplit ? 'tree-parent' : ''} ${isSplitSession ? 'tree-child' : ''}`}
+                  onClick={() => {
+                    setActiveTerminal(t);
+                    if (t.id === splitSession?.id) {
+                      splitXtermRef.current?.focus();
+                    } else {
+                      xtermRef.current?.focus();
+                    }
+                  }}
+                  title={t.title}
+                >
+                  {isMainWithSplit && <span className="term-tree-branch">┌</span>}
+                  {isSplitSession && <span className="term-tree-branch">└</span>}
+
+                  <span className="term-sidebar-icon">
+                    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
+                      <path fillRule="evenodd" d="M1.5 2A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13zm0 1h13a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5z"/>
+                      <path fillRule="evenodd" d="M3.854 5.146a.5.5 0 0 1 0 .708L5.793 7.8 3.854 9.746a.5.5 0 0 1-.708-.708L4.379 7.8 3.146 6.566a.5.5 0 0 1 .708-.708zM6.5 9.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H7a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+                  </span>
+
+                  <span className="term-sidebar-title">
+                    {t.title.replace(' (Split)', '')}
+                  </span>
+
+                  {terminals.length > 1 && (
+                    <button
+                      className="term-sidebar-item-kill"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        killTerminal(t.id);
+                      }}
+                      title="Kill Terminal"
+                    >
+                      <VscClose />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
+      {/* Global resizing overlay during dragging */}
+      {(isDraggingSplit || isDraggingSidebar) && (
+        <div className="terminal-resizing-overlay" />
+      )}
     </div>
   );
 }
