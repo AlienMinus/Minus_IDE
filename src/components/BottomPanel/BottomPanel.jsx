@@ -1,6 +1,7 @@
 import "./BottomPanel.css";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Terminal from "../Terminal";
+import TerminalDropdownMenu from "../Terminal/TerminalDropdownMenu";
 import Output from "../Output/Output";
 import Repl from "../Repl/Repl";
 import useTerminal from "../../hooks/useTerminal";
@@ -21,7 +22,8 @@ import {
   FaExternalLinkAlt,
   FaSearch,
   FaTimesCircle,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaChevronDown
 } from "react-icons/fa";
 
 /**
@@ -319,6 +321,9 @@ function BottomPanel() {
     setBottomPanelTab
   } = useEditor();
 
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownAnchorRef = useRef(null);
+
   const activeTab = bottomPanelTab || "Terminal";
   const setActiveTab = (tab) => {
     if (setBottomPanelTab) {
@@ -398,6 +403,7 @@ function BottomPanel() {
                     onClick={() => setActiveTerminal(t)}
                     title={`Switch to ${t.title}`}
                   >
+                    {t.title?.includes('(Split)') && <FaColumns style={{ fontSize: '10px', marginRight: '4px' }} />}
                     <span>{t.title}</span>
                     {terminals.length > 1 && (
                       <span
@@ -413,14 +419,34 @@ function BottomPanel() {
                     )}
                   </div>
                 ))}
-                <button
-                  className="term-header-btn icon-btn"
-                  onClick={createTerminal}
-                  title="New Terminal (Ctrl+Shift+`)"
-                  aria-label="New Terminal"
-                >
-                  <FaPlus />
-                </button>
+                <div className="term-add-dropdown-container" ref={dropdownAnchorRef}>
+                  <div className="term-add-split-btn">
+                    <button
+                      className="term-header-btn icon-btn"
+                      onClick={() => createTerminal()}
+                      title="New Terminal (Ctrl+Shift+`)"
+                      aria-label="New Terminal"
+                    >
+                      <FaPlus />
+                    </button>
+                    <button
+                      className={`term-header-btn icon-btn term-add-chevron ${isDropdownOpen ? 'active' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsDropdownOpen(prev => !prev);
+                      }}
+                      title="Terminal Profiles & Options"
+                      aria-label="Terminal Profiles & Options"
+                    >
+                      <FaChevronDown style={{ fontSize: '8px' }} />
+                    </button>
+                  </div>
+                  <TerminalDropdownMenu
+                    isOpen={isDropdownOpen}
+                    onClose={() => setIsDropdownOpen(false)}
+                    anchorRef={dropdownAnchorRef}
+                  />
+                </div>
               </div>
 
               {/* CWD Badge */}

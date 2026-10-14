@@ -1,0 +1,246 @@
+/* Terminal Dropdown Menu matching VS Code */
+.terminal-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 1000;
+  min-width: 260px;
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  padding: 4px 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  user-select: none;
+  animation: fadeInMenu 0.12s ease-out;
+}
+
+@keyframes fadeInMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.term-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  color: #cccccc;
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+  position: relative;
+  text-decoration: none;
+}
+
+.term-dropdown-item:hover {
+  background: #04395e;
+  color: #ffffff;
+}
+
+.term-dropdown-item.default-profile {
+  font-weight: 500;
+}
+
+.term-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  font-size: 11px;
+  color: #858585;
+}
+
+.term-dropdown-item:hover .term-item-icon {
+  color: #ffffff;
+}
+
+.term-item-icon.cypher-icon {
+  color: #a855f7;
+}
+
+.term-dropdown-item:hover .term-item-icon.cypher-icon {
+  color: #c084fc;
+}
+
+.term-item-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.term-item-shortcut {
+  margin-left: auto;
+  font-size: 11px;
+  color: #858585;
+  padding-left: 12px;
+}
+
+.term-dropdown-item:hover .term-item-shortcut {
+  color: #d4d4d4;
+}
+
+.term-item-badge {
+  margin-left: auto;
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+
+.term-active-check {
+  margin-left: auto;
+  font-size: 11px;
+  color: #388a34;
+}
+
+.term-dropdown-divider {
+  height: 1px;
+  background: #333333;
+  margin: 4px 0;
+}
+
+/* Submenu */
+.term-dropdown-item.has-submenu {
+  position: relative;
+}
+
+.term-submenu-arrow {
+  margin-left: auto;
+  font-size: 10px;
+  color: #858585;
+}
+
+.term-sub-dropdown-menu {
+  position: absolute;
+  top: -4px;
+  left: calc(100% - 2px);
+  min-width: 220px;
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  padding: 4px 0;
+  z-index: 1010;
+}
+
+/* Modal for Profile Selection */
+.term-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.term-modal-content {
+  background: #252526;
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+  width: 420px;
+  max-width: 90vw;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.term-modal-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #333;
+}
+
+.term-modal-header h3 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.term-modal-header p {
+  margin: 0;
+  font-size: 12px;
+  color: #858585;
+}
+
+.term-profile-options {
+  padding: 8px 12px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.term-profile-opt-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  margin-bottom: 4px;
+}
+
+.term-profile-opt-item:hover {
+  background: #2a2d2e;
+}
+
+.term-profile-opt-item.active {
+  background: #04395e;
+}
+
+.term-profile-opt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.term-profile-opt-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.term-profile-opt-desc {
+  font-size: 11px;
+  color: #858585;
+}
+
+.term-check-icon {
+  color: #388a34;
+  font-size: 13px;
+}
+
+.term-modal-footer {
+  padding: 10px 16px;
+  background: #1e1e1e;
+  border-top: 1px solid #333;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.term-modal-btn {
+  background: #3c3c3c;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.term-modal-btn:hover {
+  background: #4a4a4a;
+}
+

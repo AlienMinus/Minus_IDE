@@ -1,5 +1,5 @@
 import "./Terminal.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Terminal as XtermTerminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
@@ -7,6 +7,7 @@ import { SearchAddon } from "@xterm/addon-search";
 import "@xterm/xterm/css/xterm.css";
 import useTerminal from "../../hooks/useTerminal";
 import useEditor from "../../hooks/useEditor";
+import TerminalDropdownMenu from "./TerminalDropdownMenu";
 import {
   FaPlay,
   FaTrash,
@@ -17,7 +18,8 @@ import {
   FaColumns,
   FaStop,
   FaTrashAlt,
-  FaGlobe
+  FaGlobe,
+  FaChevronDown
 } from "react-icons/fa";
 
 function TerminalComponent({ hideToolbar = false }) {
@@ -76,6 +78,84 @@ function TerminalComponent({ hideToolbar = false }) {
   const splitOutputLines = useRef(0);
   const splitHistoryIndex = useRef(-1);
   const lastSplitTerminalId = useRef(splitSession?.id);
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownAnchorRef = useRef(null);
+
+  const [splitRatio, setSplitRatio] = useState(50);
+  const [isDraggingSplit, setIsDraggingSplit] = useState(false);
+  const splitWrapperRef = useRef(null);
+  const isDraggingRef = useRef(false);
+
+  // Global Terminal Shortcuts (Ctrl+Shift+`, Ctrl+Shift+5, Ctrl+Shift+Alt+`)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+Shift+` -> New Terminal
+      if (e.ctrlKey && e.shiftKey && !e.altKey && (e.key === '`' || e.code === 'Backquote')) {
+        e.preventDefault();
+        createTerminal();
+      }
+      // Ctrl+Shift+Alt+` -> New Terminal Window
+      else if (e.ctrlKey && e.shiftKey && e.altKey && (e.key === '`' || e.code === 'Backquote')) {
+        e.preventDefault();
+        createTerminal();
+      }
+      // Ctrl+Shift+5 -> Split Terminal
+      else if (e.ctrlKey && e.shiftKey && (e.key === '%' || e.key === '5' || e.code === 'Digit5')) {
+        e.preventDefault();
+        splitTerminal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [createTerminal, splitTerminal]);
+
+  // Handle separator dragging between split panes
+  const handleResizerMouseDown = (e) => {
+    e.preventDefault();
+    isDraggingRef.current = true;
+    setIsDraggingSplit(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (moveEvent) => {
+      if (!isDraggingRef.current || !splitWrapperRef.current) return;
+      const rect = splitWrapperRef.current.getBoundingClientRect();
+      const offsetX = moveEvent.clientX - rect.left;
+      const percentage = (offsetX / rect.width) * 100;
+      const clamped = Math.min(Math.max(percentage, 15), 85);
+      setSplitRatio(clamped);
+
+      requestAnimationFrame(() => {
+        try { fitAddonRef.current?.fit(); } catch {}
+        try { splitFitAddonRef.current?.fit(); } catch {}
+      });
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      setIsDraggingSplit(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      setTimeout(() => {
+        try { fitAddonRef.current?.fit(); } catch {}
+        try { splitFitAddonRef.current?.fit(); } catch {}
+      }, 40);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleResizerDoubleClick = () => {
+    setSplitRatio(50);
+    setTimeout(() => {
+      try { fitAddonRef.current?.fit(); } catch {}
+      try { splitFitAddonRef.current?.fit(); } catch {}
+    }, 40);
+  };
 
   // Initialize main xterm
   useEffect(() => {
@@ -266,16 +346,12 @@ function TerminalComponent({ hideToolbar = false }) {
     const term = xtermRef.current;
     if (!term || !mainSession) return;
 
+    const isPromptLine = (str) => /(?:\$ |>>> |\.\.\. |> |cypher> |agent> )$/.test(str);
+
     const writeOutput = (lines) => {
       lines.forEach((line, index) => {
         const formatted = String(line).replace(/\r?\n/g, '\r\n');
-        const isPromptLine = index === lines.length - 1 && (
-          formatted.endsWith('$ ') ||
-          formatted.endsWith('>>> ') ||
-          formatted.endsWith('... ') ||
-          formatted.endsWith('> ')
-        );
-        if (isPromptLine) {
+        if (index === lines.length - 1 && isPromptLine(formatted)) {
           term.write(formatted);
         } else {
           term.writeln(formatted);
@@ -285,7 +361,7 @@ function TerminalComponent({ hideToolbar = false }) {
 
     if (lastTerminalId.current !== mainSession.id) {
       lastTerminalId.current = mainSession.id;
-      term.clear();
+      term.reset();
       writeOutput(mainSession.output);
       outputLines.current = mainSession.output.length;
       return;
@@ -296,7 +372,7 @@ function TerminalComponent({ hideToolbar = false }) {
       writeOutput(newLines);
       outputLines.current = mainSession.output.length;
     } else if (mainSession.output.length < outputLines.current) {
-      term.clear();
+      term.reset();
       writeOutput(mainSession.output);
       outputLines.current = mainSession.output.length;
     }
@@ -311,6 +387,7 @@ function TerminalComponent({ hideToolbar = false }) {
         splitFitAddonRef.current = null;
         splitOutputLines.current = 0;
         splitCurrentCommand.current = "";
+        lastSplitTerminalId.current = null;
       }
       return;
     }
@@ -495,24 +572,7 @@ function TerminalComponent({ hideToolbar = false }) {
         }
       });
 
-      // Write initial output
-      if (splitSessionRef.current?.output) {
-        splitSessionRef.current.output.forEach((line, index) => {
-          const formatted = String(line).replace(/\r?\n/g, '\r\n');
-          const isPrompt = index === splitSessionRef.current.output.length - 1 && (
-            formatted.endsWith('$ ') ||
-            formatted.endsWith('>>> ') ||
-            formatted.endsWith('... ') ||
-            formatted.endsWith('> ')
-          );
-          if (isPrompt) {
-            splitTerm.write(formatted);
-          } else {
-            splitTerm.writeln(formatted);
-          }
-        });
-        splitOutputLines.current = splitSessionRef.current.output.length;
-      }
+      splitOutputLines.current = 0;
 
       setTimeout(() => {
         try { splitTerm.focus(); } catch {}
@@ -525,16 +585,12 @@ function TerminalComponent({ hideToolbar = false }) {
     const term = splitXtermRef.current;
     if (!term || !splitSession || !isSplit) return;
 
+    const isPromptLine = (str) => /(?:\$ |>>> |\.\.\. |> |cypher> |agent> )$/.test(str);
+
     const writeSplitOutput = (lines) => {
       lines.forEach((line, index) => {
         const formatted = String(line).replace(/\r?\n/g, '\r\n');
-        const isPromptLine = index === lines.length - 1 && (
-          formatted.endsWith('$ ') ||
-          formatted.endsWith('>>> ') ||
-          formatted.endsWith('... ') ||
-          formatted.endsWith('> ')
-        );
-        if (isPromptLine) {
+        if (index === lines.length - 1 && isPromptLine(formatted)) {
           term.write(formatted);
         } else {
           term.writeln(formatted);
@@ -544,7 +600,7 @@ function TerminalComponent({ hideToolbar = false }) {
 
     if (lastSplitTerminalId.current !== splitSession.id) {
       lastSplitTerminalId.current = splitSession.id;
-      term.clear();
+      term.reset();
       writeSplitOutput(splitSession.output);
       splitOutputLines.current = splitSession.output.length;
       return;
@@ -555,7 +611,7 @@ function TerminalComponent({ hideToolbar = false }) {
       writeSplitOutput(newLines);
       splitOutputLines.current = splitSession.output.length;
     } else if (splitSession.output.length < splitOutputLines.current) {
-      term.clear();
+      term.reset();
       writeSplitOutput(splitSession.output);
       splitOutputLines.current = splitSession.output.length;
     }
@@ -573,6 +629,7 @@ function TerminalComponent({ hideToolbar = false }) {
                   className={`terminal-tab-item ${activeTerminal?.id === t.id ? 'active' : ''}`}
                   onClick={() => setActiveTerminal(t)}
                 >
+                  {t.title?.includes('(Split)') && <FaColumns style={{ fontSize: '10px', marginRight: '4px' }} />}
                   <span>{t.title}</span>
                   <span
                     className="terminal-tab-kill"
@@ -586,9 +643,32 @@ function TerminalComponent({ hideToolbar = false }) {
                   </span>
                 </div>
               ))}
-              <button className="terminal-add-btn" onClick={createTerminal} title="New Terminal (Ctrl+Shift+`)">
-                <FaPlus />
-              </button>
+              <div className="term-add-dropdown-container" ref={dropdownAnchorRef}>
+                <div className="term-add-split-btn">
+                  <button
+                    className="terminal-add-btn"
+                    onClick={() => createTerminal()}
+                    title="New Terminal (Ctrl+Shift+`)"
+                  >
+                    <FaPlus />
+                  </button>
+                  <button
+                    className={`terminal-add-btn term-add-chevron ${isDropdownOpen ? 'active' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDropdownOpen(prev => !prev);
+                    }}
+                    title="Terminal Profiles & Options"
+                  >
+                    <FaChevronDown style={{ fontSize: '9px' }} />
+                  </button>
+                </div>
+                <TerminalDropdownMenu
+                  isOpen={isDropdownOpen}
+                  onClose={() => setIsDropdownOpen(false)}
+                  anchorRef={dropdownAnchorRef}
+                />
+              </div>
               {activeTerminal?.cwd && (
                 <span className="terminal-cwd-badge" title={`Working Directory: ${activeTerminal.cwd}`}>
                   📁 {activeTerminal.cwd}
@@ -639,7 +719,7 @@ function TerminalComponent({ hideToolbar = false }) {
 
             <button
               className="term-action-btn"
-              onClick={splitTerminal}
+              onClick={() => splitTerminal()}
               title="Split Terminal Side by Side (Ctrl+Shift+5)"
               aria-label="Split Terminal"
             >
@@ -667,25 +747,38 @@ function TerminalComponent({ hideToolbar = false }) {
         </div>
       )}
 
-      <div className={`terminal-body-split-wrapper ${isSplit ? 'split' : ''}`}>
+      <div
+        ref={splitWrapperRef}
+        className={`terminal-body-split-wrapper ${isSplit ? 'split' : ''} ${isDraggingSplit ? 'resizing' : ''}`}
+      >
         <div
           ref={terminalRef}
           className={`terminal main-pane ${activeTerminal?.id === mainSession?.id ? 'active-focus' : ''}`}
+          style={isSplit ? { width: `${splitRatio}%`, flex: 'none' } : { width: '100%', flex: '1' }}
           onClick={() => {
             if (mainSession) setActiveTerminal(mainSession);
             xtermRef.current?.focus();
           }}
         />
         {isSplit && (
-          <div
-            className={`split-pane-container ${activeTerminal?.id === splitSession?.id ? 'active-focus' : ''}`}
-            onClick={() => {
-              if (splitSession) setActiveTerminal(splitSession);
-              splitXtermRef.current?.focus();
-            }}
-          >
-            <div ref={splitTerminalRef} className="terminal split-pane" />
-          </div>
+          <>
+            <div
+              className="terminal-split-resizer"
+              onMouseDown={handleResizerMouseDown}
+              onDoubleClick={handleResizerDoubleClick}
+              title="Drag to adjust split widths. Double-click to reset (50/50)."
+            />
+            <div
+              className={`split-pane-container ${activeTerminal?.id === splitSession?.id ? 'active-focus' : ''}`}
+              style={{ width: `calc(${100 - splitRatio}% - 5px)`, flex: 'none' }}
+              onClick={() => {
+                if (splitSession) setActiveTerminal(splitSession);
+                splitXtermRef.current?.focus();
+              }}
+            >
+              <div ref={splitTerminalRef} className="terminal split-pane" />
+            </div>
+          </>
         )}
       </div>
     </div>

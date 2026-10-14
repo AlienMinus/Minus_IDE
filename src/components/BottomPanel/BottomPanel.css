@@ -142,6 +142,51 @@
   color: #f85149;
 }
 
+.term-add-dropdown-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.term-add-split-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #2d2d30;
+  border-radius: 3px;
+  border: 1px solid #3c3c3c;
+  overflow: hidden;
+}
+
+.term-add-split-btn .term-header-btn {
+  border: none !important;
+  border-radius: 0 !important;
+  height: 22px !important;
+  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  color: #cccccc !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+
+.term-add-split-btn .term-header-btn:hover {
+  background: #37373d !important;
+  color: #ffffff !important;
+}
+
+.term-add-split-btn .term-add-chevron {
+  border-left: 1px solid #3c3c3c !important;
+  padding: 0 4px !important;
+}
+
+.term-add-split-btn .term-add-chevron.active {
+  background: #007acc !important;
+  color: #ffffff !important;
+}
+
 .terminal-cwd-badge {
   font-size: 11px;
   color: #858585;
