@@ -1,5 +1,5 @@
 // src/components/Architecture/ArchitecturePanel.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import "./ArchitecturePanel.css";
 import {
   FaProjectDiagram,
@@ -12,15 +12,29 @@ import {
   FaChevronDown,
   FaChevronRight,
   FaCode,
-  FaLayerGroup
+  FaLayerGroup,
+  FaShieldAlt
 } from "react-icons/fa";
 import useEditor from "../../hooks/useEditor";
-import { scanCodebaseArchitecture } from "../../services/architectureScanner";
+import { scanCodebaseArchitecture, isIgnoredPath } from "../../services/architectureScanner";
 
 export default function ArchitecturePanel({ onOpenFullView }) {
-  const { files = [], openFile } = useEditor();
+  const { files = [], openFile, openMongoSchemaTab, openBackendRoutesTab, scanWorkspaceFiles, isScanningWorkspace, scanProgress } = useEditor();
   const [search, setSearch] = useState("");
   const [collapsedLayers, setCollapsedLayers] = useState({});
+
+  // Auto-scan on mount if any files lack content
+  useEffect(() => {
+    if (!scanWorkspaceFiles || isScanningWorkspace) return;
+    const hasUnscannedFiles = files.some(f =>
+      !isIgnoredPath(f.path, f.name) &&
+      (f.content == null || f.content === "") &&
+      ["js", "jsx", "ts", "tsx", "json"].some(ext => (f.name || "").toLowerCase().endsWith("." + ext))
+    );
+    if (hasUnscannedFiles) {
+      scanWorkspaceFiles(false);
+    }
+  }, [files.length]);
 
   const architecture = useMemo(() => {
     return scanCodebaseArchitecture(files);
@@ -40,9 +54,10 @@ export default function ArchitecturePanel({ onOpenFullView }) {
       const matchName = n.name.toLowerCase().includes(q);
       const matchFile = n.fileName.toLowerCase().includes(q);
       const matchVars = (n.details.stateVars || []).some(v => v.state?.toLowerCase().includes(q));
+      const matchConstants = (n.details.constants || []).some(c => c.name?.toLowerCase().includes(q) || c.value?.toLowerCase().includes(q));
       const matchFuncs = (n.details.functions || []).some(f => f.toLowerCase().includes(q));
       const matchFields = (n.details.fields || []).some(f => f.name?.toLowerCase().includes(q));
-      return matchName || matchFile || matchVars || matchFuncs || matchFields;
+      return matchName || matchFile || matchVars || matchConstants || matchFuncs || matchFields;
     });
   }, [architecture.nodes, search]);
 
@@ -53,12 +68,20 @@ export default function ArchitecturePanel({ onOpenFullView }) {
     { key: "context", label: "Context & State", icon: <FaLayerGroup color="#bc8cff" /> },
     { key: "hook", label: "Custom Hooks", icon: <FaCode color="#f0883e" /> },
     { key: "page", label: "Pages & Views", icon: <FaCube color="#58a6ff" /> },
-    { key: "component", label: "UI Components", icon: <FaCube color="#79c0ff" /> }
+    { key: "component", label: "UI Components", icon: <FaCube color="#79c0ff" /> },
+    { key: "util", label: "Utilities & Modules", icon: <FaCode color="#e5c07b" /> },
+    { key: "config", label: "Config & Setup", icon: <FaShieldAlt color="#f472b6" /> }
   ];
 
   const handleNodeClick = (node) => {
-    const targetFile = files.find(f => f.name === node.fileName || f.path === node.filePath);
-    if (targetFile && openFile) {
+    if (!openFile) return;
+    // 1. Match by fileId or exact filePath excluding node_modules/ignored files
+    let targetFile = files.find(f => !isIgnoredPath(f.path, f.name) && (f.id === node.fileId || f.path === node.filePath));
+    // 2. Fallback to exact filename among valid workspace files
+    if (!targetFile) {
+      targetFile = files.find(f => !isIgnoredPath(f.path, f.name) && f.name === node.fileName);
+    }
+    if (targetFile) {
       openFile(targetFile);
     }
   };
@@ -80,14 +103,55 @@ export default function ArchitecturePanel({ onOpenFullView }) {
           </button>
         </div>
 
-        <button className="arch-open-canvas-btn" onClick={onOpenFullView}>
-          <FaProjectDiagram /> Open Visual Blueprint
-        </button>
+        <div style={{ display: "flex", gap: "6px", width: "100%" }}>
+          <button className="arch-open-canvas-btn" style={{ flex: 1 }} onClick={onOpenFullView} title="Open Architecture Blueprint Canvas">
+            <FaProjectDiagram /> Blueprint
+          </button>
+          <button
+            className="arch-open-canvas-btn"
+            style={{
+              flex: 1,
+              background: "rgba(0, 255, 136, 0.12)",
+              color: "#00ff88",
+              borderColor: "rgba(0, 255, 136, 0.3)"
+            }}
+            onClick={() => openMongoSchemaTab && openMongoSchemaTab()}
+            title="Open Dedicated MongoSchema ERD"
+          >
+            <FaDatabase /> Mongo ERD
+          </button>
+        </div>
+
+        <div style={{ display: "flex", gap: "6px", width: "100%", marginTop: "6px" }}>
+          <button
+            className="arch-open-canvas-btn"
+            style={{
+              width: "100%",
+              background: isScanningWorkspace ? "rgba(227, 179, 65, 0.15)" : "rgba(56, 189, 248, 0.12)",
+              color: isScanningWorkspace ? "#e3b341" : "#38bdf8",
+              borderColor: isScanningWorkspace ? "rgba(227, 179, 65, 0.3)" : "rgba(56, 189, 248, 0.3)",
+              justifyContent: "center"
+            }}
+            onClick={() => scanWorkspaceFiles && scanWorkspaceFiles(true)}
+            disabled={isScanningWorkspace}
+            title="Scan all workspace files across all directories without opening them"
+          >
+            <FaSyncAlt className={isScanningWorkspace ? "spinning" : ""} />
+            {isScanningWorkspace
+              ? (scanProgress ? `Scanning ${scanProgress.current}/${scanProgress.total}` : "Scanning...")
+              : "⚡ Scan All Folders"}
+          </button>
+        </div>
       </div>
 
       {/* Stats Summary Chips */}
       <div className="arch-stats-row">
-        <span className="arch-stat-chip model" title="Database Models">
+        <span
+          className="arch-stat-chip model"
+          title="Click to open MongoSchema ERD"
+          style={{ cursor: "pointer" }}
+          onClick={() => openMongoSchemaTab && openMongoSchemaTab()}
+        >
           <FaDatabase /> {architecture.stats.models} Models
         </span>
         <span className="arch-stat-chip component" title="Components & Pages">
@@ -96,8 +160,19 @@ export default function ArchitecturePanel({ onOpenFullView }) {
         <span className="arch-stat-chip context" title="Context Providers">
           <FaLayerGroup /> {architecture.stats.contexts} Contexts
         </span>
-        <span className="arch-stat-chip service" title="Services & APIs">
+        <span
+          className="arch-stat-chip service"
+          title="Click to open Backend API Routes"
+          style={{ cursor: "pointer" }}
+          onClick={() => openBackendRoutesTab && openBackendRoutesTab()}
+        >
           <FaSyncAlt /> {architecture.stats.services} Services
+        </span>
+        <span className="arch-stat-chip util" title="Utilities, Helpers & Modules" style={{ color: "#e5c07b" }}>
+          <FaCode /> {architecture.stats.utils || 0} Utils
+        </span>
+        <span className="arch-stat-chip config" title="Configuration & Environment" style={{ color: "#f472b6" }}>
+          <FaShieldAlt /> {architecture.stats.configs || 0} Config
         </span>
       </div>
 
@@ -137,6 +212,7 @@ export default function ArchitecturePanel({ onOpenFullView }) {
                     const symbolCount =
                       (node.details.fields?.length || 0) +
                       (node.details.stateVars?.length || 0) +
+                      (node.details.constants?.length || 0) +
                       (node.details.functions?.length || 0) +
                       (node.details.endpoints?.length || 0);
 

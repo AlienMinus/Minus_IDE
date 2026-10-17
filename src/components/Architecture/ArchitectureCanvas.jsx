@@ -1,26 +1,27 @@
 // src/components/Architecture/ArchitectureCanvas.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import "./ArchitectureCanvas.css";
 import {
   FaProjectDiagram,
   FaBolt,
-  FaCode,
   FaBook,
   FaSearch,
   FaSearchPlus,
   FaSearchMinus,
   FaExpandArrowsAlt,
   FaDownload,
-  FaCopy,
   FaDatabase,
   FaServer,
   FaSyncAlt,
   FaLayerGroup,
   FaCube,
-  FaFileCode
+  FaCode,
+  FaFileCode,
+  FaShieldAlt,
+  FaNetworkWired
 } from "react-icons/fa";
 import useEditor from "../../hooks/useEditor";
-import { scanCodebaseArchitecture } from "../../services/architectureScanner";
+import { scanCodebaseArchitecture, isIgnoredPath } from "../../services/architectureScanner";
 import { traceExecutionSequences } from "../../services/lifecycleTracer";
 import {
   generateArchitectureFlowchart,
@@ -28,10 +29,13 @@ import {
   generateEntityRelationshipDiagram
 } from "../../services/mermaidGenerator";
 import SequenceVisualizer from "./SequenceVisualizer";
+import MermaidRenderer from "./MermaidRenderer";
+import MongoSchemaERD from "./MongoSchemaERD";
 
 export default function ArchitectureCanvas() {
-  const { files = [], openFile } = useEditor();
+  const { files = [], openFile, scanWorkspaceFiles, isScanningWorkspace, scanProgress, openBackendRoutesTab } = useEditor();
   const [activeTab, setActiveTab] = useState("graph"); // "graph" | "sequence" | "mermaid" | "dictionary"
+  const [mermaidDiagramType, setMermaidDiagramType] = useState("flowchart"); // "flowchart" | "sequence" | "erd"
   const [zoom, setZoom] = useState(100);
   const [search, setSearch] = useState("");
   const [activeLayers, setActiveLayers] = useState({
@@ -41,11 +45,25 @@ export default function ArchitectureCanvas() {
     context: true,
     hook: true,
     page: true,
-    component: true
+    component: true,
+    util: true,
+    config: true
   });
-  const [copied, setCopied] = useState(false);
 
-  // Scan codebase
+  // Automatically scan workspace files on mount if any code files have null/empty content
+  useEffect(() => {
+    if (!scanWorkspaceFiles || isScanningWorkspace) return;
+    const hasUnscannedFiles = files.some(f =>
+      !isIgnoredPath(f.path, f.name) &&
+      (f.content == null || f.content === "") &&
+      ["js", "jsx", "ts", "tsx", "json"].some(ext => (f.name || "").toLowerCase().endsWith("." + ext))
+    );
+    if (hasUnscannedFiles) {
+      scanWorkspaceFiles(false);
+    }
+  }, [files.length]);
+
+  // Scan codebase excluding node_modules, dist, and caches
   const architecture = useMemo(() => {
     return scanCodebaseArchitecture(files);
   }, [files]);
@@ -55,7 +73,7 @@ export default function ArchitectureCanvas() {
     return traceExecutionSequences(architecture);
   }, [architecture]);
 
-  // Mermaid scripts
+  // Generate Mermaid diagram codes
   const mermaidFlowchart = useMemo(() => {
     return generateArchitectureFlowchart(architecture);
   }, [architecture]);
@@ -80,23 +98,24 @@ export default function ArchitectureCanvas() {
       const matchName = n.name.toLowerCase().includes(q);
       const matchFile = n.fileName.toLowerCase().includes(q);
       const matchVars = (n.details.stateVars || []).some(v => v.state?.toLowerCase().includes(q));
+      const matchConstants = (n.details.constants || []).some(c => c.name?.toLowerCase().includes(q) || c.value?.toLowerCase().includes(q));
       const matchFuncs = (n.details.functions || []).some(f => f.toLowerCase().includes(q));
       const matchFields = (n.details.fields || []).some(f => f.name?.toLowerCase().includes(q));
-      return matchName || matchFile || matchVars || matchFuncs || matchFields;
+      const matchEndpoints = (n.details.endpoints || []).some(e => e.path?.toLowerCase().includes(q));
+      return matchName || matchFile || matchVars || matchConstants || matchFuncs || matchFields || matchEndpoints;
     });
   }, [architecture.nodes, activeLayers, search]);
 
   const handleOpenFile = (node) => {
-    const target = files.find(f => f.path === node.filePath || f.name === node.fileName);
-    if (target && openFile) {
+    if (!openFile) return;
+    // Match by exact fileId or exact filePath excluding node_modules/ignored files
+    let target = files.find(f => !isIgnoredPath(f.path, f.name) && (f.id === node.fileId || f.path === node.filePath));
+    if (!target) {
+      target = files.find(f => !isIgnoredPath(f.path, f.name) && f.name === node.fileName);
+    }
+    if (target) {
       openFile(target);
     }
-  };
-
-  const handleCopyMermaid = () => {
-    navigator.clipboard.writeText(mermaidFlowchart);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownloadJson = () => {
@@ -109,12 +128,14 @@ export default function ArchitectureCanvas() {
 
   const layerSections = [
     { key: "model", title: "Database Models & Schemas", icon: <FaDatabase color="#3fb950" /> },
-    { key: "backend", title: "Backend Server & HTTP Endpoints", icon: <FaServer color="#f85149" /> },
-    { key: "service", title: "API Clients & Network Services", icon: <FaSyncAlt color="#d29922" /> },
+    { key: "backend", title: "Backend Server & API Routing", icon: <FaServer color="#f85149" /> },
+    { key: "service", title: "Services & Network Fetchers", icon: <FaSyncAlt color="#d29922" /> },
     { key: "context", title: "Context Providers & State Stores", icon: <FaLayerGroup color="#bc8cff" /> },
     { key: "hook", title: "Custom React Hooks", icon: <FaCode color="#f0883e" /> },
     { key: "page", title: "Views & Page Hierarchies", icon: <FaCube color="#58a6ff" /> },
-    { key: "component", title: "UI Components & Widgets", icon: <FaCube color="#79c0ff" /> }
+    { key: "component", title: "UI Components & Widgets", icon: <FaCube color="#79c0ff" /> },
+    { key: "util", title: "Utilities, Helpers & Modules", icon: <FaCode color="#e5c07b" /> },
+    { key: "config", title: "Configuration & Environment", icon: <FaShieldAlt color="#f472b6" /> }
   ];
 
   return (
@@ -129,16 +150,31 @@ export default function ArchitectureCanvas() {
             <FaProjectDiagram /> Visual Architecture
           </button>
           <button
-            className={`arch-view-tab ${activeTab === "sequence" ? "active" : ""}`}
-            onClick={() => setActiveTab("sequence")}
+            className={`arch-view-tab ${activeTab === "mongoschema" ? "active" : ""}`}
+            onClick={() => setActiveTab("mongoschema")}
+            style={{ color: activeTab === "mongoschema" ? "#00ff88" : undefined }}
           >
-            <FaBolt color="#e3b341" /> Execution Flow ({executionSteps.length} steps)
+            <FaDatabase color="#00ff88" /> MongoSchema ERD
+          </button>
+          <button
+            className="arch-view-tab"
+            onClick={() => openBackendRoutesTab && openBackendRoutesTab()}
+            style={{ color: "#38bdf8" }}
+            title="Open Dedicated Backend API Routes Tab"
+          >
+            <FaNetworkWired color="#38bdf8" /> API Routes
           </button>
           <button
             className={`arch-view-tab ${activeTab === "mermaid" ? "active" : ""}`}
             onClick={() => setActiveTab("mermaid")}
           >
             <FaCode /> Mermaid Diagrams
+          </button>
+          <button
+            className={`arch-view-tab ${activeTab === "sequence" ? "active" : ""}`}
+            onClick={() => setActiveTab("sequence")}
+          >
+            <FaBolt color="#e3b341" /> Execution Flow ({executionSteps.length} steps)
           </button>
           <button
             className={`arch-view-tab ${activeTab === "dictionary" ? "active" : ""}`}
@@ -149,6 +185,27 @@ export default function ArchitectureCanvas() {
         </div>
 
         <div className="arch-toolbar-right">
+          <button
+            className={`arch-tool-btn arch-scan-btn ${isScanningWorkspace ? "scanning" : ""}`}
+            onClick={() => scanWorkspaceFiles && scanWorkspaceFiles(true)}
+            disabled={isScanningWorkspace}
+            title={isScanningWorkspace ? "Scanning files in workspace..." : "Scan workspace files to index models, routes & architecture without opening each file"}
+            style={{
+              background: isScanningWorkspace ? "rgba(227, 179, 65, 0.2)" : "rgba(0, 255, 136, 0.15)",
+              color: isScanningWorkspace ? "#e3b341" : "#00ff88",
+              borderColor: isScanningWorkspace ? "rgba(227, 179, 65, 0.4)" : "rgba(0, 255, 136, 0.4)",
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
+            }}
+          >
+            <FaSyncAlt className={isScanningWorkspace ? "spinning" : ""} size={11} />
+            {isScanningWorkspace
+              ? (scanProgress ? `Scanning (${scanProgress.current}/${scanProgress.total})...` : "Scanning...")
+              : "⚡ Scan Codebase"}
+          </button>
+
           {activeTab === "graph" && (
             <>
               <button
@@ -176,13 +233,7 @@ export default function ArchitectureCanvas() {
             </>
           )}
 
-          {activeTab === "mermaid" && (
-            <button className="arch-tool-btn" onClick={handleCopyMermaid}>
-              <FaCopy /> {copied ? "Copied!" : "Copy Mermaid"}
-            </button>
-          )}
-
-          <button className="arch-tool-btn" onClick={handleDownloadJson} title="Export Architecture JSON">
+          <button className="arch-tool-btn" onClick={handleDownloadJson} title="Export Architecture JSON Spec">
             <FaDownload /> Export Spec
           </button>
         </div>
@@ -205,7 +256,7 @@ export default function ArchitectureCanvas() {
             <FaSearch color="#666" />
             <input
               type="text"
-              placeholder="Search symbols..."
+              placeholder="Search symbols or constants..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
@@ -248,7 +299,30 @@ export default function ArchitectureCanvas() {
                       >
                         <div className={`arch-card-top ${node.layer}`}>
                           <span className="arch-card-name">{node.name}</span>
-                          <span className="arch-card-badge">{node.layer}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            {node.layer === "model" && (
+                              <button
+                                style={{
+                                  background: "rgba(0, 255, 136, 0.15)",
+                                  color: "#00ff88",
+                                  border: "1px solid rgba(0, 255, 136, 0.4)",
+                                  fontSize: "9px",
+                                  padding: "1px 6px",
+                                  borderRadius: "3px",
+                                  cursor: "pointer",
+                                  fontWeight: "600"
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveTab("mongoschema");
+                                }}
+                                title="Open MongoSchema ERD"
+                              >
+                                ERD ➔
+                              </button>
+                            )}
+                            <span className="arch-card-badge">{node.layer}</span>
+                          </div>
                         </div>
 
                         <div className="arch-card-body">
@@ -256,6 +330,131 @@ export default function ArchitectureCanvas() {
                           <div style={{ fontSize: "10px", color: "#6e7681", display: "flex", alignItems: "center", gap: "4px" }}>
                             <FaFileCode /> {node.filePath} ({node.lineCount} lines)
                           </div>
+
+                          {/* Backend Server: Port & Middleware */}
+                          {node.layer === "backend" && (
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "#9cdcfe" }}>
+                                <FaNetworkWired /> Port: {node.details.port || "5000"}
+                              </div>
+                              {node.details.middleware?.length > 0 && (
+                                <div style={{ marginTop: "4px", display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                                  {node.details.middleware.map((m, i) => (
+                                    <span key={i} className="arch-var-chip" style={{ color: "#fca5a5" }}>
+                                      {m}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Backend Server: HTTP Endpoints & Routes */}
+                          {node.details.endpoints?.length > 0 && (
+                            <div>
+                              <div className="arch-section-title">
+                                {node.layer === "backend" ? "Express HTTP Routes" : "API Endpoints"}
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                {node.details.endpoints.slice(0, 8).map((ep, i) => (
+                                  <div
+                                    key={i}
+                                    style={{
+                                      fontSize: "11px",
+                                      fontFamily: "monospace",
+                                      background: "#141414",
+                                      padding: "3px 6px",
+                                      borderRadius: "3px",
+                                      border: "1px solid #282828",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between"
+                                    }}
+                                  >
+                                    <span style={{ color: ep.method === "GET" ? "#3fb950" : "#d29922", fontWeight: "700" }}>
+                                      {ep.method} {ep.path}
+                                    </span>
+                                    {ep.isProtected && (
+                                      <span title="Protected Route" style={{ color: "#f85149" }}>
+                                        <FaShieldAlt size={10} />
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                                {node.details.endpoints.length > 8 && (
+                                  <span style={{ fontSize: "10px", color: "#888" }}>
+                                    +{node.details.endpoints.length - 8} more routes...
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Backend Server: Database Models Queried */}
+                          {node.details.queriedModels?.length > 0 && (
+                            <div>
+                              <div className="arch-section-title">Database Models Accessed</div>
+                              <div className="arch-chip-list">
+                                {node.details.queriedModels.map((m, i) => (
+                                  <span key={i} className="arch-field-chip">
+                                    {m}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Module Declarations & Constants */}
+                          {node.details.constants?.length > 0 && (
+                            <div>
+                              <div className="arch-section-title">Declarations & Constants</div>
+                              <div className="arch-chip-list">
+                                {node.details.constants.slice(0, 8).map((c, i) => {
+                                  let badgeColor = "#e3b341";
+                                  let badgeBg = "rgba(227, 179, 65, 0.15)";
+                                  let label = "CONST";
+                                  if (c.kind === "instance") {
+                                    badgeColor = "#f472b6";
+                                    badgeBg = "rgba(244, 114, 182, 0.15)";
+                                    label = "INSTANCE";
+                                  } else if (c.kind === "schema") {
+                                    badgeColor = "#3fb950";
+                                    badgeBg = "rgba(63, 185, 80, 0.15)";
+                                    label = "SCHEMA";
+                                  } else if (c.kind === "ref") {
+                                    badgeColor = "#38bdf8";
+                                    badgeBg = "rgba(56, 189, 248, 0.15)";
+                                    label = "REF";
+                                  } else if (c.kind === "destructured") {
+                                    badgeColor = "#a78bfa";
+                                    badgeBg = "rgba(167, 139, 250, 0.15)";
+                                    label = "DESTRUCT";
+                                  } else if (c.kind === "variable") {
+                                    badgeColor = "#93c5fd";
+                                    badgeBg = "rgba(147, 197, 253, 0.15)";
+                                    label = "VAR";
+                                  }
+
+                                  return (
+                                    <span
+                                      key={i}
+                                      className="arch-var-chip"
+                                      style={{ color: badgeColor, borderColor: "rgba(255,255,255,0.1)" }}
+                                      title={`${c.name} (${c.type}): ${c.value}`}
+                                    >
+                                      <span style={{ fontSize: "8px", padding: "1px 4px", borderRadius: "2px", background: badgeBg, marginRight: "4px", fontWeight: "700" }}>{label}</span>
+                                      {c.name}: {c.value}
+                                    </span>
+                                  );
+                                })}
+                                {node.details.constants.length > 8 && (
+                                  <span style={{ fontSize: "10px", color: "#888" }}>
+                                    +{node.details.constants.length - 8} more
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
 
                           {/* Schema Fields (for Models) */}
                           {node.details.fields?.length > 0 && (
@@ -298,20 +497,6 @@ export default function ArchitectureCanvas() {
                               </div>
                             </div>
                           )}
-
-                          {/* API Endpoints */}
-                          {node.details.endpoints?.length > 0 && (
-                            <div>
-                              <div className="arch-section-title">Endpoints</div>
-                              <div className="arch-chip-list">
-                                {node.details.endpoints.slice(0, 3).map((ep, i) => (
-                                  <span key={i} className="arch-var-chip" style={{ color: "#d29922" }}>
-                                    {ep.method} {ep.path}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}
@@ -323,27 +508,54 @@ export default function ArchitectureCanvas() {
         </div>
       )}
 
+      {/* Mode: Dedicated MongoSchema ERD */}
+      {activeTab === "mongoschema" && (
+        <MongoSchemaERD />
+      )}
+
       {/* Mode 2: Execution Sequence Visualizer */}
       {activeTab === "sequence" && (
         <SequenceVisualizer steps={executionSteps} />
       )}
 
-      {/* Mode 3: Mermaid Diagrams */}
+      {/* Mode 3: Visual Rendered Mermaid Diagrams */}
       {activeTab === "mermaid" && (
-        <div className="arch-mermaid-view">
-          <div>
-            <h3 style={{ color: "#58a6ff", marginBottom: "8px" }}>1. Architecture & Component Flowchart</h3>
-            <pre className="arch-mermaid-pre">{mermaidFlowchart}</pre>
+        <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%", overflow: "hidden" }}>
+          {/* Sub-toolbar to pick diagram type */}
+          <div style={{ display: "flex", gap: "8px", padding: "8px 16px", background: "#1c1c1c", borderBottom: "1px solid #2d2d30" }}>
+            <button
+              className={`mermaid-btn ${mermaidDiagramType === "flowchart" ? "active" : ""}`}
+              onClick={() => setMermaidDiagramType("flowchart")}
+              style={{ background: mermaidDiagramType === "flowchart" ? "#0e639c" : "#2d2d30" }}
+            >
+              🏗️ Architecture Flowchart
+            </button>
+            <button
+              className={`mermaid-btn ${mermaidDiagramType === "sequence" ? "active" : ""}`}
+              onClick={() => setMermaidDiagramType("sequence")}
+              style={{ background: mermaidDiagramType === "sequence" ? "#0e639c" : "#2d2d30" }}
+            >
+              ⚡ Call Sequence Diagram
+            </button>
+            <button
+              className={`mermaid-btn ${mermaidDiagramType === "erd" ? "active" : ""}`}
+              onClick={() => setMermaidDiagramType("erd")}
+              style={{ background: mermaidDiagramType === "erd" ? "#0e639c" : "#2d2d30" }}
+            >
+              🗄️ Database ERD Diagram
+            </button>
           </div>
 
-          <div>
-            <h3 style={{ color: "#bc8cff", marginBottom: "8px" }}>2. Runtime Call Sequence Diagram</h3>
-            <pre className="arch-mermaid-pre">{mermaidSequence}</pre>
-          </div>
-
-          <div>
-            <h3 style={{ color: "#3fb950", marginBottom: "8px" }}>3. Database Entity Relationship Diagram</h3>
-            <pre className="arch-mermaid-pre">{mermaidErd}</pre>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            {mermaidDiagramType === "flowchart" && (
+              <MermaidRenderer code={mermaidFlowchart} title="Architecture & Component Flowchart" />
+            )}
+            {mermaidDiagramType === "sequence" && (
+              <MermaidRenderer code={mermaidSequence} title="Runtime Execution Call Sequence Diagram" />
+            )}
+            {mermaidDiagramType === "erd" && (
+              <MermaidRenderer code={mermaidErd} title="Database Entity Relationship Diagram" />
+            )}
           </div>
         </div>
       )}
@@ -364,11 +576,33 @@ export default function ArchitectureCanvas() {
             <tbody>
               {architecture.nodes.flatMap(n => {
                 const rows = [];
+                // Endpoints
+                (n.details.endpoints || []).forEach(ep => {
+                  rows.push({
+                    name: `${ep.method} ${ep.path}`,
+                    type: "HTTP Route",
+                    file: n.fileName,
+                    layer: n.layer,
+                    details: ep.models?.length ? `Queries: ${ep.models.join(", ")}` : "Express route"
+                  });
+                });
+                // Declarations, Instances, Variables & Constants
+                (n.details.constants || []).forEach(c => {
+                  rows.push({
+                    name: c.name,
+                    type: c.type || (c.kind ? c.kind.toUpperCase() : "Declaration"),
+                    kind: c.kind,
+                    file: n.fileName,
+                    layer: n.layer,
+                    details: `${c.kind?.toUpperCase() || 'VAL'}: ${c.value || 'undefined'}`
+                  });
+                });
                 // Model fields
                 (n.details.fields || []).forEach(f => {
                   rows.push({
                     name: f.name,
                     type: "Schema Field",
+                    kind: "field",
                     file: n.fileName,
                     layer: n.layer,
                     details: `Type: ${f.type}${f.ref ? ` (ref: ${f.ref})` : ""}`
@@ -378,7 +612,8 @@ export default function ArchitectureCanvas() {
                 (n.details.stateVars || []).forEach(v => {
                   rows.push({
                     name: v.state,
-                    type: "useState",
+                    type: "React useState",
+                    kind: "state",
                     file: n.fileName,
                     layer: n.layer,
                     details: `Setter: ${v.setter}, Initial: ${v.initial}`
@@ -389,6 +624,7 @@ export default function ArchitectureCanvas() {
                   rows.push({
                     name: `${fn}()`,
                     type: "Function",
+                    kind: "function",
                     file: n.fileName,
                     layer: n.layer,
                     details: "Callable method"
@@ -399,23 +635,56 @@ export default function ArchitectureCanvas() {
                   rows.push({
                     name: `${af}()`,
                     type: "API Service",
+                    kind: "service",
                     file: n.fileName,
                     layer: n.layer,
                     details: "Network fetcher"
                   });
                 });
                 return rows;
-              }).map((r, i) => (
-                <tr key={i}>
-                  <td style={{ fontFamily: "monospace", color: "#4fc1ff", fontWeight: "600" }}>{r.name}</td>
-                  <td>{r.type}</td>
-                  <td style={{ color: "#e6edf3" }}>{r.file}</td>
-                  <td>
-                    <span className={`arch-card-badge ${r.layer}`}>{r.layer}</span>
-                  </td>
-                  <td style={{ color: "#8b949e" }}>{r.details}</td>
-                </tr>
-              ))}
+              }).map((r, i) => {
+                let badgeColor = "#cccccc";
+                let badgeBg = "#252528";
+                if (r.kind === "constant") {
+                  badgeColor = "#e3b341";
+                  badgeBg = "rgba(227, 179, 65, 0.15)";
+                } else if (r.kind === "instance") {
+                  badgeColor = "#f472b6";
+                  badgeBg = "rgba(244, 114, 182, 0.15)";
+                } else if (r.kind === "schema") {
+                  badgeColor = "#3fb950";
+                  badgeBg = "rgba(63, 185, 80, 0.15)";
+                } else if (r.kind === "ref") {
+                  badgeColor = "#38bdf8";
+                  badgeBg = "rgba(56, 189, 248, 0.15)";
+                } else if (r.kind === "state") {
+                  badgeColor = "#79c0ff";
+                  badgeBg = "rgba(121, 192, 255, 0.15)";
+                }
+
+                return (
+                  <tr key={i}>
+                    <td style={{ fontFamily: "monospace", color: badgeColor, fontWeight: "600" }}>{r.name}</td>
+                    <td>
+                      <span style={{
+                        fontSize: "10px",
+                        padding: "2px 6px",
+                        borderRadius: "3px",
+                        background: badgeBg,
+                        color: badgeColor,
+                        fontWeight: "600"
+                      }}>
+                        {r.type}
+                      </span>
+                    </td>
+                    <td style={{ color: "#e6edf3" }}>{r.file}</td>
+                    <td>
+                      <span className={`arch-card-badge ${r.layer}`}>{r.layer}</span>
+                    </td>
+                    <td style={{ color: "#8b949e" }}>{r.details}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -423,4 +692,3 @@ export default function ArchitectureCanvas() {
     </div>
   );
 }
-

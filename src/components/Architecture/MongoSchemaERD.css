@@ -1,0 +1,705 @@
+/* src/components/Architecture/MongoSchemaERD.css */
+
+.mongoschema-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background: #09090b;
+  color: #e4e4e7;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ==========================================================================
+   LEFT SIDEBAR
+   ========================================================================== */
+.mongoschema-sidebar {
+  width: 260px;
+  min-width: 240px;
+  background: #0c0c0e;
+  border-right: 1px solid #1e1e24;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+  gap: 16px;
+  overflow-y: auto;
+  user-select: none;
+}
+
+.mongoschema-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mongoschema-brand-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #00ff88;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mongoschema-version {
+  font-size: 11px;
+  color: #38bdf8;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.mongoschema-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+.mongoschema-search-input {
+  width: 100%;
+  background: #141417;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  color: #f4f4f5;
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.mongoschema-search-input:focus {
+  border-color: #00ff88;
+}
+
+/* Filters */
+.mongoschema-filters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mongoschema-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #00ff88;
+  cursor: pointer;
+}
+
+.mongoschema-checkbox-label input[type="checkbox"] {
+  accent-color: #00ff88;
+  cursor: pointer;
+}
+
+/* Chen Attributes LOD Control */
+.mongoschema-lod-control {
+  display: flex;
+  background: #141417;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.mongoschema-lod-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  padding: 5px 0;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.mongoschema-lod-btn:hover {
+  background: #1f1f23;
+  color: #ffffff;
+}
+
+.mongoschema-lod-btn.active {
+  background: #00ff88;
+  color: #000000;
+  font-weight: 800;
+}
+
+/* Statistics Grid */
+.mongoschema-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mongoschema-stat-card {
+  background: #141417;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  padding: 10px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.mongoschema-stat-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: #38bdf8;
+  line-height: 1;
+  font-family: monospace;
+}
+
+.mongoschema-stat-title {
+  font-size: 11px;
+  color: #71717a;
+  margin-top: 4px;
+}
+
+/* Models List */
+.mongoschema-models-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mongoschema-model-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mongoschema-model-item:hover {
+  background: #18181b;
+}
+
+.mongoschema-model-item.active {
+  background: rgba(0, 255, 136, 0.1);
+  border-left: 2px solid #00ff88;
+}
+
+.mongoschema-model-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #00ff88;
+}
+
+.mongoschema-model-count {
+  font-size: 11px;
+  color: #71717a;
+}
+
+/* ==========================================================================
+   CENTER CANVAS & VIEWPORT
+   ========================================================================== */
+.mongoschema-canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: #09090b;
+}
+
+/* Canvas Toolbar */
+.mongoschema-toolbar {
+  height: 44px;
+  background: #0c0c0e;
+  border-bottom: 1px solid #1e1e24;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 10;
+  gap: 10px;
+}
+
+.mongoschema-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.mongoschema-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mongoschema-view-pill {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #a1a1aa;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.mongoschema-view-pill:hover {
+  background: #27272a;
+  color: #ffffff;
+}
+
+.mongoschema-view-pill.active {
+  background: #00ff88;
+  color: #000000;
+  border-color: #00ff88;
+  font-weight: 800;
+}
+
+.mongoschema-sub-pill {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.mongoschema-sub-pill:hover {
+  background: #27272a;
+  color: #ffffff;
+}
+
+.mongoschema-sub-pill.active {
+  background: #00ff88;
+  color: #000000;
+  border-color: #00ff88;
+  font-weight: 800;
+}
+
+.mongoschema-zoom-btn {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #cccccc;
+  width: 28px;
+  height: 26px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s ease;
+}
+
+.mongoschema-zoom-btn:hover {
+  background: #27272a;
+  color: #ffffff;
+}
+
+.mongoschema-btn-green {
+  background: #00ff88;
+  color: #000000;
+  border: 1px solid #00ff88;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mongoschema-btn-green:hover {
+  background: #00dd75;
+}
+
+.mongoschema-canvas-body {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  padding: 40px;
+  background-color: #09090b;
+  background-image: radial-gradient(circle, #222226 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ==========================================================================
+   CHEN ERD SVG DIAGRAM
+   ========================================================================== */
+.chen-viewport {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  position: relative;
+}
+
+.chen-svg-canvas {
+  width: 1500px;
+  height: 1100px;
+  display: block;
+}
+
+.chen-entity-node {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.chen-entity-node:hover rect:first-child {
+  stroke: #00ff88;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+}
+
+.chen-attr-node {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chen-attr-node:hover rect {
+  stroke: #00ff88;
+  filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
+}
+
+.chen-rel-line {
+  stroke: #162e21;
+  stroke-width: 1.2;
+}
+
+.chen-inter-entity-line {
+  stroke: #1e3a2b;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+/* Grid of Cards */
+.mongoschema-cards-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 32px;
+  min-width: 700px;
+}
+
+/* Schema Card */
+.mongoschema-card {
+  width: 300px;
+  background: #101214;
+  border: 1px solid #1e2420;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mongoschema-card:hover, .mongoschema-card.selected {
+  border-color: #00ff88;
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.15);
+}
+
+.mongoschema-card-header {
+  padding: 10px 14px;
+  background: #141716;
+  border-bottom: 1px solid #1e2420;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mongoschema-card-title-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.mongoschema-card-model-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #00ff88;
+}
+
+.mongoschema-card-collection {
+  font-size: 11px;
+  color: #71717a;
+}
+
+.mongoschema-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mongoschema-card-btn {
+  background: #181d1a;
+  border: 1px solid #2a332c;
+  color: #a1a1aa;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mongoschema-card-btn:hover {
+  background: #27332a;
+  color: #00ff88;
+  border-color: #00ff88;
+}
+
+.mongoschema-card-fields {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.mongoschema-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  line-height: 1.4;
+}
+
+.mongoschema-field-key {
+  color: #00ff88;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mongoschema-field-key.nested {
+  color: #4ade80;
+  padding-left: 10px;
+  font-size: 11px;
+}
+
+.mongoschema-field-type {
+  color: #a1a1aa;
+  font-size: 11px;
+}
+
+.mongoschema-req-check {
+  color: #00ff88;
+  font-weight: bold;
+  margin-right: 2px;
+}
+
+/* ==========================================================================
+   RIGHT SCHEMA DETAILS PANEL
+   ========================================================================== */
+.mongoschema-detail-panel {
+  width: 480px;
+  min-width: 380px;
+  background: #0b0c0e;
+  border-left: 1px solid #1e1e24;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.mongoschema-detail-header {
+  padding: 16px;
+  border-bottom: 1px solid #1e1e24;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mongoschema-detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mongoschema-detail-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #00ff88;
+}
+
+.mongoschema-badge-collection {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.mongoschema-badge-fields {
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.mongoschema-detail-filepath {
+  font-size: 11px;
+  color: #71717a;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.mongoschema-detail-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mongoschema-filter-fields {
+  flex: 1;
+  background: #141417;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  color: #f4f4f5;
+  font-size: 11px;
+  padding: 5px 8px;
+  outline: none;
+}
+
+.mongoschema-action-btn {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #cccccc;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.mongoschema-action-btn:hover {
+  background: #27272a;
+  color: #ffffff;
+}
+
+.mongoschema-action-btn.primary {
+  background: #00ff88;
+  color: #000000;
+  border-color: #00ff88;
+  font-weight: 700;
+}
+
+.mongoschema-action-btn.primary:hover {
+  background: #00dd75;
+}
+
+/* Detail Table */
+.mongoschema-detail-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+.mongoschema-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.mongoschema-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #71717a;
+  border-bottom: 1px solid #27272a;
+  font-weight: 600;
+}
+
+.mongoschema-table td {
+  padding: 10px;
+  border-bottom: 1px solid #18181b;
+}
+
+.mongoschema-table tr:hover {
+  background: #141417;
+}
+
+.mongoschema-cell-name {
+  font-family: monospace;
+  color: #00ff88;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mongoschema-cell-name.nested {
+  padding-left: 18px;
+  color: #4ade80;
+}
+
+.mongoschema-type-badge {
+  font-size: 10px;
+  font-family: monospace;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #27272a;
+  color: #e4e4e7;
+}
+
+.mongoschema-type-badge.string { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.mongoschema-type-badge.number { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.mongoschema-type-badge.boolean { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+.mongoschema-type-badge.object-array { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.mongoschema-type-badge.map { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.mongoschema-type-badge.objectid { background: rgba(14, 165, 233, 0.15); color: #38bdf8; }
+
+/* API Routes Table */
+.mongoschema-routes-wrap {
+  padding: 24px 32px;
+  max-width: 1000px;
+}
+
+.mongoschema-routes-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #00ff88;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@keyframes mongo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mongoschema-btn-green .spinning {
+  animation: mongo-spin 1s linear infinite;
+}
+
+.mongoschema-btn-green:disabled {
+  opacity: 0.8;
+  cursor: wait;
+}

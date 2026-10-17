@@ -3,7 +3,9 @@ import "./Breadcrumb.css";
 import {
     FaChevronRight,
     FaFolder,
-    FaProjectDiagram
+    FaProjectDiagram,
+    FaDatabase,
+    FaNetworkWired
 } from "react-icons/fa";
 import { getFileIcon } from "../../utils/fileIcons";
 
@@ -29,6 +31,28 @@ function Breadcrumb() {
                 <div className="crumb file">
                     <FaProjectDiagram style={{ color: "#58a6ff" }} />
                     <span>Architecture Blueprint</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (activeFile.type === "mongoschema" || activeFile.isMongoSchema) {
+        return (
+            <div className="breadcrumb">
+                <div className="crumb file">
+                    <FaDatabase style={{ color: "#00ff88" }} />
+                    <span>MongoSchema ERD</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (activeFile.type === "backend-routes" || activeFile.isBackendRoutes) {
+        return (
+            <div className="breadcrumb">
+                <div className="crumb file">
+                    <FaNetworkWired style={{ color: "#00ff88" }} />
+                    <span>Backend API Routes</span>
                 </div>
             </div>
         );

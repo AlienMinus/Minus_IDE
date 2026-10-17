@@ -4,6 +4,7 @@ import { traverseDirectory, flattenFiles, readFileContent, writeFileContent, get
 import { loadEditorFile, saveEditorFile, refreshEditorContent } from "../services/editorService";
 import { FileContext } from "./FileContext";
 import { saveWorkspaceState, getStoredWorkspaceState, clearWorkspaceState } from "../services/workspacePersistence";
+import { isIgnoredPath } from "../services/architectureScanner";
 
 const initialFiles = flattenFiles(fileTree);
 
@@ -203,6 +204,14 @@ export function EditorProvider({ children }) {
       case "architecture-canvas":
         openArchitectureTab();
         break;
+      case "mongoschema":
+      case "erd":
+        openMongoSchemaTab();
+        break;
+      case "routes":
+      case "backend-routes":
+        openBackendRoutesTab();
+        break;
       default:
         break;
     }
@@ -237,6 +246,10 @@ export function EditorProvider({ children }) {
           const inMemoryOpen = openFiles.find((of) => of.id === fcFile.id || of.path === fcFile.path);
           if (inMemoryOpen && inMemoryOpen.content != null) {
             return { ...fcFile, content: inMemoryOpen.content };
+          }
+          const existingInMemory = prevFiles.find((pf) => pf.id === fcFile.id || pf.path === fcFile.path);
+          if (existingInMemory && existingInMemory.content != null) {
+            return { ...fcFile, content: existingInMemory.content };
           }
           return fcFile;
         });
@@ -634,6 +647,208 @@ export function EditorProvider({ children }) {
     });
   }
 
+  function openMongoSchemaTab(modelName = null) {
+    const tabId = "hyperion-mongoschema-erd";
+    const name = "MongoSchema ERD";
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        if (modelName) {
+          existing.initialModel = modelName;
+        }
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name,
+        type: "mongoschema",
+        isPreview: true,
+        isMongoSchema: true,
+        initialModel: modelName
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
+  function openBackendRoutesTab(initialView = "table") {
+    const tabId = "hyperion-backend-api-routes";
+    const name = "Backend API Routes";
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        if (initialView) existing.initialView = initialView;
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name,
+        type: "backend-routes",
+        isPreview: true,
+        isBackendRoutes: true,
+        initialView
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
+  const [isScanningWorkspace, setIsScanningWorkspace] = useState(false);
+  const [scanProgress, setScanProgress] = useState(null);
+
+  async function scanWorkspaceFiles(force = false) {
+    if (isScanningWorkspace) return;
+    setIsScanningWorkspace(true);
+    try {
+      const fileMap = new Map();
+      (files || []).forEach(f => {
+        if (f && (f.id || f.path)) fileMap.set(f.id || f.path, f);
+      });
+      (fileContext?.files || []).forEach(f => {
+        if (f && (f.id || f.path)) {
+          const key = f.id || f.path;
+          if (!fileMap.has(key)) {
+            fileMap.set(key, f);
+          } else {
+            const existing = fileMap.get(key);
+            if (!existing.handle && f.handle) existing.handle = f.handle;
+            if (!existing.content && f.content) existing.content = f.content;
+          }
+        }
+      });
+      const allFiles = Array.from(fileMap.values());
+      const targetFiles = allFiles.filter(f => {
+        if (!f || !f.name) return false;
+        if (isIgnoredPath(f.path, f.name)) return false;
+        const ext = (f.name.toLowerCase().split('.').pop() || "");
+        return ["js", "jsx", "ts", "tsx", "json", "html", "css", "md", "mjs", "cjs"].includes(ext);
+      });
+
+      const updatedMap = new Map();
+      let done = 0;
+      const rootHandle = workspaceHandle || fileContext?.workspaceHandle;
+      const basePath = fileContext?.persistedFolderInfo?.path || "";
+
+      for (const file of targetFiles) {
+        if (!force && file.content != null && file.content.length > 5) {
+          updatedMap.set(file.id || file.path, file.content);
+          done++;
+          continue;
+        }
+
+        let text = null;
+
+        // 1. Try file.handle (or handle found in fileContext.files)
+        let handle = file.handle;
+        if (!handle && fileContext?.files) {
+          const match = fileContext.files.find(f => (f.id && f.id === file.id) || (f.path && f.path === file.path) || f.name === file.name);
+          if (match?.handle) handle = match.handle;
+        }
+
+        if (handle) {
+          try {
+            const fileObj = await handle.getFile();
+            text = await fileObj.text();
+          } catch (err) {
+            console.warn(`Could not read handle for ${file.name}:`, err);
+          }
+        }
+
+        // 2. Fallback to root directory handle traversal
+        if (text === null && rootHandle) {
+          try {
+            const rawPath = file.path || file.name;
+            const parts = rawPath.replace(/\\/g, "/").split("/").filter(Boolean);
+            if (parts.length > 0 && parts[0] === rootHandle.name) {
+              parts.shift();
+            }
+            let curr = rootHandle;
+            for (let i = 0; i < parts.length - 1; i++) {
+              curr = await curr.getDirectoryHandle(parts[i]);
+            }
+            const fHandle = await curr.getFileHandle(parts[parts.length - 1]);
+            const fileObj = await fHandle.getFile();
+            text = await fileObj.text();
+          } catch {
+            // ignore
+          }
+        }
+
+        // 3. Fallback to sandbox backend
+        if (text === null && (file.path || file.name)) {
+          const targetPath = file.path || file.name;
+          const candidatePaths = [targetPath];
+          if (basePath && !targetPath.includes(":") && !targetPath.startsWith("/")) {
+            candidatePaths.unshift(`${basePath}/${targetPath}`);
+            candidatePaths.unshift(`${basePath}\\${targetPath}`);
+          }
+
+          for (const cand of candidatePaths) {
+            try {
+              const res = await fetch(`/api/sandbox/workspace/file?path=${encodeURIComponent(cand)}`);
+              if (res.ok) {
+                text = await res.text();
+                if (text !== null) break;
+              }
+            } catch {
+              // ignore
+            }
+          }
+        }
+
+        if (text !== null) {
+          updatedMap.set(file.id || file.path, text);
+          if (file.id && file.path) {
+            updatedMap.set(file.id, text);
+            updatedMap.set(file.path, text);
+          }
+        }
+        done++;
+        setScanProgress({ current: done, total: targetFiles.length, filename: file.name });
+      }
+
+      setFiles((prev) => {
+        return prev.map(f => {
+          const key = f.id || f.path;
+          if (updatedMap.has(key)) {
+            return { ...f, content: updatedMap.get(key) };
+          }
+          if (f.path && updatedMap.has(f.path)) {
+            return { ...f, content: updatedMap.get(f.path) };
+          }
+          if (f.id && updatedMap.has(f.id)) {
+            return { ...f, content: updatedMap.get(f.id) };
+          }
+          return f;
+        });
+      });
+
+      setOpenFiles((prev) => {
+        return prev.map(f => {
+          const key = f.id || f.path;
+          if (updatedMap.has(key) && (f.content == null || f.content === "")) {
+            return { ...f, content: updatedMap.get(key) };
+          }
+          if (f.path && updatedMap.has(f.path) && (f.content == null || f.content === "")) {
+            return { ...f, content: updatedMap.get(f.path) };
+          }
+          return f;
+        });
+      });
+
+      return updatedMap.size;
+    } catch (e) {
+      console.warn("Scan workspace error:", e);
+    } finally {
+      setIsScanningWorkspace(false);
+      setTimeout(() => setScanProgress(null), 3000);
+    }
+  }
+
   function setEditorInstance(editor) {
     editorRef.current = editor;
   }
@@ -829,6 +1044,11 @@ export function EditorProvider({ children }) {
         replaceInFiles,
         openLiveBrowserTab,
         openArchitectureTab,
+        openMongoSchemaTab,
+        openBackendRoutesTab,
+        scanWorkspaceFiles,
+        isScanningWorkspace,
+        scanProgress,
         toggleLineComment,
         toggleBlockComment,
         expandEmmet,

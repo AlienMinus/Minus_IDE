@@ -5,6 +5,8 @@ import useEditor from "../../hooks/useEditor";
 import Preview from "../Preview";
 import LiveBrowser from "../LiveBrowser/LiveBrowser";
 import ArchitectureCanvas from "../Architecture/ArchitectureCanvas";
+import MongoSchemaERD from "../Architecture/MongoSchemaERD";
+import BackendApiRoutes from "../Architecture/BackendApiRoutes";
 import {
   DocxPreview,
   PptxPreview,
@@ -376,6 +378,24 @@ function Editor() {
     return (
       <div className="editor-container">
         <ArchitectureCanvas />
+      </div>
+    );
+  }
+
+  // MongoSchema ERD tab
+  if (activeFile.type === "mongoschema" || activeFile.isMongoSchema) {
+    return (
+      <div className="editor-container">
+        <MongoSchemaERD initialModel={activeFile.initialModel} />
+      </div>
+    );
+  }
+
+  // Backend API Routes tab
+  if (activeFile.type === "backend-routes" || activeFile.isBackendRoutes) {
+    return (
+      <div className="editor-container">
+        <BackendApiRoutes />
       </div>
     );
   }

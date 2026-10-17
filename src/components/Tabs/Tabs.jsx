@@ -1,6 +1,6 @@
 import "./Tabs.css";
 
-import { FaTimes, FaProjectDiagram } from "react-icons/fa";
+import { FaTimes, FaProjectDiagram, FaDatabase, FaNetworkWired } from "react-icons/fa";
 import useEditor from "../../hooks/useEditor";
 import { getFileIcon } from "../../utils/fileIcons";
 
@@ -16,9 +16,15 @@ function Tabs() {
     <div className="tabs">
       {openFiles.map((tab) => {
         const isArch = tab.type === "architecture" || tab.isArchitecture;
+        const isMongo = tab.type === "mongoschema" || tab.isMongoSchema;
+        const isRoutes = tab.type === "backend-routes" || tab.isBackendRoutes;
         const isPreview = tab.type === "preview" || tab.isPreview;
         const icon = isArch ? (
           <FaProjectDiagram style={{ color: "#58a6ff" }} />
+        ) : isMongo ? (
+          <FaDatabase style={{ color: "#00ff88" }} />
+        ) : isRoutes ? (
+          <FaNetworkWired style={{ color: "#00ff88" }} />
         ) : isPreview ? (
           getFileIcon("preview")
         ) : (

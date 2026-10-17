@@ -1,0 +1,411 @@
+/* src/components/Architecture/BackendApiRoutes.css */
+
+.routes-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #09090b;
+  color: #e4e4e7;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ==========================================================================
+   TOP HEADER
+   ========================================================================== */
+.routes-header {
+  padding: 16px 24px;
+  background: #0c0c0e;
+  border-bottom: 1px solid #1e1e24;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.routes-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.routes-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #00ff88;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.routes-endpoint-count-pill {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.routes-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.routes-action-pill {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #cccccc;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.routes-action-pill:hover {
+  background: #27272a;
+  color: #ffffff;
+}
+
+.routes-action-pill.active {
+  background: #00ff88;
+  color: #000000;
+  border-color: #00ff88;
+  font-weight: 800;
+}
+
+.routes-btn-refresh {
+  background: #00ff88;
+  color: #000000;
+  border: 1px solid #00ff88;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.routes-btn-refresh:hover {
+  background: #00dd75;
+}
+
+/* ==========================================================================
+   STATISTICS 4-CARD BAR
+   ========================================================================== */
+.routes-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 16px 24px 8px;
+}
+
+.routes-stat-box {
+  background: #111114;
+  border: 1px solid #1e1e24;
+  border-radius: 6px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.routes-stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #00ff88;
+  font-family: monospace;
+  line-height: 1;
+}
+
+.routes-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #71717a;
+  text-transform: uppercase;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   FILTER BAR
+   ========================================================================== */
+.routes-filter-bar {
+  padding: 10px 24px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.routes-method-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.routes-method-btn {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.routes-method-btn:hover {
+  background: #27272a;
+  color: #ffffff;
+}
+
+.routes-method-btn.active {
+  background: #00ff88;
+  color: #000000;
+  border-color: #00ff88;
+  font-weight: 800;
+}
+
+.routes-search-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.routes-search-input {
+  width: 260px;
+  background: #141417;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  color: #f4f4f5;
+  font-size: 12px;
+  padding: 6px 12px;
+  outline: none;
+}
+
+.routes-search-input:focus {
+  border-color: #00ff88;
+}
+
+.routes-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #a1a1aa;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.routes-checkbox-label input[type="checkbox"] {
+  accent-color: #00ff88;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   ROUTER SECTION & TABLE VIEW
+   ========================================================================== */
+.routes-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 32px;
+}
+
+.routes-file-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 8px;
+}
+
+.routes-file-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #00ff88;
+}
+
+.routes-file-path {
+  font-size: 12px;
+  color: #71717a;
+  font-family: monospace;
+  margin-left: 8px;
+}
+
+.routes-file-count {
+  font-size: 12px;
+  color: #71717a;
+}
+
+.routes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.routes-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #71717a;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid #1e1e24;
+}
+
+.routes-table td {
+  padding: 12px;
+  border-bottom: 1px solid #18181b;
+  vertical-align: middle;
+}
+
+.routes-table tr:hover {
+  background: #111114;
+}
+
+/* Method Badges */
+.routes-badge-method {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  min-width: 44px;
+}
+
+.routes-badge-method.all { background: #27272a; color: #a1a1aa; border: 1px solid #3f3f46; }
+.routes-badge-method.get { background: rgba(0, 255, 136, 0.12); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.3); }
+.routes-badge-method.post { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.routes-badge-method.put { background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.routes-badge-method.delete { background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.routes-cell-path {
+  font-family: monospace;
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.routes-cell-handler {
+  font-family: monospace;
+  color: #60a5fa;
+  font-size: 11px;
+  max-width: 320px;
+  word-break: break-all;
+}
+
+.routes-model-pill {
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  color: #60a5fa;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.routes-model-pill:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.routes-action-code {
+  font-family: monospace;
+  font-size: 11px;
+  color: #38bdf8;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.routes-action-code:hover {
+  color: #00ff88;
+}
+
+/* ==========================================================================
+   VISUAL FLOW GRAPH (3-COLUMN BEZIER FLOW)
+   ========================================================================== */
+.routes-flow-canvas-viewport {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  background-color: #09090b;
+  background-image: radial-gradient(circle, #202024 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.routes-flow-svg {
+  display: block;
+}
+
+.routes-flow-node-router {
+  cursor: pointer;
+}
+
+.routes-flow-node-endpoint {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.routes-flow-node-endpoint:hover rect {
+  stroke: #00ff88;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.4));
+}
+
+.routes-flow-node-model {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.routes-flow-node-model:hover rect {
+  stroke: #38bdf8;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+}
+
+.routes-flow-curve {
+  fill: none;
+  stroke: #262c33;
+  stroke-width: 1.2;
+  transition: stroke 0.2s ease, stroke-width 0.2s ease;
+}
+
+.routes-flow-curve:hover {
+  stroke: #00ff88;
+  stroke-width: 2;
+}
+
+@keyframes routes-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.routes-btn-refresh .spinning {
+  animation: routes-spin 1s linear infinite;
+}
+
+.routes-btn-refresh:disabled {
+  opacity: 0.8;
+  cursor: wait;
+}
+

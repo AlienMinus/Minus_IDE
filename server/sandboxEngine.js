@@ -824,7 +824,7 @@ export function validatePath(targetPath) {
 /**
  * Read local disk directory tree for workspace loading
  */
-export function readWorkspaceTree(dirPath, maxDepth = 4, currentDepth = 0) {
+export function readWorkspaceTree(dirPath, maxDepth = 10, currentDepth = 0) {
   const resolved = normalizePath(dirPath);
   if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
     return [];
@@ -832,12 +832,26 @@ export function readWorkspaceTree(dirPath, maxDepth = 4, currentDepth = 0) {
 
   const entries = fs.readdirSync(resolved, { withFileTypes: true });
   const nodes = [];
+  const ignoredDirNames = new Set([
+    'node_modules',
+    '.git',
+    'dist',
+    'build',
+    'out',
+    '.cache',
+    '.next',
+    '.vite',
+    '.turbo',
+    'coverage',
+    'vendor'
+  ]);
 
   for (const entry of entries) {
     const relPath = path.join(dirPath, entry.name);
     if (entry.isDirectory()) {
+      const isIgnored = ignoredDirNames.has(entry.name.toLowerCase());
       const children =
-        currentDepth < maxDepth && entry.name !== 'node_modules' && entry.name !== '.git'
+        currentDepth < maxDepth && !isIgnored
           ? readWorkspaceTree(relPath, maxDepth, currentDepth + 1)
           : [];
       nodes.push({

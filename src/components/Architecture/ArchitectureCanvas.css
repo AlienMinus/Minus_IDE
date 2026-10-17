@@ -184,6 +184,8 @@
 .arch-card-top.context { background: rgba(188, 140, 255, 0.12); border-color: rgba(188, 140, 255, 0.25); }
 .arch-card-top.hook { background: rgba(240, 136, 62, 0.12); border-color: rgba(240, 136, 62, 0.25); }
 .arch-card-top.component, .arch-card-top.page { background: rgba(88, 166, 255, 0.12); border-color: rgba(88, 166, 255, 0.25); }
+.arch-card-top.util { background: rgba(229, 192, 123, 0.12); border-color: rgba(229, 192, 123, 0.25); }
+.arch-card-top.config { background: rgba(244, 114, 182, 0.12); border-color: rgba(244, 114, 182, 0.25); }
 
 .arch-card-name {
   font-weight: 700;
@@ -304,5 +306,31 @@
 
 .arch-dict-table tr:hover td {
   background: #202022;
+}
+
+@keyframes arch-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: arch-spin 1s linear infinite;
+}
+
+.arch-scan-btn {
+  transition: all 0.2s ease;
+}
+
+.arch-scan-btn:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+.arch-scan-btn:disabled {
+  opacity: 0.85;
+  cursor: wait;
 }
 

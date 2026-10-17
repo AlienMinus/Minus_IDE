@@ -2,42 +2,51 @@
 // Multi-layer AST & static analysis scanner for Hyperion WebIDE
 
 /**
- * Excludes third-party packages, caches, compiled build outputs, and minified bundles
+ * Excludes third-party packages, caches, compiled build outputs, and minified bundles.
+ * Notice: 'public' is explicitly NOT ignored.
  */
 export function isIgnoredPath(filePath = "", fileName = "") {
-  const fullPath = ((filePath || "") + "/" + (fileName || "")).toLowerCase().replace(/\\/g, "/");
-  const segments = fullPath.split("/").filter(Boolean);
+  const full = ((filePath || "") + "/" + (fileName || "")).toLowerCase().replace(/\\/g, "/");
 
-  const ignoredNames = new Set([
-    "node_modules",
-    "dist",
-    "build",
-    "out",
-    ".cache",
-    "cache",
-    ".next",
-    ".vite",
-    ".git",
-    ".turbo",
-    "coverage",
-    ".nyc_output",
-    "temp",
-    "tmp",
-    "vendor",
-    "public"
-  ]);
-
-  for (const seg of segments) {
-    if (ignoredNames.has(seg)) {
-      return true;
-    }
+  // Explicitly ignore node_modules, build outputs, version control, and temporary caches
+  if (
+    full.includes("/node_modules/") ||
+    full.includes("node_modules/") ||
+    full.startsWith("node_modules/") ||
+    full.includes("/dist/") ||
+    full.includes("dist/") ||
+    full.startsWith("dist/") ||
+    full.includes("/build/") ||
+    full.includes("build/") ||
+    full.startsWith("build/") ||
+    full.includes("/out/") ||
+    full.includes("out/") ||
+    full.includes("/.cache/") ||
+    full.includes(".cache/") ||
+    full.includes("/cache/") ||
+    full.includes("/.next/") ||
+    full.includes(".next/") ||
+    full.includes("/.vite/") ||
+    full.includes(".vite/") ||
+    full.includes("/.git/") ||
+    full.includes(".git/") ||
+    full.includes("/.turbo/") ||
+    full.includes(".turbo/") ||
+    full.includes("/coverage/") ||
+    full.includes("/.nyc_output/") ||
+    full.includes("/temp/") ||
+    full.includes("/tmp/") ||
+    full.includes("/vendor/")
+  ) {
+    return true;
   }
 
+  // Minified bundles, vendor chunks, and source maps
   if (
-    fullPath.endsWith(".min.js") ||
-    fullPath.endsWith(".bundle.js") ||
-    fullPath.endsWith(".map") ||
-    fullPath.includes(".chunk.")
+    full.endsWith(".min.js") ||
+    full.endsWith(".bundle.js") ||
+    full.endsWith(".map") ||
+    full.includes(".chunk.")
   ) {
     return true;
   }
@@ -53,52 +62,128 @@ export function categorizeFile(file) {
     return "ignored";
   }
 
-  const path = (file.path || file.name || "").toLowerCase();
+  const path = (file.path || file.name || "").toLowerCase().replace(/\\/g, "/");
   const name = file.name || "";
   const content = file.content || "";
 
-  // 1. Database Models / Schemas
+  // 1. Database Models / Schemas (in any folder)
   if (
     path.includes("/models/") ||
     path.includes("/schemas/") ||
-    path.includes("\\models\\") ||
-    path.includes("\\schemas\\") ||
-    /model\.(js|ts)$/i.test(name) ||
-    /schema\.(js|ts)$/i.test(name) ||
+    path.startsWith("models/") ||
+    path.startsWith("schemas/") ||
+    path.includes("/entities/") ||
+    path.includes("/database/") ||
+    path.includes("/db/") ||
+    /model\.(js|ts|mjs|cjs)$/i.test(name) ||
+    /schema\.(js|ts|mjs|cjs)$/i.test(name) ||
+    /entity\.(js|ts|mjs|cjs)$/i.test(name) ||
     content.includes("mongoose.Schema") ||
-    content.includes("new Schema(") ||
-    content.includes("@prisma/client")
+    content.includes("new Schema") ||
+    content.includes("mongoose.model") ||
+    content.includes(".model(") ||
+    content.includes("@prisma/client") ||
+    content.includes("PrismaClient") ||
+    content.includes("@Entity") ||
+    content.includes("sequelize.define")
   ) {
     return "model";
   }
 
-  // 2. React Context & State Stores
+  // 2. Backend Server, Routes, APIs, Routers, Controllers & Middleware (in any folder)
+  const isBackendLocation =
+    path.startsWith("server/") ||
+    path.includes("/server/") ||
+    path.startsWith("backend/") ||
+    path.includes("/backend/") ||
+    path.includes("/routes/") ||
+    path.startsWith("routes/") ||
+    path.includes("/controllers/") ||
+    path.startsWith("controllers/") ||
+    path.includes("/handlers/") ||
+    path.startsWith("handlers/") ||
+    path.includes("/endpoints/") ||
+    path.startsWith("endpoints/") ||
+    path.includes("/api/") ||
+    path.startsWith("api/") ||
+    path.includes("/api-routes/") ||
+    path.includes("/middleware/") ||
+    path.includes("/middlewares/") ||
+    name === "server.js" ||
+    name === "app.js";
+
+  const hasExpressServerCode =
+    content.includes("express(") ||
+    content.includes("express.Router") ||
+    content.includes('require("express")') ||
+    content.includes("require('express')") ||
+    content.includes('from "express"') ||
+    content.includes("from 'express'") ||
+    content.includes("app.listen(") ||
+    content.includes("app.get(") ||
+    content.includes("app.post(") ||
+    content.includes("app.put(") ||
+    content.includes("app.delete(") ||
+    content.includes("app.patch(") ||
+    content.includes("app.use(") ||
+    content.includes("router.get(") ||
+    content.includes("router.post(") ||
+    content.includes("router.put(") ||
+    content.includes("router.delete(") ||
+    content.includes("router.patch(") ||
+    content.includes("res.json(") ||
+    content.includes("res.status(") ||
+    content.includes("res.send(");
+
+  if (isBackendLocation || hasExpressServerCode) {
+    // Ensure it's not a frontend React component or context
+    const isFrontendReact =
+      content.includes("createContext(") ||
+      (content.includes("return (") && (content.includes("</div>") || content.includes("</button>")));
+
+    if (!isFrontendReact) {
+      return "backend";
+    }
+  }
+
+  // 3. React Context & State Stores (in any folder)
   if (
     path.includes("/context/") ||
-    path.includes("\\context\\") ||
+    path.startsWith("context/") ||
+    path.includes("/store/") ||
+    path.startsWith("store/") ||
+    path.includes("/state/") ||
+    path.includes("/slices/") ||
+    path.includes("/reducers/") ||
     /context\.(js|jsx|ts|tsx)$/i.test(name) ||
+    /store\.(js|jsx|ts|tsx)$/i.test(name) ||
     content.includes("createContext(") ||
-    content.includes("createSlice(")
+    content.includes("createSlice(") ||
+    content.includes("createStore(") ||
+    content.includes("defineStore(") ||
+    content.includes("atom(")
   ) {
     return "context";
   }
 
-  // 3. Custom Hooks
+  // 4. Custom Hooks (in any folder)
   if (
     path.includes("/hooks/") ||
-    path.includes("\\hooks\\") ||
+    path.startsWith("hooks/") ||
     /^use[A-Z0-9].*\.(js|jsx|ts|tsx)$/.test(name)
   ) {
     return "hook";
   }
 
-  // 4. API Services & HTTP Clients
+  // 5. API Services & Network Clients (in any folder)
   if (
     path.includes("/services/") ||
-    path.includes("\\services\\") ||
-    path.includes("/api/") ||
-    path.includes("\\api\\") ||
+    path.startsWith("services/") ||
+    path.includes("/client/") ||
+    path.startsWith("client/") ||
+    path.includes("/fetcher/") ||
     /api\.(js|ts)$/i.test(name) ||
+    /service\.(js|ts)$/i.test(name) ||
     content.includes("fetchWithTimeout") ||
     (content.includes("fetch(") && content.includes("http")) ||
     content.includes("axios.")
@@ -106,35 +191,26 @@ export function categorizeFile(file) {
     return "service";
   }
 
-  // 5. Backend Server, Routes & Controllers
-  if (
-    name === "server.js" ||
-    name === "app.js" ||
-    path.includes("/routes/") ||
-    path.includes("\\routes\\") ||
-    path.includes("/controllers/") ||
-    path.includes("\\controllers\\") ||
-    content.includes("express.Router()") ||
-    content.includes("app.get(") ||
-    content.includes("app.post(")
-  ) {
-    return "backend";
-  }
-
-  // 6. Pages / Views
+  // 6. Pages / Views (in any folder)
   if (
     path.includes("/pages/") ||
-    path.includes("\\pages\\") ||
+    path.startsWith("pages/") ||
     path.includes("/views/") ||
-    path.includes("\\views\\")
+    path.startsWith("views/") ||
+    path.includes("/screens/") ||
+    path.startsWith("screens/") ||
+    /page\.(jsx|tsx|js)$/i.test(name) ||
+    /view\.(jsx|tsx|js)$/i.test(name)
   ) {
     return "page";
   }
 
-  // 7. React UI Components
+  // 7. React UI Components & Widgets (in any folder)
   if (
     path.includes("/components/") ||
-    path.includes("\\components\\") ||
+    path.startsWith("components/") ||
+    path.includes("/widgets/") ||
+    path.includes("/ui/") ||
     /\.(jsx|tsx)$/i.test(name) ||
     content.includes("return (") ||
     content.includes("return <")
@@ -142,22 +218,25 @@ export function categorizeFile(file) {
     return "component";
   }
 
-  // 8. Utilities & Helpers
+  // 8. Configuration & Environment (in any folder)
   if (
-    path.includes("/utils/") ||
-    path.includes("\\utils\\") ||
-    path.includes("/helpers/") ||
-    path.includes("\\helpers\\") ||
-    /util(s)?\.(js|ts)$/i.test(name)
+    path.includes("/config/") ||
+    path.startsWith("config/") ||
+    path.includes("/env/") ||
+    /config\.(js|ts|json)$/i.test(name) ||
+    name.endsWith(".config.js") ||
+    name.endsWith(".config.ts") ||
+    name === "package.json"
   ) {
-    return "util";
+    return "config";
   }
 
-  return "other";
+  // 9. Utilities, Helpers & Core Modules (all other folders across the entire workspace)
+  return "util";
 }
 
 /**
- * Extracts schema fields and relations from Mongoose/Prisma/SQL schemas
+ * Extracts schema fields, types, and relations from Mongoose/Prisma models
  */
 function extractModelDetails(content) {
   const fields = [];
@@ -199,7 +278,7 @@ function extractModelDetails(content) {
     }
   }
 
-  // Extract hooks and statics/methods
+  // Schema hooks & methods
   const methods = [];
   const hookRegex = /\.pre\(['"]([a-zA-Z0-9_]+)['"]|\.post\(['"]([a-zA-Z0-9_]+)['"]|\.methods\.([a-zA-Z0-9_]+)|\.statics\.([a-zA-Z0-9_]+)/g;
   while ((match = hookRegex.exec(content)) !== null) {
@@ -208,6 +287,64 @@ function extractModelDetails(content) {
   }
 
   return { fields, relations, methods };
+}
+
+/**
+ * Extracts backend server routes, methods, controllers, and database interactions
+ */
+function extractBackendDetails(content) {
+  const endpoints = [];
+  const queriedModels = new Set();
+  const middleware = [];
+
+  // Extract Express routes: app.get("/api/portfolio-data", async (req, res) => ...)
+  // router.post("/contact", ...)
+  const routeRegex = /(?:app|router)\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]([\s\S]*?)(?=(?:(?:app|router)\.(?:get|post|put|delete|patch)\s*\()|$)/gi;
+  let match;
+  while ((match = routeRegex.exec(content)) !== null) {
+    const method = match[1].toUpperCase();
+    const routePath = match[2];
+    const handlerBlock = match[3] || "";
+
+    // Detect models queried in this handler block (e.g. Hero.findOne(), Project.find())
+    const modelCallRegex = /\b([A-Z][a-zA-Z0-9_]+)\.(find|findOne|findById|create|updateOne|updateMany|deleteOne|deleteMany|save|aggregate)\b/g;
+    let mMatch;
+    const modelsInRoute = [];
+    while ((mMatch = modelCallRegex.exec(handlerBlock)) !== null) {
+      const modelName = mMatch[1];
+      if (!["Promise", "Object", "Array", "JSON", "Date", "Math"].includes(modelName)) {
+        modelsInRoute.push(modelName);
+        queriedModels.add(modelName);
+      }
+    }
+
+    endpoints.push({
+      method,
+      path: routePath,
+      models: [...new Set(modelsInRoute)],
+      isProtected: handlerBlock.includes("admin") || handlerBlock.includes("auth") || handlerBlock.includes("x-admin-password")
+    });
+  }
+
+  // Check server configuration & middleware
+  if (content.includes("cors(")) middleware.push("cors");
+  if (content.includes("express.json(")) middleware.push("express.json");
+  if (content.includes("dotenv")) middleware.push("dotenv");
+  if (content.includes("mongoose.connect")) middleware.push("mongoose");
+
+  // Extract port
+  let port = "5000";
+  const portMatch = content.match(/PORT\s*=\s*(?:process\.env\.PORT\s*\|\|\s*)?(\d{2,5})/i);
+  if (portMatch) {
+    port = portMatch[1];
+  }
+
+  return {
+    endpoints,
+    queriedModels: Array.from(queriedModels),
+    middleware,
+    port
+  };
 }
 
 /**
@@ -236,7 +373,7 @@ function extractComponentDetails(content) {
     if (!hooksUsed.includes(match[1])) hooksUsed.push(match[1]);
   }
 
-  // Internal and exported functions
+  // Functions & Handlers
   const funcRegex = /(?:function\s+([a-zA-Z0-9_]+)|const\s+([a-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>)/g;
   while ((match = funcRegex.exec(content)) !== null) {
     const name = match[1] || match[2];
@@ -262,9 +399,6 @@ function extractComponentDetails(content) {
  */
 function extractContextDetails(content) {
   const providedValues = [];
-  const consumers = [];
-
-  // Match: value={{ a, b, c }}
   const valueRegex = /value\s*=\s*\{\s*\{([^}]+)\}\s*\}/g;
   const match = valueRegex.exec(content);
   if (match) {
@@ -272,39 +406,30 @@ function extractContextDetails(content) {
     providedValues.push(...items);
   }
 
-  return { providedValues, consumers };
+  return { providedValues };
 }
 
 /**
- * Extracts API routes, fetch functions, and endpoints from backend & service files
+ * Extracts API services and network endpoints
  */
-function extractApiDetails(content) {
+function extractServiceDetails(content) {
   const endpoints = [];
   const apiFunctions = [];
 
-  // Express endpoints: app.get('/api/...', ...) or router.post(...)
-  const expressRegex = /(?:app|router)\.(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)['"`]/gi;
+  // Fetch or axios calls: fetch(`${API_BASE_URL}/portfolio-data`)
+  const fetchRegex = /(?:fetchWithTimeout|fetch|axios\.(?:get|post|put|delete))\s*\(\s*(?:`([^`]+)`|'([^']+)'|"([^"]+)")/g;
   let match;
-  while ((match = expressRegex.exec(content)) !== null) {
-    endpoints.push({
-      method: match[1].toUpperCase(),
-      path: match[2]
-    });
-  }
-
-  // Fetch or axios requests: fetch(`${API_BASE_URL}/portfolio-data`)
-  const fetchRegex = /(?:fetch|axios\.(?:get|post|put|delete))\s*\(\s*(?:`([^`]+)`|'([^']+)'|"([^"]+)")/g;
   while ((match = fetchRegex.exec(content)) !== null) {
     const ep = match[1] || match[2] || match[3];
     if (ep) {
       endpoints.push({
         method: match[0].includes("post") ? "POST" : "GET",
-        path: ep.replace(/\${[^}]+}/g, '')
+        path: ep.replace(/\${[^}]+}/g, "")
       });
     }
   }
 
-  // Exported async service functions: export async function getPortfolioData()
+  // Exported service functions: export async function getPortfolioData()
   const serviceFuncRegex = /export\s+(?:async\s+)?function\s+([a-zA-Z0-9_]+)|export\s+const\s+([a-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\(/g;
   while ((match = serviceFuncRegex.exec(content)) !== null) {
     const fn = match[1] || match[2];
@@ -313,6 +438,134 @@ function extractApiDetails(content) {
 
   return { endpoints, apiFunctions };
 }
+
+/**
+ * Extracts ALL declared variables, constants, instances, refs, schemas, and concepts without ignoring any
+ */
+export function extractAllDeclarations(content = "") {
+  const items = [];
+  const seenNames = new Set();
+
+  // 1. Destructured React State: const [data, setData] = useState(...)
+  const destructuredStateRegex = /(?:const|let|var)\s*\[\s*([a-zA-Z0-9_]+)\s*,\s*([a-zA-Z0-9_]+)\s*\]\s*=\s*(useState|useReducer)\s*\(([^)]*)\)/g;
+  let match;
+  while ((match = destructuredStateRegex.exec(content)) !== null) {
+    const stateName = match[1];
+    const setterName = match[2];
+    const kind = match[3];
+    const init = match[4]?.trim() || "undefined";
+    if (!seenNames.has(stateName)) {
+      seenNames.add(stateName);
+      items.push({
+        name: stateName,
+        kind: "state",
+        type: `React ${kind}`,
+        value: `setter: ${setterName}(), initial: ${init.slice(0, 30)}`
+      });
+    }
+  }
+
+  // 2. Destructured Objects / Arrays: const { openFolder } = useFile()
+  const destructuredObjRegex = /(?:const|let|var)\s*\{([^}]+)\}\s*=\s*([^;\n]+)/g;
+  while ((match = destructuredObjRegex.exec(content)) !== null) {
+    const vars = match[1].split(",").map(v => v.trim().split(":")[0].trim()).filter(Boolean);
+    const source = match[2].trim().slice(0, 35);
+    vars.forEach(v => {
+      if (!seenNames.has(v) && /^[a-zA-Z0-9_]+$/.test(v)) {
+        seenNames.add(v);
+        items.push({
+          name: v,
+          kind: "destructured",
+          type: "Destructured",
+          value: `from ${source}`
+        });
+      }
+    });
+  }
+
+  // 3. All Variable & Constant Declarations: const, let, var, export const
+  const declRegex = /(?:export\s+)?(const|let|var)\s+([a-zA-Z0-9_]+)\s*=\s*([^;\n]+)/g;
+  while ((match = declRegex.exec(content)) !== null) {
+    const declKeyword = match[1];
+    const name = match[2];
+    let rawVal = match[3]?.trim() || "";
+
+    if (seenNames.has(name)) continue;
+    seenNames.add(name);
+
+    let kind = "variable";
+    let type = "Variable";
+    let preview = rawVal.replace(/['"`]/g, "");
+    if (preview.length > 40) {
+      preview = preview.slice(0, 37) + "...";
+    }
+
+    // Classify semantic concept accurately:
+    if (rawVal.includes("express(") || rawVal.includes("express.Router(")) {
+      kind = "instance";
+      type = "Express App / Router Instance";
+    } else if (rawVal.includes("new mongoose.Schema") || rawVal.includes("new Schema(")) {
+      kind = "schema";
+      type = "Mongoose Database Schema";
+    } else if (rawVal.includes("mongoose.model(") || rawVal.includes(".model(")) {
+      kind = "model";
+      type = "Mongoose Model Class";
+    } else if (rawVal.startsWith("new ")) {
+      kind = "instance";
+      const className = rawVal.match(/new\s+([a-zA-Z0-9_]+)/)?.[1] || "Class";
+      type = `Instance of ${className}`;
+    } else if (rawVal.includes("useRef(")) {
+      kind = "ref";
+      type = "React Mutable Ref (useRef)";
+    } else if (rawVal.includes("useMemo(")) {
+      kind = "memo";
+      type = "React useMemo";
+    } else if (rawVal.includes("useCallback(")) {
+      kind = "callback";
+      type = "React useCallback";
+    } else if (rawVal.includes("useContext(")) {
+      kind = "context-consumer";
+      type = "React useContext";
+    } else if (rawVal.startsWith("require(") || rawVal.includes("require(")) {
+      kind = "import";
+      type = "CommonJS Require";
+    } else if (rawVal.startsWith("(") || rawVal.startsWith("async") || rawVal.includes("=>") || rawVal.startsWith("function")) {
+      kind = "function";
+      type = "Arrow Function / Handler";
+    } else if (rawVal.includes("process.env.") || rawVal.includes("import.meta.env.")) {
+      kind = "constant";
+      type = "Environment Variable / Secret";
+    } else if (/^-?\d+(\.\d+)?$/.test(rawVal)) {
+      kind = "constant";
+      type = "Number Constant";
+    } else if (rawVal === "true" || rawVal === "false") {
+      kind = "constant";
+      type = "Boolean Constant";
+    } else if (rawVal.startsWith("{")) {
+      kind = "constant";
+      type = "Object Constant";
+    } else if (rawVal.startsWith("[")) {
+      kind = "constant";
+      type = "Array Constant";
+    } else if (declKeyword === "const" && /^[A-Z0-9_]+$/.test(name)) {
+      kind = "constant";
+      type = "Named Constant";
+    }
+
+    items.push({
+      name,
+      kind,
+      type,
+      value: preview,
+      isConst: declKeyword === "const"
+    });
+  }
+
+  return items;
+}
+
+// Retain alias for backwards compatibility
+export const extractConstants = extractAllDeclarations;
 
 /**
  * Extract imported identifiers and file targets
@@ -349,6 +602,7 @@ function extractImports(content) {
 /**
  * Full Workspace Scanner:
  * Parses all workspace files and produces a comprehensive Architectural Graph.
+ * Excludes node_modules, dist, and caches.
  */
 export function scanCodebaseArchitecture(files = []) {
   const nodes = [];
@@ -357,19 +611,23 @@ export function scanCodebaseArchitecture(files = []) {
 
   const codeFiles = files.filter(f => {
     if (!f || !f.name) return false;
+    // Strict exclusion of node_modules and build directories
     if (isIgnoredPath(f.path, f.name)) return false;
+
     const n = f.name.toLowerCase();
+    const ext = n.split(".").pop();
     return (
-      (n.endsWith(".js") || n.endsWith(".jsx") || n.endsWith(".ts") || n.endsWith(".tsx")) &&
-      !n.includes("test") &&
-      !n.includes("spec") &&
-      !n.endsWith(".config.js") &&
+      ["js", "jsx", "ts", "tsx", "mjs", "cjs", "json"].includes(ext) &&
+      !n.includes(".test.") &&
+      !n.includes(".spec.") &&
       !n.endsWith(".d.ts")
     );
   });
 
   codeFiles.forEach(file => {
     const layer = categorizeFile(file);
+    if (layer === "ignored") return;
+
     const content = file.content || "";
     const name = file.name.replace(/\.[^/.]+$/, "");
     const imports = extractImports(content);
@@ -377,21 +635,26 @@ export function scanCodebaseArchitecture(files = []) {
     let details = {};
     if (layer === "model") {
       details = extractModelDetails(content);
-    } else if (layer === "component" || layer === "page") {
-      details = extractComponentDetails(content);
+    } else if (layer === "backend") {
+      details = extractBackendDetails(content);
+    } else if (layer === "service") {
+      details = extractServiceDetails(content);
     } else if (layer === "context") {
       details = {
         ...extractContextDetails(content),
         ...extractComponentDetails(content)
       };
-    } else if (layer === "service" || layer === "backend") {
-      details = extractApiDetails(content);
+    } else if (layer === "component" || layer === "page") {
+      details = extractComponentDetails(content);
     } else {
       details = extractComponentDetails(content);
     }
 
+    details.constants = extractConstants(content);
+
     const node = {
       id: `${layer}-${name}`,
+      fileId: file.id,
       name,
       fileName: file.name,
       filePath: file.path || file.name,
@@ -404,6 +667,9 @@ export function scanCodebaseArchitecture(files = []) {
     nodes.push(node);
     fileMap.set(name.toLowerCase(), node);
     fileMap.set(file.name.toLowerCase(), node);
+    if (file.path) {
+      fileMap.set(file.path.toLowerCase().replace(/\\/g, "/"), node);
+    }
   });
 
   // Build architectural connections (edges)
@@ -425,7 +691,23 @@ export function scanCodebaseArchitecture(files = []) {
       }
     });
 
-    // 2. Connection via JSX Child Rendering
+    // 2. Connection via Backend Endpoint -> Models Queried
+    if (sourceNode.layer === "backend" && sourceNode.details.queriedModels) {
+      sourceNode.details.queriedModels.forEach(modelName => {
+        const modelNode = fileMap.get(modelName.toLowerCase());
+        if (modelNode) {
+          edges.push({
+            id: `${sourceNode.id}->${modelNode.id}-query`,
+            source: sourceNode.id,
+            target: modelNode.id,
+            label: `queries MongoDB model`,
+            kind: "query"
+          });
+        }
+      });
+    }
+
+    // 3. Connection via JSX Child Rendering
     if (sourceNode.details.childComponents) {
       sourceNode.details.childComponents.forEach(child => {
         const childNode = fileMap.get(child.toLowerCase());
@@ -443,7 +725,7 @@ export function scanCodebaseArchitecture(files = []) {
       });
     }
 
-    // 3. Connection via Model Relations (Foreign Keys)
+    // 4. Connection via Model Relations (Foreign Keys)
     if (sourceNode.details.relations) {
       sourceNode.details.relations.forEach(rel => {
         const targetModelNode = fileMap.get(rel.targetModel.toLowerCase());
@@ -466,14 +748,14 @@ export function scanCodebaseArchitecture(files = []) {
     stats: {
       totalFiles: nodes.length,
       models: nodes.filter(n => n.layer === "model").length,
-      pages: nodes.filter(n => n.layer === "page").length,
-      components: nodes.filter(n => n.layer === "component").length,
+      backend: nodes.filter(n => n.layer === "backend").length,
+      services: nodes.filter(n => n.layer === "service").length,
       contexts: nodes.filter(n => n.layer === "context").length,
       hooks: nodes.filter(n => n.layer === "hook").length,
-      services: nodes.filter(n => n.layer === "service").length,
-      backend: nodes.filter(n => n.layer === "backend").length,
-      utils: nodes.filter(n => n.layer === "util").length
+      pages: nodes.filter(n => n.layer === "page").length,
+      components: nodes.filter(n => n.layer === "component").length,
+      utils: nodes.filter(n => n.layer === "util").length,
+      configs: nodes.filter(n => n.layer === "config").length
     }
   };
 }
-

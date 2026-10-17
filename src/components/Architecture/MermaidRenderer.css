@@ -1,0 +1,110 @@
+/* src/components/Architecture/MermaidRenderer.css */
+.mermaid-renderer-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #181818;
+  color: #cccccc;
+  overflow: hidden;
+  position: relative;
+}
+
+.mermaid-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #252526;
+  border-bottom: 1px solid #333333;
+  z-index: 10;
+}
+
+.mermaid-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mermaid-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mermaid-btn {
+  background: #2d2d30;
+  border: 1px solid #3c3c3c;
+  color: #cccccc;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  transition: all 0.15s ease;
+}
+
+.mermaid-btn:hover {
+  background: #38383d;
+  color: #ffffff;
+  border-color: #555555;
+}
+
+.mermaid-canvas-viewport {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  padding: 30px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: radial-gradient(circle, #252525 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.mermaid-svg-output {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+  transform-origin: top center;
+  min-width: 600px;
+}
+
+.mermaid-svg-output svg {
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.mermaid-raw-code-box {
+  padding: 16px;
+  background: #141414;
+  border-top: 1px solid #2d2d30;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mermaid-raw-pre {
+  margin: 0;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 11px;
+  color: #9cdcfe;
+  line-height: 1.4;
+}
+
+.mermaid-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: #888888;
+  font-size: 13px;
+}

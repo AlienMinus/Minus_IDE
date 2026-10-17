@@ -107,6 +107,31 @@ export async function traverseDirectory(dirHandle, path = "") {
     const itemPath = path ? `${path}/${name}` : name;
 
     if (handle.kind === "directory") {
+      const lower = (name || "").toLowerCase();
+      // Skip heavy build, dependencies and cache directories
+      if (
+        lower === "node_modules" ||
+        lower === ".git" ||
+        lower === "dist" ||
+        lower === "build" ||
+        lower === ".cache" ||
+        lower === ".next" ||
+        lower === ".vite" ||
+        lower === "coverage" ||
+        lower === ".turbo" ||
+        lower === "vendor"
+      ) {
+        entries.push({
+          id: itemPath,
+          name,
+          type: "folder",
+          path: itemPath,
+          handle,
+          children: []
+        });
+        continue;
+      }
+
       const children = await traverseDirectory(handle, itemPath);
       entries.push({
         id: itemPath,
