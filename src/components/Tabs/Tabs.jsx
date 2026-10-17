@@ -1,6 +1,6 @@
 import "./Tabs.css";
 
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaProjectDiagram } from "react-icons/fa";
 import useEditor from "../../hooks/useEditor";
 import { getFileIcon } from "../../utils/fileIcons";
 
@@ -9,14 +9,21 @@ function Tabs() {
 
   const formatTabName = (name) => {
     if (!name || typeof name !== "string") return "";
-    return name.length > 15 ? `${name.slice(0, 15)}...` : name;
+    return name.length > 20 ? `${name.slice(0, 20)}...` : name;
   };
 
   return (
     <div className="tabs">
       {openFiles.map((tab) => {
+        const isArch = tab.type === "architecture" || tab.isArchitecture;
         const isPreview = tab.type === "preview" || tab.isPreview;
-        const icon = isPreview ? getFileIcon("preview") : getFileIcon(tab.name);
+        const icon = isArch ? (
+          <FaProjectDiagram style={{ color: "#58a6ff" }} />
+        ) : isPreview ? (
+          getFileIcon("preview")
+        ) : (
+          getFileIcon(tab.name)
+        );
         return (
           <div
             key={tab.id}

@@ -1,0 +1,195 @@
+/* src/components/Architecture/SequenceVisualizer.css */
+.seq-visualizer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #181818;
+  color: #cccccc;
+  overflow: hidden;
+}
+
+.seq-playback-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #252526;
+  border-bottom: 1px solid #333333;
+}
+
+.seq-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.seq-ctrl-btn {
+  background: #2d2d30;
+  border: 1px solid #3c3c3c;
+  color: #cccccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.seq-ctrl-btn:hover:not(:disabled) {
+  background: #38383d;
+  color: #ffffff;
+  border-color: #555555;
+}
+
+.seq-ctrl-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.seq-ctrl-btn.play-btn {
+  background: #0e639c;
+  border-color: #1177bb;
+  color: #ffffff;
+}
+
+.seq-ctrl-btn.play-btn:hover:not(:disabled) {
+  background: #1177bb;
+}
+
+.seq-step-indicator {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4fc1ff;
+  margin-left: 10px;
+}
+
+/* Active Step Detail Card */
+.seq-active-card {
+  margin: 16px;
+  padding: 16px;
+  background: #1e1e1e;
+  border: 1px solid #0e639c;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seq-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.seq-phase-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.seq-phase-badge.BOOT { background: rgba(88, 166, 255, 0.2); color: #58a6ff; }
+.seq-phase-badge.MOUNT { background: rgba(188, 140, 255, 0.2); color: #bc8cff; }
+.seq-phase-badge.DATA_FETCH { background: rgba(210, 153, 34, 0.2); color: #d29922; }
+.seq-phase-badge.RECONCILE { background: rgba(63, 185, 80, 0.2); color: #3fb950; }
+.seq-phase-badge.MUTATION { background: rgba(248, 81, 73, 0.2); color: #f85149; }
+
+.seq-flow-path {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.seq-flow-arrow {
+  color: #0e639c;
+}
+
+.seq-symbol-box {
+  background: #141414;
+  border: 1px solid #2d2d30;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  color: #9cdcfe;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.seq-desc {
+  font-size: 13px;
+  color: #aaaaaa;
+  line-height: 1.5;
+}
+
+.seq-file-link {
+  font-size: 12px;
+  color: #3794ff;
+  text-decoration: underline;
+  cursor: pointer;
+  width: fit-content;
+}
+
+/* Timeline List */
+.seq-timeline-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seq-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 5px;
+  background: #1e1e1e;
+  border: 1px solid #2d2d30;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.seq-timeline-item:hover {
+  background: #252528;
+  border-color: #3e3e42;
+}
+
+.seq-timeline-item.active {
+  background: #23272e;
+  border-color: #0e639c;
+  box-shadow: inset 0 0 0 1px #0e639c;
+}
+
+.seq-step-num {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 12px;
+  background: #2d2d30;
+  color: #ffffff;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.seq-timeline-item.active .seq-step-num {
+  background: #0e639c;
+}
+

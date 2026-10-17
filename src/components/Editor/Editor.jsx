@@ -4,6 +4,7 @@ import MonacoEditor, { DiffEditor } from "@monaco-editor/react";
 import useEditor from "../../hooks/useEditor";
 import Preview from "../Preview";
 import LiveBrowser from "../LiveBrowser/LiveBrowser";
+import ArchitectureCanvas from "../Architecture/ArchitectureCanvas";
 import {
   DocxPreview,
   PptxPreview,
@@ -366,6 +367,15 @@ function Editor() {
             automaticLayout: true
           }}
         />
+      </div>
+    );
+  }
+
+  // Architecture Blueprint Canvas tab
+  if (activeFile.type === "architecture" || activeFile.isArchitecture) {
+    return (
+      <div className="editor-container">
+        <ArchitectureCanvas />
       </div>
     );
   }

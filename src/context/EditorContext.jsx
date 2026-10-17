@@ -196,6 +196,13 @@ export function EditorProvider({ children }) {
       case "browser":
         openLiveBrowserTab("http://localhost:5173", "Live Browser Preview");
         break;
+      case "architecture":
+        setSidebarActive("architecture");
+        setIsSidebarVisible(true);
+        break;
+      case "architecture-canvas":
+        openArchitectureTab();
+        break;
       default:
         break;
     }
@@ -605,6 +612,28 @@ export function EditorProvider({ children }) {
     });
   }
 
+  function openArchitectureTab() {
+    const tabId = "hyperion-architecture-blueprint";
+    const name = "Architecture Blueprint";
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name,
+        type: "architecture",
+        isPreview: true,
+        isArchitecture: true
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
   function setEditorInstance(editor) {
     editorRef.current = editor;
   }
@@ -799,6 +828,7 @@ export function EditorProvider({ children }) {
         findInFiles,
         replaceInFiles,
         openLiveBrowserTab,
+        openArchitectureTab,
         toggleLineComment,
         toggleBlockComment,
         expandEmmet,

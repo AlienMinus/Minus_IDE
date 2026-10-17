@@ -8,6 +8,7 @@ import {
     VscAccount,
     VscSettingsGear
 } from "react-icons/vsc";
+import { FaProjectDiagram } from "react-icons/fa";
 
 function Sidebar({ active = "explorer", onSetActive = () => {} }) {
     const menuItems = [
@@ -35,6 +36,11 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
             id: "extensions",
             icon: <VscExtensions />,
             title: "Extensions (Ctrl+Shift+X)"
+        },
+        {
+            id: "architecture",
+            icon: <FaProjectDiagram />,
+            title: "Architecture & Codebase Diagram (Ctrl+Shift+A)"
         }
     ];
 

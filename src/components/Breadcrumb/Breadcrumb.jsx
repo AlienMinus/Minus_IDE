@@ -2,7 +2,8 @@ import "./Breadcrumb.css";
 
 import {
     FaChevronRight,
-    FaFolder
+    FaFolder,
+    FaProjectDiagram
 } from "react-icons/fa";
 import { getFileIcon } from "../../utils/fileIcons";
 
@@ -20,6 +21,17 @@ function Breadcrumb() {
             </div>
         );
 
+    }
+
+    if (activeFile.type === "architecture" || activeFile.isArchitecture) {
+        return (
+            <div className="breadcrumb">
+                <div className="crumb file">
+                    <FaProjectDiagram style={{ color: "#58a6ff" }} />
+                    <span>Architecture Blueprint</span>
+                </div>
+            </div>
+        );
     }
 
     const parts = activeFile.path ? activeFile.path.split("/") : [];

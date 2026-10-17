@@ -22,6 +22,7 @@ import Search from "../components/Search/Search";
 import SourceControl from "../components/SourceControl/SourceControl";
 import RunDebug from "../components/RunDebug/RunDebug";
 import CommandPalette from "../components/CommandPalette/CommandPalette";
+import ArchitecturePanel from "../components/Architecture/ArchitecturePanel";
 import useEditor from "../hooks/useEditor";
 import useTerminal from "../hooks/useTerminal";
 import useFile from "../hooks/useFile";
@@ -44,6 +45,7 @@ function MainLayout() {
     setIsCommandPaletteOpen,
     commandPaletteMode,
     openView,
+    openArchitectureTab,
     toggleWordWrap,
     saveActiveFile
   } = useEditor();
@@ -64,6 +66,17 @@ function MainLayout() {
     return () => window.removeEventListener("hyperion:open-chat", handleOpenChat);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        handleSidebarClick("architecture");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sidebarActive, isSidebarVisible]);
+
   const handleSidebarClick = (id) => {
     if (sidebarActive === id && isSidebarVisible) {
       toggleSidebar();
@@ -83,6 +96,8 @@ function MainLayout() {
     { id: "view-git", category: "View", label: "Source Control", shortcut: "Ctrl+Shift+G", action: () => openView("git") },
     { id: "view-run", category: "View", label: "Run and Debug", shortcut: "Ctrl+Shift+D", action: () => openView("run") },
     { id: "view-extensions", category: "View", label: "Extensions", shortcut: "Ctrl+Shift+X", action: () => openView("extensions") },
+    { id: "view-architecture", category: "View", label: "Architecture: Focus Architecture Diagram", shortcut: "Ctrl+Shift+A", action: () => openView("architecture") },
+    { id: "view-architecture-canvas", category: "View", label: "Architecture: Open Full Visual Blueprint", action: () => openView("architecture-canvas") },
     { id: "view-chat", category: "View", label: "Chat", shortcut: "Ctrl+Alt+I", action: () => setIsChatOpen(true) },
     { id: "view-browser", category: "View", label: "Live Browser Preview", shortcut: "Ctrl+Alt+/", action: () => openView("browser") },
     { id: "view-terminal", category: "View", label: "Terminal", shortcut: "Ctrl+`", action: () => openView("terminal") },
@@ -158,6 +173,8 @@ function MainLayout() {
                   <SourceControl />
                 ) : sidebarActive === "run" ? (
                   <RunDebug />
+                ) : sidebarActive === "architecture" ? (
+                  <ArchitecturePanel onOpenFullView={openArchitectureTab} />
                 ) : (
                   <Explorer />
                 )}
