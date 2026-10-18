@@ -213,6 +213,9 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
         });
       });
     });
+    return rels;
+  }, [models]);
+
   // Canvas Drag & Pan Handlers
   const handleCanvasMouseDown = (e) => {
     if (e.button !== 0 || e.target.closest("button") || e.target.closest("input") || e.target.closest(".mongoschema-card-actions")) return;
@@ -1094,4 +1097,4 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
       )}
     </div>
   );
-})}
+}

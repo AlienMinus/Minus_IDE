@@ -239,7 +239,24 @@ export default function BackendApiRoutes({ onOpenModel = null }) {
       </div>
 
       {/* 4. MAIN CONTENT VIEWPORT */}
-      {viewMode === "table" ? (
+      {routers.length === 0 ? (
+        <div className="routes-empty-state" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", textAlign: "center", color: "#a1a1aa" }}>
+          <FaNetworkWired size={44} style={{ color: "#38bdf8", marginBottom: "16px", opacity: 0.8 }} />
+          <h3 style={{ color: "#f4f4f5", fontSize: "18px", marginBottom: "8px" }}>No Backend API Routes Indexed</h3>
+          <p style={{ maxWidth: "460px", fontSize: "13px", lineHeight: "1.6", marginBottom: "20px" }}>
+            Express server routes, router definitions, and API endpoints are indexed automatically across all workspace folders. Click below to scan the workspace.
+          </p>
+          <button
+            className="routes-btn-refresh"
+            onClick={() => scanWorkspaceFiles && scanWorkspaceFiles(true)}
+            disabled={isScanningWorkspace}
+            style={{ padding: "8px 18px", fontSize: "13px" }}
+          >
+            <FaSyncAlt className={isScanningWorkspace ? "spinning" : ""} size={12} />
+            {isScanningWorkspace ? "Scanning Codebase..." : "⚡ Scan Codebase for Routes"}
+          </button>
+        </div>
+      ) : viewMode === "table" ? (
         <div className="routes-scroll-body">
           {routers.map((router, rIdx) => (
             <div key={rIdx} style={{ marginBottom: "24px" }}>

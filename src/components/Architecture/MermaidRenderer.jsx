@@ -78,11 +78,16 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
 
         if (isCancelled || !containerRef.current) return;
 
-        // 2. Initialize Mermaid with vibrant dark theme
+        // 2. Initialize Mermaid with vibrant dark theme and squared straight lines
         window.mermaid.initialize({
           startOnLoad: false,
           securityLevel: "loose",
           theme: "dark",
+          flowchart: {
+            curve: "stepBefore",
+            useMaxWidth: false,
+            htmlLabels: true
+          },
           themeVariables: {
             darkMode: true,
             background: "#101214",

@@ -1,0 +1,425 @@
+/* src/components/Architecture/ThreeExecutionFlow.css */
+
+.three-flow-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #0a0c10;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 1. TOP TOOLBAR */
+.three-flow-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #11141a;
+  border-bottom: 1px solid #1f242d;
+  z-index: 10;
+  gap: 12px;
+}
+
+.three-flow-toolbar-left,
+.three-flow-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.three-flow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1e2430;
+  border: 1px solid #2d3748;
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.three-flow-btn:hover:not(:disabled) {
+  background: #2b3547;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.three-flow-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.three-flow-btn.play {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: rgba(0, 255, 136, 0.4);
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.three-flow-btn.play:hover {
+  background: rgba(0, 255, 136, 0.25);
+  border-color: #00ff88;
+}
+
+.three-flow-btn.toggle.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.three-flow-step-pill {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+}
+
+.three-step-highlight {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.three-step-total {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.three-flow-speed-group {
+  display: flex;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.three-speed-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.three-speed-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.three-flow-camera-presets {
+  display: flex;
+  gap: 4px;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  padding: 2px;
+  border-radius: 5px;
+}
+
+.three-cam-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.three-cam-btn:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+/* 2. 3D WEBGL VIEWPORT */
+.three-flow-viewport {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.three-flow-viewport:active {
+  cursor: grabbing;
+}
+
+/* Floating HUD Card */
+.three-flow-hud {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 330px;
+  background: rgba(13, 17, 23, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.15);
+  border-radius: 10px;
+  padding: 14px 16px;
+  z-index: 20;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+}
+
+.three-hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.three-phase-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.three-phase-tag.BOOT {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.three-phase-tag.MOUNT {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.three-phase-tag.LIFECYCLE {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+.three-phase-tag.DATA_FETCH {
+  background: rgba(0, 255, 136, 0.15);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.4);
+}
+
+.three-phase-tag.MUTATION {
+  background: rgba(244, 63, 94, 0.15);
+  color: #f43f5e;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+
+.three-hud-step-num {
+  font-size: 11px;
+  color: #71717a;
+  font-family: monospace;
+}
+
+.three-hud-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.three-hud-node {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #1e293b;
+  color: #f8fafc;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.three-hud-node.source {
+  border-left: 3px solid #38bdf8;
+}
+
+.three-hud-node.target {
+  border-left: 3px solid #00ff88;
+}
+
+.three-hud-arrow {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.three-hud-action {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.three-hud-symbol {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #090d14;
+  border: 1px solid #1e293b;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.three-hud-symbol code {
+  color: #93c5fd;
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.three-hud-desc {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+
+.three-hud-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: monospace;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.three-hud-file:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38bdf8;
+  text-decoration: underline;
+}
+
+/* 3D Tier Legend */
+.three-flow-tiers-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.client { background: #38bdf8; box-shadow: 0 0 6px #38bdf8; }
+.legend-dot.context { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+.legend-dot.component { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+.legend-dot.service { background: #a855f7; box-shadow: 0 0 6px #a855f7; }
+.legend-dot.backend { background: #f43f5e; box-shadow: 0 0 6px #f43f5e; }
+.legend-dot.database { background: #00ff88; box-shadow: 0 0 6px #00ff88; }
+
+/* 3. BOTTOM SCRUBBER STRIP */
+.three-flow-scrubber-bar {
+  background: #11141a;
+  border-top: 1px solid #1f242d;
+  padding: 8px 16px;
+  z-index: 10;
+}
+
+.three-scrubber-track {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.three-scrubber-pip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #1e2430;
+  border: 1px solid #2d3748;
+  color: #94a3b8;
+  font-family: monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.three-scrubber-pip:hover {
+  background: #2b3547;
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+.three-scrubber-pip.active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+  transform: scale(1.15);
+}
+
+.spin-slow {
+  animation: spinSlow 8s linear infinite;
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.three-flow-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #94a3b8;
+  text-align: center;
+  padding: 40px;
+}
+

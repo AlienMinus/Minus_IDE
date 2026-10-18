@@ -32,11 +32,12 @@ import {
 import SequenceVisualizer from "./SequenceVisualizer";
 import MermaidRenderer from "./MermaidRenderer";
 import MongoSchemaERD from "./MongoSchemaERD";
+import BackendApiRoutes from "./BackendApiRoutes";
 import ProjectFileTree from "./ProjectFileTree";
 
 export default function ArchitectureCanvas() {
   const { files = [], openFile, scanWorkspaceFiles, isScanningWorkspace, scanProgress, openBackendRoutesTab } = useEditor();
-  const [activeTab, setActiveTab] = useState("graph"); // "graph" | "filetree" | "mongoschema" | "mermaid" | "sequence" | "dictionary"
+  const [activeTab, setActiveTab] = useState("graph"); // "graph" | "filetree" | "mongoschema" | "routes" | "mermaid" | "sequence" | "dictionary"
   const [mermaidDiagramType, setMermaidDiagramType] = useState("flowchart"); // "flowchart" | "sequence" | "erd"
   const [catalogFilter, setCatalogFilter] = useState("ALL");
   const [zoom, setZoom] = useState(100);
@@ -216,9 +217,9 @@ export default function ArchitectureCanvas() {
             <FaDatabase color="#00ff88" /> MongoSchema ERD
           </button>
           <button
-            className="arch-view-tab"
-            onClick={() => openBackendRoutesTab && openBackendRoutesTab()}
-            style={{ color: "#38bdf8" }}
+            className={`arch-view-tab ${activeTab === "routes" ? "active" : ""}`}
+            onClick={() => setActiveTab("routes")}
+            style={{ color: activeTab === "routes" ? "#38bdf8" : undefined }}
             title="Backend REST API routes & controller endpoints"
           >
             <FaNetworkWired color="#38bdf8" /> API Routes
@@ -633,6 +634,11 @@ export default function ArchitectureCanvas() {
       {/* Mode 1: Dedicated MongoSchema ERD */}
       {activeTab === "mongoschema" && (
         <MongoSchemaERD />
+      )}
+
+      {/* Mode 2: Backend API Routes */}
+      {activeTab === "routes" && (
+        <BackendApiRoutes />
       )}
 
       {/* Mode 2: Execution Sequence Visualizer */}
