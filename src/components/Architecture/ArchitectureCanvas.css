@@ -114,10 +114,16 @@
 .arch-viewport {
   flex: 1;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
   padding: 40px;
   background: radial-gradient(circle, #222222 1px, transparent 1px);
   background-size: 24px 24px;
+  cursor: grab;
+  user-select: none;
+}
+
+.arch-viewport.dragging {
+  cursor: grabbing;
 }
 
 .arch-graph-grid {
@@ -332,5 +338,27 @@
 .arch-scan-btn:disabled {
   opacity: 0.85;
   cursor: wait;
+}
+
+.arch-fn-chip {
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.08) !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+}
+
+.arch-fn-chip:hover {
+  background: rgba(56, 189, 248, 0.15) !important;
+  border-color: #38bdf8 !important;
+}
+
+.arch-const-chip {
+  color: #e3b341 !important;
+  background: rgba(227, 179, 65, 0.08) !important;
+  border-color: rgba(227, 179, 65, 0.25) !important;
+}
+
+.arch-const-chip:hover {
+  background: rgba(227, 179, 65, 0.15) !important;
+  border-color: #e3b341 !important;
 }
 

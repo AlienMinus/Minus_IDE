@@ -1001,6 +1001,7 @@ export function EditorProvider({ children }) {
       value={{
         workspaceTree: fileContext?.workspaceTree || workspaceTree,
         workspaceHandle: fileContext?.workspaceHandle || workspaceHandle,
+        persistedFolderInfo: fileContext?.persistedFolderInfo || (initialCached?.folderPath ? { name: initialCached.folderName, path: initialCached.folderPath } : null),
         files,
         openFiles,
         activeFile,

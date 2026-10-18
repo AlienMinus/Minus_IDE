@@ -1,5 +1,5 @@
 // src/components/Architecture/ArchitectureCanvas.jsx
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import "./ArchitectureCanvas.css";
 import {
   FaProjectDiagram,
@@ -18,7 +18,8 @@ import {
   FaCode,
   FaFileCode,
   FaShieldAlt,
-  FaNetworkWired
+  FaNetworkWired,
+  FaFolderOpen
 } from "react-icons/fa";
 import useEditor from "../../hooks/useEditor";
 import { scanCodebaseArchitecture, isIgnoredPath } from "../../services/architectureScanner";
@@ -31,12 +32,60 @@ import {
 import SequenceVisualizer from "./SequenceVisualizer";
 import MermaidRenderer from "./MermaidRenderer";
 import MongoSchemaERD from "./MongoSchemaERD";
+import ProjectFileTree from "./ProjectFileTree";
 
 export default function ArchitectureCanvas() {
   const { files = [], openFile, scanWorkspaceFiles, isScanningWorkspace, scanProgress, openBackendRoutesTab } = useEditor();
-  const [activeTab, setActiveTab] = useState("graph"); // "graph" | "sequence" | "mermaid" | "dictionary"
+  const [activeTab, setActiveTab] = useState("graph"); // "graph" | "filetree" | "mongoschema" | "mermaid" | "sequence" | "dictionary"
   const [mermaidDiagramType, setMermaidDiagramType] = useState("flowchart"); // "flowchart" | "sequence" | "erd"
+  const [catalogFilter, setCatalogFilter] = useState("ALL");
   const [zoom, setZoom] = useState(100);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const viewportRef = useRef(null);
+
+  const handleCanvasMouseDown = (e) => {
+    if (e.button !== 0) return;
+    if (
+      e.target.closest("button") ||
+      e.target.closest("input") ||
+      e.target.closest("a") ||
+      e.target.closest(".arch-card-btn")
+    ) {
+      return;
+    }
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y
+    };
+  };
+
+  const handleCanvasMouseMove = (e) => {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStartRef.current.x,
+      y: e.clientY - dragStartRef.current.y
+    });
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleCanvasWheel = (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -10 : 10;
+      setZoom(z => Math.max(30, Math.min(z + delta, 300)));
+    }
+  };
+
+  const handleResetZoomPan = () => {
+    setZoom(100);
+    setPan({ x: 0, y: 0 });
+  };
   const [search, setSearch] = useState("");
   const [activeLayers, setActiveLayers] = useState({
     model: true,
@@ -73,7 +122,7 @@ export default function ArchitectureCanvas() {
     return traceExecutionSequences(architecture);
   }, [architecture]);
 
-  // Generate Mermaid diagram codes
+  // Generate Mermaid diagram codes dynamically for whatever project is active
   const mermaidFlowchart = useMemo(() => {
     return generateArchitectureFlowchart(architecture);
   }, [architecture]);
@@ -146,8 +195,17 @@ export default function ArchitectureCanvas() {
           <button
             className={`arch-view-tab ${activeTab === "graph" ? "active" : ""}`}
             onClick={() => setActiveTab("graph")}
+            title="Multi-Layer Workspace Component Cards"
           >
             <FaProjectDiagram /> Visual Architecture
+          </button>
+          <button
+            className={`arch-view-tab ${activeTab === "filetree" ? "active" : ""}`}
+            onClick={() => setActiveTab("filetree")}
+            style={{ color: activeTab === "filetree" ? "#00ff88" : undefined }}
+            title="Project File Tree using 'tree /F' on Sandbox Environment"
+          >
+            <FaFolderOpen color="#00ff88" /> Project File Tree (tree /F)
           </button>
           <button
             className={`arch-view-tab ${activeTab === "mongoschema" ? "active" : ""}`}
@@ -210,23 +268,23 @@ export default function ArchitectureCanvas() {
             <>
               <button
                 className="arch-tool-btn"
-                onClick={() => setZoom(z => Math.max(z - 10, 60))}
+                onClick={() => setZoom(z => Math.max(z - 15, 30))}
                 title="Zoom Out"
               >
                 <FaSearchMinus />
               </button>
-              <span style={{ fontSize: "11px", color: "#888" }}>{zoom}%</span>
+              <span style={{ fontSize: "11px", color: "#888", minWidth: "35px", textAlign: "center" }}>{zoom}%</span>
               <button
                 className="arch-tool-btn"
-                onClick={() => setZoom(z => Math.min(z + 10, 160))}
+                onClick={() => setZoom(z => Math.min(z + 15, 300))}
                 title="Zoom In"
               >
                 <FaSearchPlus />
               </button>
               <button
                 className="arch-tool-btn"
-                onClick={() => setZoom(100)}
-                title="Reset Zoom to 100%"
+                onClick={handleResetZoomPan}
+                title="Reset Pan & Zoom"
               >
                 <FaExpandArrowsAlt /> Reset
               </button>
@@ -274,10 +332,22 @@ export default function ArchitectureCanvas() {
 
       {/* Mode 1: Interactive Node Graph */}
       {activeTab === "graph" && (
-        <div className="arch-viewport">
+        <div
+          ref={viewportRef}
+          className={`arch-viewport ${isDragging ? "dragging" : ""}`}
+          onMouseDown={handleCanvasMouseDown}
+          onMouseMove={handleCanvasMouseMove}
+          onMouseUp={handleCanvasMouseUp}
+          onMouseLeave={handleCanvasMouseUp}
+          onWheel={handleCanvasWheel}
+          onDoubleClick={handleResetZoomPan}
+        >
           <div
             className="arch-graph-grid"
-            style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left" }}
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})`,
+              transformOrigin: "top left"
+            }}
           >
             {layerSections.map(sec => {
               const nodesInLayer = filteredNodes.filter(n => n.layer === sec.key);
@@ -404,54 +474,97 @@ export default function ArchitectureCanvas() {
                             </div>
                           )}
 
-                          {/* Module Declarations & Constants */}
-                          {node.details.constants?.length > 0 && (
+                          {/* 1. Arrow Functions & Handlers (Explicitly Differentiated) */}
+                          {node.details.arrowFunctions?.length > 0 && (
                             <div>
-                              <div className="arch-section-title">Declarations & Constants</div>
+                              <div className="arch-section-title" style={{ color: "#38bdf8" }}>
+                                <FaBolt size={9} color="#38bdf8" /> Arrow Functions ({node.details.arrowFunctions.length})
+                              </div>
                               <div className="arch-chip-list">
-                                {node.details.constants.slice(0, 8).map((c, i) => {
-                                  let badgeColor = "#e3b341";
-                                  let badgeBg = "rgba(227, 179, 65, 0.15)";
-                                  let label = "CONST";
-                                  if (c.kind === "instance") {
-                                    badgeColor = "#f472b6";
-                                    badgeBg = "rgba(244, 114, 182, 0.15)";
-                                    label = "INSTANCE";
-                                  } else if (c.kind === "schema") {
-                                    badgeColor = "#3fb950";
-                                    badgeBg = "rgba(63, 185, 80, 0.15)";
-                                    label = "SCHEMA";
-                                  } else if (c.kind === "ref") {
-                                    badgeColor = "#38bdf8";
-                                    badgeBg = "rgba(56, 189, 248, 0.15)";
-                                    label = "REF";
-                                  } else if (c.kind === "destructured") {
-                                    badgeColor = "#a78bfa";
-                                    badgeBg = "rgba(167, 139, 250, 0.15)";
-                                    label = "DESTRUCT";
-                                  } else if (c.kind === "variable") {
-                                    badgeColor = "#93c5fd";
-                                    badgeBg = "rgba(147, 197, 253, 0.15)";
-                                    label = "VAR";
-                                  }
-
-                                  return (
-                                    <span
-                                      key={i}
-                                      className="arch-var-chip"
-                                      style={{ color: badgeColor, borderColor: "rgba(255,255,255,0.1)" }}
-                                      title={`${c.name} (${c.type}): ${c.value}`}
-                                    >
-                                      <span style={{ fontSize: "8px", padding: "1px 4px", borderRadius: "2px", background: badgeBg, marginRight: "4px", fontWeight: "700" }}>{label}</span>
-                                      {c.name}: {c.value}
+                                {node.details.arrowFunctions.slice(0, 8).map((fn, i) => (
+                                  <span
+                                    key={i}
+                                    className="arch-var-chip"
+                                    style={{ color: "#38bdf8", borderColor: "rgba(56, 189, 248, 0.3)" }}
+                                    title={`${fn.name}() => ${fn.value}`}
+                                  >
+                                    <span style={{ fontSize: "8px", padding: "1px 4px", borderRadius: "2px", background: "rgba(56, 189, 248, 0.15)", marginRight: "4px", fontWeight: "700" }}>
+                                      () =&gt;
                                     </span>
-                                  );
-                                })}
-                                {node.details.constants.length > 8 && (
+                                    {fn.name}
+                                  </span>
+                                ))}
+                                {node.details.arrowFunctions.length > 8 && (
                                   <span style={{ fontSize: "10px", color: "#888" }}>
-                                    +{node.details.constants.length - 8} more
+                                    +{node.details.arrowFunctions.length - 8} more...
                                   </span>
                                 )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 2. Constants & Configuration Values */}
+                          {node.details.constants?.length > 0 && (
+                            <div>
+                              <div className="arch-section-title" style={{ color: "#e3b341" }}>
+                                <FaShieldAlt size={9} color="#e3b341" /> Constants &amp; Values ({node.details.constants.length})
+                              </div>
+                              <div className="arch-chip-list">
+                                {node.details.constants.slice(0, 8).map((c, i) => (
+                                  <span
+                                    key={i}
+                                    className="arch-var-chip"
+                                    style={{ color: "#e3b341", borderColor: "rgba(227, 179, 65, 0.3)" }}
+                                    title={`${c.name} (${c.type}): ${c.value}`}
+                                  >
+                                    <span style={{ fontSize: "8px", padding: "1px 4px", borderRadius: "2px", background: "rgba(227, 179, 65, 0.15)", marginRight: "4px", fontWeight: "700" }}>
+                                      CONST
+                                    </span>
+                                    {c.name}: {c.value}
+                                  </span>
+                                ))}
+                                {node.details.constants.length > 8 && (
+                                  <span style={{ fontSize: "10px", color: "#888" }}>
+                                    +{node.details.constants.length - 8} more...
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 3. Instances, Schemas & Refs */}
+                          {(node.details.instances?.length > 0 || node.details.schemas?.length > 0) && (
+                            <div>
+                              <div className="arch-section-title" style={{ color: "#f472b6" }}>
+                                Instances &amp; Schemas
+                              </div>
+                              <div className="arch-chip-list">
+                                {(node.details.instances || []).map((ins, i) => (
+                                  <span
+                                    key={`ins-${i}`}
+                                    className="arch-var-chip"
+                                    style={{ color: "#f472b6", borderColor: "rgba(244, 114, 182, 0.3)" }}
+                                    title={`${ins.name} (${ins.type}): ${ins.value}`}
+                                  >
+                                    <span style={{ fontSize: "8px", padding: "1px 4px", borderRadius: "2px", background: "rgba(244, 114, 182, 0.15)", marginRight: "4px", fontWeight: "700" }}>
+                                      INSTANCE
+                                    </span>
+                                    {ins.name}
+                                  </span>
+                                ))}
+                                {(node.details.schemas || []).map((sc, i) => (
+                                  <span
+                                    key={`sc-${i}`}
+                                    className="arch-var-chip"
+                                    style={{ color: "#3fb950", borderColor: "rgba(63, 185, 80, 0.3)" }}
+                                    title={`${sc.name} (${sc.type})`}
+                                  >
+                                    <span style={{ fontSize: "8px", padding: "1px 4px", borderRadius: "2px", background: "rgba(63, 185, 80, 0.15)", marginRight: "4px", fontWeight: "700" }}>
+                                      SCHEMA
+                                    </span>
+                                    {sc.name}
+                                  </span>
+                                ))}
                               </div>
                             </div>
                           )}
@@ -508,7 +621,12 @@ export default function ArchitectureCanvas() {
         </div>
       )}
 
-      {/* Mode: Dedicated MongoSchema ERD */}
+      {/* Mode 0: Project File Tree (tree /F) */}
+      {activeTab === "filetree" && (
+        <ProjectFileTree onOpenFile={handleOpenFile} />
+      )}
+
+      {/* Mode 1: Dedicated MongoSchema ERD */}
       {activeTab === "mongoschema" && (
         <MongoSchemaERD />
       )}
@@ -563,6 +681,36 @@ export default function ArchitectureCanvas() {
       {/* Mode 4: Symbol Catalog */}
       {activeTab === "dictionary" && (
         <div className="arch-dict-view">
+          <div style={{ display: "flex", gap: "8px", padding: "10px 16px", background: "#18181b", borderBottom: "1px solid #27272a", alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "11px", color: "#888", marginRight: "4px" }}>Filter Concept:</span>
+            {[
+              { id: "ALL", label: "All Symbols" },
+              { id: "ARROW_FN", label: "⚡ Arrow Functions", color: "#38bdf8" },
+              { id: "CONST", label: "🔒 Constants & Config", color: "#e3b341" },
+              { id: "STATE", label: "🔄 React State", color: "#79c0ff" },
+              { id: "SCHEMA", label: "🗄️ Schemas & Fields", color: "#3fb950" },
+              { id: "ROUTES", label: "🚀 HTTP Routes", color: "#f87171" }
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => setCatalogFilter(f.id)}
+                style={{
+                  background: catalogFilter === f.id ? (f.color || "#00ff88") : "#27272a",
+                  color: catalogFilter === f.id ? "#000000" : "#d4d4d8",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  fontWeight: catalogFilter === f.id ? "700" : "500",
+                  padding: "4px 10px",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease"
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
           <table className="arch-dict-table">
             <thead>
               <tr>
@@ -581,20 +729,43 @@ export default function ArchitectureCanvas() {
                   rows.push({
                     name: `${ep.method} ${ep.path}`,
                     type: "HTTP Route",
+                    kind: "route",
                     file: n.fileName,
                     layer: n.layer,
                     details: ep.models?.length ? `Queries: ${ep.models.join(", ")}` : "Express route"
                   });
                 });
-                // Declarations, Instances, Variables & Constants
+                // Arrow Functions (Explicitly Differentiated)
+                (n.details.arrowFunctions || []).forEach(fn => {
+                  rows.push({
+                    name: `${fn.name}()`,
+                    type: "Arrow Function",
+                    kind: "arrow-function",
+                    file: n.fileName,
+                    layer: n.layer,
+                    details: `() => ${fn.value || 'handler'}`
+                  });
+                });
+                // Constants & Values
                 (n.details.constants || []).forEach(c => {
                   rows.push({
                     name: c.name,
-                    type: c.type || (c.kind ? c.kind.toUpperCase() : "Declaration"),
-                    kind: c.kind,
+                    type: c.type || "Constant Value",
+                    kind: "constant",
                     file: n.fileName,
                     layer: n.layer,
-                    details: `${c.kind?.toUpperCase() || 'VAL'}: ${c.value || 'undefined'}`
+                    details: `CONST: ${c.value || 'undefined'}`
+                  });
+                });
+                // Instances
+                (n.details.instances || []).forEach(ins => {
+                  rows.push({
+                    name: ins.name,
+                    type: ins.type || "Instance",
+                    kind: "instance",
+                    file: n.fileName,
+                    layer: n.layer,
+                    details: ins.value || "class instance"
                   });
                 });
                 // Model fields
@@ -642,10 +813,20 @@ export default function ArchitectureCanvas() {
                   });
                 });
                 return rows;
+              }).filter(r => {
+                if (catalogFilter === "ARROW_FN") return r.kind === "arrow-function";
+                if (catalogFilter === "CONST") return r.kind === "constant";
+                if (catalogFilter === "STATE") return r.kind === "state";
+                if (catalogFilter === "SCHEMA") return r.kind === "field" || r.kind === "schema";
+                if (catalogFilter === "ROUTES") return r.type === "HTTP Route";
+                return true;
               }).map((r, i) => {
                 let badgeColor = "#cccccc";
                 let badgeBg = "#252528";
-                if (r.kind === "constant") {
+                if (r.kind === "arrow-function") {
+                  badgeColor = "#38bdf8";
+                  badgeBg = "rgba(56, 189, 248, 0.15)";
+                } else if (r.kind === "constant") {
                   badgeColor = "#e3b341";
                   badgeBg = "rgba(227, 179, 65, 0.15)";
                 } else if (r.kind === "instance") {

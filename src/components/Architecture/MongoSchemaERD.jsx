@@ -1,5 +1,5 @@
 // src/components/Architecture/MongoSchemaERD.jsx
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Fragment, useRef } from "react";
 import "./MongoSchemaERD.css";
 import {
   FaDatabase,
@@ -11,7 +11,8 @@ import {
   FaChevronDown,
   FaCode,
   FaNetworkWired,
-  FaShieldAlt
+  FaShieldAlt,
+  FaArrowsAlt
 } from "react-icons/fa";
 import useEditor from "../../hooks/useEditor";
 import { extractMongoSchemas } from "../../services/mongoSchemaParser";
@@ -23,9 +24,13 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
   const [searchModel, setSearchModel] = useState("");
   const [searchField, setSearchField] = useState("");
   const [selectedModelId, setSelectedModelId] = useState(initialModel);
+  const [showDetailPanel, setShowDetailPanel] = useState(!!initialModel);
   const [viewMode, setViewMode] = useState("cards"); // "cards" | "chen" | "routes" | "flow"
   const [chenLod, setChenLod] = useState("keys"); // "keys" | "all" | "none"
   const [zoom, setZoom] = useState(100);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const [showRelationships, setShowRelationships] = useState(true);
   const [showIndexes, setShowIndexes] = useState(true);
   const [showEmbeddedDocs, setShowEmbeddedDocs] = useState(true);
@@ -83,19 +88,20 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
     );
   }, [models, searchModel]);
 
-  // Filtered fields for right detail table
+  // Filtered fields for right detail table (top-level schema fields with nested sub-schemas)
   const filteredFields = useMemo(() => {
     if (!activeModel) return [];
-    let list = activeModel.fields;
-    if (!showEmbeddedDocs) {
-      list = list.filter(f => !f.isEmbedded || !f.name.includes("."));
-    }
+    let list = activeModel.topLevelFields || activeModel.fields.filter(f => !f.name.includes("."));
     const q = searchField.toLowerCase().trim();
     if (q) {
-      list = list.filter(f => f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q));
+      list = list.filter(f =>
+        f.name.toLowerCase().includes(q) ||
+        f.type.toLowerCase().includes(q) ||
+        (f.subFields || []).some(sf => sf.name.toLowerCase().includes(q) || sf.type.toLowerCase().includes(q))
+      );
     }
     return list;
-  }, [activeModel, showEmbeddedDocs, searchField]);
+  }, [activeModel, searchField]);
 
   const handleOpenSource = (model) => {
     if (!model || !openFile) return;
@@ -125,7 +131,11 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
   };
 
   const toggleRowExpand = (fieldName) => {
-    setExpandedRows(prev => ({ ...prev, [fieldName]: !prev[fieldName] }));
+    setExpandedRows(prev => {
+      const current = prev[fieldName];
+      const isExpanded = current === undefined ? true : current;
+      return { ...prev, [fieldName]: !isExpanded };
+    });
   };
 
   const getTypeBadgeClass = (type = "") => {
@@ -139,22 +149,22 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
     return "default";
   };
 
-  // Coordinates for Chen diagram layout (3 columns layout matching the uploaded screenshot)
+  // Coordinates for Chen diagram layout (3 columns with wide clearance to prevent attribute overlap)
   const getChenCoordinates = (modelName, idx) => {
     const norm = (modelName || "").toLowerCase();
     const positions = {
-      about: { cx: 290, cy: 190 },
-      contactinfo: { cx: 700, cy: 190 },
-      experience: { cx: 1110, cy: 190 },
-      hero: { cx: 290, cy: 530 },
-      message: { cx: 700, cy: 530 },
-      project: { cx: 1110, cy: 530 },
-      skill: { cx: 290, cy: 860 }
+      about: { cx: 270, cy: 200 },
+      contactinfo: { cx: 780, cy: 200 },
+      experience: { cx: 1290, cy: 200 },
+      hero: { cx: 270, cy: 580 },
+      message: { cx: 780, cy: 580 },
+      project: { cx: 1290, cy: 580 },
+      skill: { cx: 270, cy: 940 }
     };
     if (positions[norm]) return positions[norm];
     const col = idx % 3;
     const row = Math.floor(idx / 3);
-    return { cx: 290 + col * 410, cy: 190 + row * 340 };
+    return { cx: 270 + col * 510, cy: 200 + row * 380 };
   };
 
   // Attributes for each entity in Chen diagram
@@ -191,15 +201,52 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
     return deduped;
   };
 
-  // Pre-configured relationships between entities for Chen diagram
-  const chenRelationships = [
-    { from: "about", to: "contactinfo" },
-    { from: "contactinfo", to: "experience" },
-    { from: "hero", to: "message" },
-    { from: "message", to: "project" },
-    { from: "hero", to: "skill" },
-    { from: "about", to: "hero" }
-  ];
+  // Real schema relationships from explicit foreign references
+  const realRelationships = useMemo(() => {
+    const rels = [];
+    models.forEach(m => {
+      (m.relations || []).forEach(r => {
+        rels.push({
+          from: m.name.toLowerCase(),
+          to: (r.targetModel || "").toLowerCase(),
+          field: r.fromField
+        });
+      });
+    });
+  // Canvas Drag & Pan Handlers
+  const handleCanvasMouseDown = (e) => {
+    if (e.button !== 0 || e.target.closest("button") || e.target.closest("input") || e.target.closest(".mongoschema-card-actions")) return;
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y
+    };
+  };
+
+  const handleCanvasMouseMove = (e) => {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStartRef.current.x,
+      y: e.clientY - dragStartRef.current.y
+    });
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleResetPan = () => {
+    setPan({ x: 0, y: 0 });
+    setZoom(100);
+  };
+
+  const handleCanvasWheel = (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -10 : 10;
+      setZoom(z => Math.max(30, Math.min(z + delta, 300)));
+    }
+  };
 
   return (
     <div className="mongoschema-container">
@@ -378,22 +425,23 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
 
             <button
               className="mongoschema-view-pill"
-              onClick={() => setZoom(100)}
+              onClick={handleResetPan}
+              title="Reset Pan & Zoom (100%)"
             >
               Fit
             </button>
             <span style={{ fontSize: "11px", color: "#888", marginLeft: "2px" }}>{zoom}%</span>
             <button
               className="mongoschema-zoom-btn"
-              onClick={() => setZoom(z => Math.min(z + 10, 160))}
-              title="Zoom In"
+              onClick={() => setZoom(z => Math.min(z + 15, 300))}
+              title="Zoom In (Max 300%)"
             >
               +
             </button>
             <button
               className="mongoschema-zoom-btn"
-              onClick={() => setZoom(z => Math.max(z - 10, 60))}
-              title="Zoom Out"
+              onClick={() => setZoom(z => Math.max(z - 15, 30))}
+              title="Zoom Out (Min 30%)"
             >
               -
             </button>
@@ -440,15 +488,27 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
           </div>
         </div>
 
-        {/* Canvas Body with Dot Grid */}
-        <div className="mongoschema-canvas-body">
+        {/* Canvas Body with Dot Grid & Dragability */}
+        <div
+          className={`mongoschema-canvas-body ${isDragging ? "dragging" : ""}`}
+          onMouseDown={handleCanvasMouseDown}
+          onMouseMove={handleCanvasMouseMove}
+          onMouseUp={handleCanvasMouseUp}
+          onMouseLeave={handleCanvasMouseUp}
+          onWheel={handleCanvasWheel}
+          onDoubleClick={handleResetPan}
+          style={{ cursor: isDragging ? "grabbing" : "grab" }}
+        >
           {/* VIEW MODE 1: CHEN ERD DIAGRAM */}
           {viewMode === "chen" && (
             <div
               className="chen-viewport"
-              style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left" }}
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})`,
+                transformOrigin: "top left"
+              }}
             >
-              <svg className="chen-svg-canvas">
+              <svg className="chen-svg-canvas" viewBox="0 0 1600 1180" width="1600" height="1180">
                 <defs>
                   {/* Subtle neon green glow filter */}
                   <filter id="chen-glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -456,8 +516,8 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
                   </filter>
                 </defs>
 
-                {/* 1. Connecting lines between related entities */}
-                {showRelationships && chenRelationships.map((rel, idx) => {
+                {/* 1. Connecting lines between related entities (only when real schema relations exist) */}
+                {showRelationships && realRelationships.map((rel, idx) => {
                   const m1 = filteredModels.find(m => m.name.toLowerCase() === rel.from);
                   const m2 = filteredModels.find(m => m.name.toLowerCase() === rel.to);
                   if (!m1 || !m2) return null;
@@ -626,7 +686,10 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
           {viewMode === "cards" && (
             <div
               className="mongoschema-cards-flow"
-              style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left" }}
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})`,
+                transformOrigin: "top left",
+              }}
             >
               {filteredModels.map(model => {
                 const isSelected = activeModel?.id === model.id;
@@ -648,6 +711,7 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedModelId(model.id);
+                            setShowDetailPanel(true);
                           }}
                         >
                           Table
@@ -664,27 +728,55 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
                       </div>
                     </div>
 
-                    {/* Card Fields List */}
+                    {/* Card Fields List with Nested Sub-Schema Tables */}
                     <div className="mongoschema-card-fields">
-                      {model.fields.slice(0, 12).map((f, idx) => {
-                        const isNested = f.name.includes(".");
+                      {(model.topLevelFields || model.fields.filter(f => !f.name.includes("."))).map((f, idx) => {
+                        const hasSubFields = showEmbeddedDocs && f.subFields && f.subFields.length > 0;
                         return (
-                          <div key={idx} className="mongoschema-field-row">
-                            <span className={`mongoschema-field-key ${isNested ? "nested" : ""}`}>
-                              {f.name}
-                            </span>
-                            <span className="mongoschema-field-type">
-                              {f.required && <span className="mongoschema-req-check">✓</span>}
-                              {f.type}
-                            </span>
+                          <div key={idx} className="mongoschema-card-field-block">
+                            <div className="mongoschema-field-row">
+                              <span className="mongoschema-field-key">
+                                {f.name}
+                              </span>
+                              <span className="mongoschema-field-type">
+                                {f.required && <span className="mongoschema-req-check">✓</span>}
+                                {f.type}
+                              </span>
+                            </div>
+
+                            {/* Nested Sub-Schema Table */}
+                            {hasSubFields && (
+                              <div className="mongoschema-card-nested-table-wrap">
+                                <div className="mongoschema-card-nested-header">
+                                  <span className="nested-arrow">↳</span>
+                                  <span className="nested-title">Sub-Schema:</span>
+                                  <span className="nested-name">{f.subSchemaName || `${f.name}Schema`}</span>
+                                </div>
+                                <table className="mongoschema-card-nested-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Sub-Field</th>
+                                      <th>Type</th>
+                                      <th style={{ textAlign: "center", width: "36px" }}>Req</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {f.subFields.map((sf, sIdx) => (
+                                      <tr key={sIdx}>
+                                        <td className="nested-key-cell">{sf.name}</td>
+                                        <td className="nested-type-cell">{sf.type}</td>
+                                        <td className="nested-req-cell" style={{ textAlign: "center", color: sf.required ? "#00ff88" : "#52525b" }}>
+                                          {sf.required ? "✓" : "—"}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
-                      {model.fields.length > 12 && (
-                        <div style={{ color: "#71717a", fontSize: "10px", marginTop: "4px" }}>
-                          +{model.fields.length - 12} more fields...
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
@@ -762,15 +854,30 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
         </div>
       </div>
 
-      {/* 3. RIGHT SCHEMA DETAILS PANEL (Available in Cards mode or when an Entity is selected) */}
-      {viewMode === "cards" && activeModel && (
+      {/* 3. RIGHT SCHEMA DETAILS PANEL (Available in Cards mode when Table is clicked) */}
+      {viewMode === "cards" && showDetailPanel && activeModel && (
         <div className="mongoschema-detail-panel">
           {/* Header */}
           <div className="mongoschema-detail-header">
             <div className="mongoschema-detail-title-row">
               <span className="mongoschema-detail-title">{activeModel.name}</span>
               <span className="mongoschema-badge-collection">collection: {activeModel.collection}</span>
-              <span className="mongoschema-badge-fields">{activeModel.fields.length} fields</span>
+              <span className="mongoschema-badge-fields">
+                {(activeModel.topLevelFields || activeModel.fields).length} fields
+              </span>
+              {activeModel.subSchemas?.length > 0 && (
+                <span className="mongoschema-badge-subschemas">
+                  {activeModel.subSchemas.length} sub-schemas
+                </span>
+              )}
+              <button
+                className="mongoschema-card-btn"
+                onClick={() => setShowDetailPanel(false)}
+                title="Close Schema Table Panel"
+                style={{ marginLeft: "auto", color: "#f87171", borderColor: "rgba(248, 113, 113, 0.4)" }}
+              >
+                ✕ Close
+              </button>
             </div>
 
             <div className="mongoschema-detail-filepath">
@@ -825,48 +932,166 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
               </thead>
               <tbody>
                 {filteredFields.map((field, index) => {
-                  const isNested = field.name.includes(".");
-                  const hasChildren = field.type === "Object[]";
-                  const isExpanded = expandedRows[field.name];
+                  const hasSubFields = field.subFields && field.subFields.length > 0;
+                  const isExpanded = expandedRows[field.name] === undefined ? true : expandedRows[field.name];
 
                   return (
-                    <tr key={index}>
-                      <td style={{ color: "#71717a", fontFamily: "monospace" }}>{index + 1}</td>
-                      <td>
-                        <div className={`mongoschema-cell-name ${isNested ? "nested" : ""}`}>
-                          {hasChildren && (
-                            <span
-                              style={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}
-                              onClick={() => toggleRowExpand(field.name)}
-                            >
-                              {isExpanded ? <FaChevronDown size={9} /> : <FaChevronRight size={9} />}
-                            </span>
-                          )}
-                          <span>{field.name}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`mongoschema-type-badge ${getTypeBadgeClass(field.type)}`}>
-                          {field.type}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: "center", color: field.required ? "#00ff88" : "#52525b" }}>
-                        {field.required ? "✓" : "—"}
-                      </td>
-                      <td style={{ textAlign: "center", color: field.unique ? "#00ff88" : "#52525b" }}>
-                        {field.unique ? "✓" : "—"}
-                      </td>
-                      <td style={{ textAlign: "center", color: field.index ? "#38bdf8" : "#52525b" }}>
-                        {field.index ? "✓" : "—"}
-                      </td>
-                    </tr>
+                    <Fragment key={field.name || index}>
+                      <tr>
+                        <td style={{ color: "#71717a", fontFamily: "monospace" }}>{index + 1}</td>
+                        <td>
+                          <div className="mongoschema-cell-name">
+                            {hasSubFields && (
+                              <span
+                                className="mongoschema-expand-toggle"
+                                onClick={() => toggleRowExpand(field.name)}
+                                title={isExpanded ? "Collapse Sub-Schema Table" : "Expand Sub-Schema Table"}
+                              >
+                                {isExpanded ? <FaChevronDown size={9} /> : <FaChevronRight size={9} />}
+                              </span>
+                            )}
+                            <span>{field.name}</span>
+                            {hasSubFields && (
+                              <span className="mongoschema-subschema-pill">
+                                ↳ {field.subSchemaName || `${field.name}Schema`}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`mongoschema-type-badge ${getTypeBadgeClass(field.type)}`}>
+                            {field.type}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "center", color: field.required ? "#00ff88" : "#52525b" }}>
+                          {field.required ? "✓" : "—"}
+                        </td>
+                        <td style={{ textAlign: "center", color: field.unique ? "#00ff88" : "#52525b" }}>
+                          {field.unique ? "✓" : "—"}
+                        </td>
+                        <td style={{ textAlign: "center", color: field.index ? "#38bdf8" : "#52525b" }}>
+                          {field.index ? "✓" : "—"}
+                        </td>
+                      </tr>
+
+                      {/* Nested Sub-Schema Table Row */}
+                      {hasSubFields && isExpanded && showEmbeddedDocs && (
+                        <tr className="mongoschema-nested-table-row">
+                          <td colSpan="6" className="mongoschema-nested-table-cell">
+                            <div className="mongoschema-nested-table-box">
+                              <div className="mongoschema-nested-header-bar">
+                                <span className="nested-bar-icon">↳</span>
+                                <span className="nested-bar-title">Nested Sub-Schema Table:</span>
+                                <span className="nested-bar-name">{field.subSchemaName || `${field.name}Schema`}</span>
+                                <span className="nested-bar-count">{field.subFields.length} sub-fields</span>
+                              </div>
+                              <table className="mongoschema-table mongoschema-inner-subtable">
+                                <thead>
+                                  <tr>
+                                    <th style={{ width: "32px" }}>#</th>
+                                    <th>Sub-Field Name</th>
+                                    <th>Type</th>
+                                    <th style={{ width: "60px", textAlign: "center" }}>Required</th>
+                                    <th style={{ width: "50px", textAlign: "center" }}>Unique</th>
+                                    <th style={{ width: "50px", textAlign: "center" }}>Index</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {field.subFields.map((sf, sfIdx) => (
+                                    <tr key={sfIdx}>
+                                      <td style={{ color: "#71717a", fontFamily: "monospace" }}>{index + 1}.{sfIdx + 1}</td>
+                                      <td>
+                                        <div className="mongoschema-cell-name nested">
+                                          <span>{sf.name}</span>
+                                        </div>
+                                      </td>
+                                      <td>
+                                        <span className={`mongoschema-type-badge ${getTypeBadgeClass(sf.type)}`}>
+                                          {sf.type}
+                                        </span>
+                                      </td>
+                                      <td style={{ textAlign: "center", color: sf.required ? "#00ff88" : "#52525b" }}>
+                                        {sf.required ? "✓" : "—"}
+                                      </td>
+                                      <td style={{ textAlign: "center", color: sf.unique ? "#00ff88" : "#52525b" }}>
+                                        {sf.unique ? "✓" : "—"}
+                                      </td>
+                                      <td style={{ textAlign: "center", color: sf.index ? "#38bdf8" : "#52525b" }}>
+                                        {sf.index ? "✓" : "—"}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>
             </table>
+
+            {/* Sub-Schemas Defined in File Section */}
+            {activeModel.subSchemas?.length > 0 && (
+              <div className="mongoschema-subschemas-section">
+                <div className="mongoschema-section-label" style={{ marginTop: "20px", marginBottom: "10px", color: "#38bdf8" }}>
+                  SUB-SCHEMAS DEFINED IN {activeModel.name}.js ({activeModel.subSchemas.length})
+                </div>
+                {activeModel.subSchemas.map((subSchema, ssIdx) => (
+                  <div key={ssIdx} className="mongoschema-nested-table-box" style={{ marginBottom: "14px" }}>
+                    <div className="mongoschema-nested-header-bar">
+                      <span className="nested-bar-icon">📋</span>
+                      <span className="nested-bar-title">Sub-Schema:</span>
+                      <span className="nested-bar-name">{subSchema.name}</span>
+                      <span className="nested-bar-count">{subSchema.fields.length} fields</span>
+                    </div>
+                    <table className="mongoschema-table mongoschema-inner-subtable">
+                      <thead>
+                        <tr>
+                          <th style={{ width: "32px" }}>#</th>
+                          <th>Sub-Field Name</th>
+                          <th>Type</th>
+                          <th style={{ width: "60px", textAlign: "center" }}>Required</th>
+                          <th style={{ width: "50px", textAlign: "center" }}>Unique</th>
+                          <th style={{ width: "50px", textAlign: "center" }}>Index</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subSchema.fields.map((sf, sfIdx) => (
+                          <tr key={sfIdx}>
+                            <td style={{ color: "#71717a", fontFamily: "monospace" }}>{sfIdx + 1}</td>
+                            <td>
+                              <div className="mongoschema-cell-name nested">
+                                <span>{sf.name}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span className={`mongoschema-type-badge ${getTypeBadgeClass(sf.type)}`}>
+                                {sf.type}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: "center", color: sf.required ? "#00ff88" : "#52525b" }}>
+                              {sf.required ? "✓" : "—"}
+                            </td>
+                            <td style={{ textAlign: "center", color: sf.unique ? "#00ff88" : "#52525b" }}>
+                              {sf.unique ? "✓" : "—"}
+                            </td>
+                            <td style={{ textAlign: "center", color: sf.index ? "#38bdf8" : "#52525b" }}>
+                              {sf.index ? "✓" : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
     </div>
   );
-}
+})}

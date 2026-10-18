@@ -278,6 +278,22 @@ function extractModelDetails(content) {
     }
   }
 
+  // Sub-schemas defined in the model file (e.g. const educationSchema = new mongoose.Schema({...}))
+  const subSchemas = [];
+  const subSchemaRegex = /(?:const|let|var)\s+([a-zA-Z0-9_]+Schema)\s*=\s*(?:new\s+)?(?:mongoose\.)?Schema\s*\(\s*\{([\s\S]*?)\}\s*(?:,|\))/g;
+  let sMatch;
+  while ((sMatch = subSchemaRegex.exec(content)) !== null) {
+    const sName = sMatch[1];
+    const sBody = sMatch[2];
+    const sFields = [];
+    const sfRegex = /([a-zA-Z0-9_]+)\s*:\s*(?:\{\s*type\s*:\s*([a-zA-Z0-9_.]+)|(String|Number|Boolean|Date|ObjectId))/g;
+    let sfm;
+    while ((sfm = sfRegex.exec(sBody)) !== null) {
+      sFields.push({ name: sfm[1], type: sfm[2] || sfm[3] });
+    }
+    subSchemas.push({ name: sName, fields: sFields });
+  }
+
   // Schema hooks & methods
   const methods = [];
   const hookRegex = /\.pre\(['"]([a-zA-Z0-9_]+)['"]|\.post\(['"]([a-zA-Z0-9_]+)['"]|\.methods\.([a-zA-Z0-9_]+)|\.statics\.([a-zA-Z0-9_]+)/g;
@@ -286,7 +302,7 @@ function extractModelDetails(content) {
     if (m && !methods.includes(m)) methods.push(m);
   }
 
-  return { fields, relations, methods };
+  return { fields, relations, methods, subSchemas };
 }
 
 /**
@@ -529,9 +545,10 @@ export function extractAllDeclarations(content = "") {
     } else if (rawVal.startsWith("require(") || rawVal.includes("require(")) {
       kind = "import";
       type = "CommonJS Require";
-    } else if (rawVal.startsWith("(") || rawVal.startsWith("async") || rawVal.includes("=>") || rawVal.startsWith("function")) {
-      kind = "function";
-      type = "Arrow Function / Handler";
+    } else if (rawVal.includes("=>") || rawVal.startsWith("(") || rawVal.startsWith("async") || rawVal.startsWith("function")) {
+      // Distinctly classify arrow functions and asynchronous handlers
+      kind = "arrow-function";
+      type = "Arrow Function";
     } else if (rawVal.includes("process.env.") || rawVal.includes("import.meta.env.")) {
       kind = "constant";
       type = "Environment Variable / Secret";
@@ -547,9 +564,9 @@ export function extractAllDeclarations(content = "") {
     } else if (rawVal.startsWith("[")) {
       kind = "constant";
       type = "Array Constant";
-    } else if (declKeyword === "const" && /^[A-Z0-9_]+$/.test(name)) {
+    } else if (declKeyword === "const") {
       kind = "constant";
-      type = "Named Constant";
+      type = /^[A-Z0-9_]+$/.test(name) ? "Named Constant" : "Constant Value";
     }
 
     items.push({
@@ -557,8 +574,27 @@ export function extractAllDeclarations(content = "") {
       kind,
       type,
       value: preview,
-      isConst: declKeyword === "const"
+      isConst: declKeyword === "const",
+      isArrowFunction: kind === "arrow-function"
     });
+  }
+
+  // 4. Standalone and Exported Function Declarations
+  const funcDeclRegex = /(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)/g;
+  while ((match = funcDeclRegex.exec(content)) !== null) {
+    const fnName = match[1];
+    const params = match[2]?.trim() || "";
+    if (!seenNames.has(fnName)) {
+      seenNames.add(fnName);
+      items.push({
+        name: fnName,
+        kind: "function",
+        type: "Standard Function",
+        value: `(${params})`,
+        isConst: false,
+        isArrowFunction: false
+      });
+    }
   }
 
   return items;
@@ -650,7 +686,13 @@ export function scanCodebaseArchitecture(files = []) {
       details = extractComponentDetails(content);
     }
 
-    details.constants = extractConstants(content);
+    const allDeclarations = extractAllDeclarations(content);
+    details.allDeclarations = allDeclarations;
+    details.arrowFunctions = allDeclarations.filter(d => d.kind === "arrow-function");
+    details.constants = allDeclarations.filter(d => d.kind === "constant");
+    details.instances = allDeclarations.filter(d => d.kind === "instance");
+    details.schemas = allDeclarations.filter(d => d.kind === "schema");
+    details.refs = allDeclarations.filter(d => d.kind === "ref");
 
     const node = {
       id: `${layer}-${name}`,
@@ -758,4 +800,25 @@ export function scanCodebaseArchitecture(files = []) {
       configs: nodes.filter(n => n.layer === "config").length
     }
   };
+}
+
+/**
+ * Detects if the workspace represents a portfolio project architecture
+ */
+export function isPortfolioProject(files = []) {
+  if (!files || !files.length) return false;
+  return files.some(f => {
+    const full = (((f.path || "") + "/" + (f.name || "")).toLowerCase()).replace(/\\/g, "/");
+    return (
+      full.includes("portfolio") ||
+      full.includes("useportfolio") ||
+      f.name === "AdminPage.jsx" ||
+      f.name === "AdminMessages.jsx" ||
+      f.name === "ResumeEmbed.jsx" ||
+      f.name === "ProjectsPage.jsx" ||
+      f.name === "SkillsPage.jsx" ||
+      f.name === "ExperiencePage.jsx" ||
+      f.name === "rag.js"
+    );
+  });
 }

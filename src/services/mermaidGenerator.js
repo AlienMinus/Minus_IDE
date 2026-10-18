@@ -1,45 +1,169 @@
 // src/services/mermaidGenerator.js
-// Generates GitHub-flavored Mermaid diagrams from ArchitectureGraph and ExecutionSteps
+// Generates GitHub-flavored Mermaid diagrams dynamically from ArchitectureGraph and ExecutionSteps
 
 export function generateArchitectureFlowchart(architectureGraph) {
-  const { nodes = [], edges = [] } = architectureGraph;
+  const { nodes = [], edges = [] } = architectureGraph || {};
   if (!nodes.length) return "flowchart TD\n  Empty[No workspace files detected]";
 
   const lines = ["flowchart TD"];
 
-  // Group nodes into subgraphs by architectural layer
-  const layers = [
-    { key: "model", title: "🗄️ Database Models & Schemas" },
-    { key: "backend", title: "🚀 Backend Server & API Routes" },
-    { key: "service", title: "🛠️ Services & API Clients" },
-    { key: "context", title: "🔄 Global State & Context Providers" },
-    { key: "hook", title: "🪝 Custom Hooks" },
-    { key: "component", title: "🧩 UI Components" },
-    { key: "page", title: "📄 Pages & Views" },
-    { key: "util", title: "⚙️ Utilities & Helpers" }
-  ];
+  // Vibrant, high-contrast dark-mode styling classes with large readable text
+  lines.push("  classDef appStyle fill:#1e1b4b,stroke:#818cf8,stroke-width:2.5px,color:#ffffff,font-size:14px;");
+  lines.push("  classDef pageStyle fill:#0c1e33,stroke:#38bdf8,stroke-width:2.2px,color:#ffffff,font-size:13px;");
+  lines.push("  classDef compStyle fill:#062a1a,stroke:#22c55e,stroke-width:2px,color:#ffffff,font-size:12px;");
+  lines.push("  classDef hookStyle fill:#2c0b3b,stroke:#c084fc,stroke-width:2px,color:#ffffff,font-size:12px;");
+  lines.push("  classDef ctxStyle fill:#331e05,stroke:#f59e0b,stroke-width:2px,color:#ffffff,font-size:13px;");
+  lines.push("  classDef srvStyle fill:#1a103c,stroke:#818cf8,stroke-width:2px,color:#ffffff,font-size:13px;");
+  lines.push("  classDef backendStyle fill:#3b0a0a,stroke:#f87171,stroke-width:2.5px,color:#ffffff,font-size:14px;");
+  lines.push("  classDef modelStyle fill:#022c22,stroke:#00ff88,stroke-width:2.5px,color:#ffffff,font-size:14px;");
+  lines.push("  classDef configStyle fill:#1a202c,stroke:#94a3b8,stroke-width:2px,color:#ffffff,font-size:12px;");
 
-  layers.forEach(layer => {
-    const layerNodes = nodes.filter(n => n.layer === layer.key);
-    if (layerNodes.length > 0) {
-      lines.push(`  subgraph ${layer.key.toUpperCase()} ["${layer.title}"]`);
-      layerNodes.forEach(node => {
-        const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
-        const cleanName = node.name.replace(/["\n]/g, "");
-        lines.push(`    ${cleanId}["${cleanName}"]`);
-      });
-      lines.push("  end");
-    }
-  });
+  // Separate nodes by architectural role
+  const pageNodes = nodes.filter(n => n.layer === "page");
+  const compNodes = nodes.filter(n => n.layer === "component");
+  const ctxNodes = nodes.filter(n => n.layer === "context");
+  const hookNodes = nodes.filter(n => n.layer === "hook");
+  const srvNodes = nodes.filter(n => n.layer === "service");
+  const backendNodes = nodes.filter(n => n.layer === "backend");
+  const modelNodes = nodes.filter(n => n.layer === "model");
+  const configNodes = nodes.filter(n => n.layer === "config");
 
-  // Add connections (edges)
-  edges.slice(0, 50).forEach(edge => {
+  // Identify router/entry point (e.g. App.jsx, App.js, main.jsx)
+  const appNode = compNodes.find(n => /^app$/i.test(n.name)) || pageNodes.find(n => /^app$/i.test(n.name));
+  const remainingComps = compNodes.filter(n => n !== appNode);
+
+  // 1. FRONTEND CLIENT TIER
+  lines.push('  subgraph FRONTEND ["🌐 Frontend Client Tier"]');
+  lines.push("    direction TB");
+
+  if (appNode) {
+    const cleanId = appNode.id.replace(/[^a-zA-Z0-9_]/g, "_");
+    lines.push(`    subgraph ROUTER_BOX ["🖥️ Application Router & Entry"]`);
+    lines.push(`      ${cleanId}["<b>${appNode.name}</b><br/><small style='color:#a1a1aa;'>${appNode.fileName}</small>"]:::appStyle`);
+    lines.push("    end");
+  }
+
+  if (pageNodes.length > 0) {
+    lines.push('    subgraph PAGES ["📄 Views & Pages"]');
+    lines.push("      direction TB");
+    pageNodes.forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`      ${cleanId}["📄 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::pageStyle`);
+    });
+    lines.push("    end");
+  }
+
+  if (remainingComps.length > 0) {
+    lines.push('    subgraph COMPONENTS ["🧩 UI Components & Widgets"]');
+    lines.push("      direction TB");
+    remainingComps.forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`      ${cleanId}["🧩 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::compStyle`);
+    });
+    lines.push("    end");
+  }
+
+  if (ctxNodes.length > 0 || hookNodes.length > 0) {
+    lines.push('    subgraph STATE_TIER ["🔄 State Management & Hooks"]');
+    lines.push("      direction TB");
+    ctxNodes.forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`      ${cleanId}["🔄 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::ctxStyle`);
+    });
+    hookNodes.forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`      ${cleanId}["🪝 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::hookStyle`);
+    });
+    lines.push("    end");
+  }
+  lines.push("  end");
+
+  // 2. NETWORK & SERVICES TIER
+  if (srvNodes.length > 0) {
+    lines.push('  subgraph SERVICES ["⚡ API Clients & Networking Services"]');
+    lines.push("    direction TB");
+    srvNodes.forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`    ${cleanId}["⚡ <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::srvStyle`);
+    });
+    lines.push("  end");
+  }
+
+  // 3. BACKEND SERVER & API ENDPOINTS TIER
+  if (backendNodes.length > 0) {
+    lines.push('  subgraph BACKEND ["🚀 Backend Server & Express Controllers"]');
+    lines.push("    direction TB");
+    backendNodes.forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`    ${cleanId}["🚀 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::backendStyle`);
+    });
+    lines.push("  end");
+  }
+
+  // 4. DATABASE MODELS TIER
+  if (modelNodes.length > 0) {
+    lines.push('  subgraph DATABASE ["🗄️ MongoDB Database Models & Schemas"]');
+    lines.push("    direction TB");
+    modelNodes.forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`    ${cleanId}[("🗄️ <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>")]:::modelStyle`);
+    });
+    lines.push("  end");
+  }
+
+  // 5. CONFIGURATION
+  if (configNodes.length > 0) {
+    lines.push('  subgraph CONFIG ["⚙️ Configuration & Environment"]');
+    lines.push("    direction TB");
+    configNodes.forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`    ${cleanId}["⚙️ <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::configStyle`);
+    });
+    lines.push("  end");
+  }
+
+  // Connect App Router to Pages if App exists
+  if (appNode) {
+    const appId = appNode.id.replace(/[^a-zA-Z0-9_]/g, "_");
+    pageNodes.forEach(page => {
+      const pageId = page.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`  ${appId} -->|routes to| ${pageId}`);
+    });
+  }
+
+  // Semantic architectural connections (edges)
+  const seenEdges = new Set();
+  edges.slice(0, 80).forEach(edge => {
     const fromId = edge.source.replace(/[^a-zA-Z0-9_]/g, "_");
     const toId = edge.target.replace(/[^a-zA-Z0-9_]/g, "_");
-    if (fromId && toId) {
-      lines.push(`  ${fromId} --> ${toId}`);
+    const edgeKey = `${fromId}->${toId}`;
+    if (fromId && toId && !seenEdges.has(edgeKey)) {
+      seenEdges.add(edgeKey);
+      let edgeLabel = "";
+      if (edge.kind === "query") edgeLabel = "|queries|";
+      else if (edge.kind === "render") edgeLabel = "|renders|";
+      else if (edge.kind === "relation") edgeLabel = "|references|";
+      else if (edge.kind === "fetch") edgeLabel = "|fetches|";
+      else if (edge.label) edgeLabel = `|${edge.label.slice(0, 18)}|`;
+
+      lines.push(`  ${fromId} -->${edgeLabel} ${toId}`);
     }
   });
+
+  // Inter-tier connections if not already linked by explicit edges
+  if (srvNodes.length > 0 && backendNodes.length > 0 && !edges.some(e => e.source?.includes("service") && e.target?.includes("backend"))) {
+    const firstSrv = srvNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_");
+    const firstBack = backendNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_");
+    lines.push(`  ${firstSrv} -.->|HTTP API calls| ${firstBack}`);
+  }
+
+  if (backendNodes.length > 0 && modelNodes.length > 0 && !edges.some(e => e.source?.includes("backend") && e.target?.includes("model"))) {
+    const firstBack = backendNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_");
+    modelNodes.slice(0, 3).forEach(m => {
+      const mId = m.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`  ${firstBack} -.->|persists/queries| ${mId}`);
+    });
+  }
 
   return lines.join("\n");
 }
@@ -80,6 +204,7 @@ export function generateEntityRelationshipDiagram(nodes) {
   if (!models.length) return "erDiagram\n  NO_MODELS ||--|| WORKSPACE : contains";
 
   const lines = ["erDiagram"];
+  const subSchemasCreated = new Set();
 
   models.forEach(model => {
     const cleanName = model.name.replace(/[^a-zA-Z0-9_]/g, "");
@@ -88,13 +213,31 @@ export function generateEntityRelationshipDiagram(nodes) {
     if (fields.length === 0) {
       lines.push("    string id PK");
     } else {
-      fields.slice(0, 10).forEach(f => {
+      const topFields = fields.filter(f => !f.name.includes("."));
+      (topFields.length ? topFields : fields).slice(0, 10).forEach(f => {
         const type = (f.type || "string").toLowerCase().replace(/[^a-zA-Z0-9]/g, "");
         const name = (f.name || "field").replace(/[^a-zA-Z0-9_]/g, "");
         lines.push(`    ${type} ${name}`);
       });
     }
     lines.push("  }");
+
+    // Render nested sub-schema entities & embeds relationship
+    const subSchemas = model.details?.subSchemas || [];
+    subSchemas.forEach(sub => {
+      const subClean = sub.name.replace(/[^a-zA-Z0-9_]/g, "");
+      if (!subSchemasCreated.has(subClean)) {
+        subSchemasCreated.add(subClean);
+        lines.push(`  ${subClean} {`);
+        (sub.fields || []).slice(0, 8).forEach(sf => {
+          const sType = (sf.type || "string").toLowerCase().replace(/[^a-zA-Z0-9]/g, "");
+          const sName = (sf.name || "field").replace(/[^a-zA-Z0-9_]/g, "");
+          lines.push(`    ${sType} ${sName}`);
+        });
+        lines.push("  }");
+      }
+      lines.push(`  ${cleanName} ||--o{ ${subClean} : embeds`);
+    });
 
     // Relations
     (model.details?.relations || []).forEach(rel => {

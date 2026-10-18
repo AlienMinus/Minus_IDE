@@ -14,12 +14,16 @@ import {
 
 export default function MermaidRenderer({ code, title = "Diagram" }) {
   const containerRef = useRef(null);
+  const viewportRef = useRef(null);
   const [zoom, setZoom] = useState(100);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
-  const renderId = useRef(`mermaid-${Math.random().toString(36).substring(2, 9)}`);
 
   useEffect(() => {
     let isCancelled = false;
@@ -48,7 +52,7 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
               const fallback = document.createElement("script");
               fallback.src = "https://unpkg.com/mermaid@10/dist/mermaid.min.js";
               fallback.onload = () => resolve();
-              fallback.onerror = (e) => reject(new Error("Failed to load Mermaid script from CDN"));
+              fallback.onerror = () => reject(new Error("Failed to load Mermaid script from CDN"));
               document.head.appendChild(fallback);
             };
             document.head.appendChild(script);
@@ -57,26 +61,26 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
 
         if (isCancelled || !containerRef.current) return;
 
-        // 2. Initialize Mermaid with VS Code dark theme
+        // 2. Initialize Mermaid with vibrant dark theme
         window.mermaid.initialize({
           startOnLoad: false,
           securityLevel: "loose",
           theme: "dark",
           themeVariables: {
             darkMode: true,
-            background: "#181818",
-            primaryColor: "#0e639c",
+            background: "#101214",
+            primaryColor: "#0284c7",
             primaryTextColor: "#ffffff",
-            primaryBorderColor: "#1177bb",
-            lineColor: "#58a6ff",
-            secondaryColor: "#238636",
-            tertiaryColor: "#1f1f1f",
-            edgeLabelBackground: "#181818",
-            actorBorder: "#388bfd",
-            actorBkg: "#161b22",
+            primaryBorderColor: "#38bdf8",
+            lineColor: "#38bdf8",
+            secondaryColor: "#059669",
+            tertiaryColor: "#1e1b4b",
+            edgeLabelBackground: "#18181b",
+            actorBorder: "#38bdf8",
+            actorBkg: "#0f172a",
             actorTextColor: "#ffffff",
-            signalColor: "#58a6ff",
-            signalTextColor: "#e6edf3"
+            signalColor: "#38bdf8",
+            signalTextColor: "#e2e8f0"
           }
         });
 
@@ -104,6 +108,60 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
     };
   }, [code]);
 
+  // Mouse Drag / Pan Handlers
+  const handleMouseDown = (e) => {
+    if (e.button !== 0 || e.target.closest("button") || e.target.closest(".mermaid-header-bar")) return;
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y
+    };
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStartRef.current.x,
+      y: e.clientY - dragStartRef.current.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Zoom on Ctrl + Wheel
+  const handleWheel = (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -15 : 15;
+      setZoom(z => Math.max(25, Math.min(z + delta, 500)));
+    }
+  };
+
+  const handleReset = () => {
+    setZoom(100);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const handleFit = () => {
+    if (!containerRef.current || !viewportRef.current) return;
+    const svgEl = containerRef.current.querySelector("svg");
+    if (!svgEl) return;
+    const vp = viewportRef.current.getBoundingClientRect();
+    const bb = svgEl.getBoundingClientRect();
+    if (bb.width > 0 && bb.height > 0) {
+      const currentScale = zoom / 100;
+      const naturalW = bb.width / currentScale;
+      const naturalH = bb.height / currentScale;
+      const scaleX = (vp.width - 60) / naturalW;
+      const scaleY = (vp.height - 60) / naturalH;
+      const fitScale = Math.max(25, Math.min(Math.floor(Math.min(scaleX, scaleY) * 100), 250));
+      setZoom(fitScale);
+      setPan({ x: 0, y: 0 });
+    }
+  };
+
   const handleCopyCode = () => {
     navigator.clipboard.writeText(code);
     setCopied(true);
@@ -129,60 +187,91 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
     <div className="mermaid-renderer-wrapper">
       {/* Header Toolbar */}
       <div className="mermaid-header-bar">
-        <div className="mermaid-title">{title}</div>
+        <div className="mermaid-title">
+          <FaExpandArrowsAlt size={12} style={{ color: "#38bdf8" }} />
+          <span>{title}</span>
+          <span className="mermaid-drag-hint">🖱️ Click & drag to pan • Ctrl + Scroll to zoom</span>
+        </div>
         <div className="mermaid-actions">
+          <div className="mermaid-zoom-controls">
+            <button
+              className="mermaid-btn icon-only"
+              onClick={() => setZoom(z => Math.max(z - 15, 25))}
+              title="Zoom Out (Min 25%)"
+            >
+              <FaSearchMinus size={11} />
+            </button>
+            <span className="mermaid-zoom-val">{zoom}%</span>
+            <button
+              className="mermaid-btn icon-only"
+              onClick={() => setZoom(z => Math.min(z + 15, 500))}
+              title="Zoom In (Max 500%)"
+            >
+              <FaSearchPlus size={11} />
+            </button>
+          </div>
+
+          <div className="mermaid-preset-pills">
+            <button className={`mermaid-preset-btn ${zoom === 50 ? "active" : ""}`} onClick={() => setZoom(50)}>50%</button>
+            <button className={`mermaid-preset-btn ${zoom === 100 ? "active" : ""}`} onClick={() => setZoom(100)}>100%</button>
+            <button className={`mermaid-preset-btn ${zoom === 150 ? "active" : ""}`} onClick={() => setZoom(150)}>150%</button>
+            <button className={`mermaid-preset-btn ${zoom === 200 ? "active" : ""}`} onClick={() => setZoom(200)}>200%</button>
+            <button className={`mermaid-preset-btn ${zoom === 300 ? "active" : ""}`} onClick={() => setZoom(300)}>300%</button>
+          </div>
+
           <button
             className="mermaid-btn"
-            onClick={() => setZoom(z => Math.max(z - 10, 50))}
-            title="Zoom Out"
+            onClick={handleFit}
+            title="Fit Diagram into Viewport"
           >
-            <FaSearchMinus />
+            <FaExpandArrowsAlt size={11} /> Fit
           </button>
-          <span style={{ fontSize: "11px", color: "#888" }}>{zoom}%</span>
           <button
             className="mermaid-btn"
-            onClick={() => setZoom(z => Math.min(z + 10, 180))}
-            title="Zoom In"
+            onClick={handleReset}
+            title="Reset Pan & Zoom (100%)"
           >
-            <FaSearchPlus />
-          </button>
-          <button
-            className="mermaid-btn"
-            onClick={() => setZoom(100)}
-            title="Reset Zoom"
-          >
-            <FaExpandArrowsAlt /> Reset
+            Reset
           </button>
           <button
             className="mermaid-btn"
             onClick={handleDownloadSvg}
             title="Download SVG Diagram"
           >
-            <FaDownload /> Download SVG
+            <FaDownload size={11} /> SVG
           </button>
           <button
             className="mermaid-btn"
             onClick={handleCopyCode}
             title="Copy Mermaid Code"
           >
-            {copied ? <FaCheck style={{ color: "#3fb950" }} /> : <FaCopy />}
-            {copied ? "Copied!" : "Copy Code"}
+            {copied ? <FaCheck style={{ color: "#3fb950" }} size={11} /> : <FaCopy size={11} />}
+            {copied ? "Copied" : "Copy"}
           </button>
           <button
             className="mermaid-btn"
             onClick={() => setShowCode(v => !v)}
             title="Toggle Mermaid Code"
           >
-            <FaCode /> {showCode ? "Hide Code" : "Show Code"}
+            <FaCode size={11} /> {showCode ? "Hide" : "Code"}
           </button>
         </div>
       </div>
 
-      {/* Rendered SVG Viewport */}
-      <div className="mermaid-canvas-viewport">
+      {/* Rendered SVG Viewport with Pan and Zoom */}
+      <div
+        ref={viewportRef}
+        className={`mermaid-canvas-viewport ${isDragging ? "dragging" : ""}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
+        onDoubleClick={handleReset}
+      >
         {loading && (
           <div className="mermaid-loading-state">
-            <FaSpinner className="spin-icon" size={24} color="#007acc" />
+            <FaSpinner className="spin-icon" size={24} color="#38bdf8" />
             <span>Rendering visual Mermaid diagram...</span>
           </div>
         )}
@@ -191,8 +280,9 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
           ref={containerRef}
           className="mermaid-svg-output"
           style={{
-            transform: `scale(${zoom / 100})`,
-            display: loading ? "none" : "flex"
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})`,
+            display: loading ? "none" : "flex",
+            cursor: isDragging ? "grabbing" : "grab"
           }}
         />
 
