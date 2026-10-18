@@ -195,7 +195,7 @@ export default function ArchitectureCanvas() {
           <button
             className={`arch-view-tab ${activeTab === "graph" ? "active" : ""}`}
             onClick={() => setActiveTab("graph")}
-            title="Multi-Layer Workspace Component Cards"
+            title="Interactive multi-layer architecture cards and relations"
           >
             <FaProjectDiagram /> Visual Architecture
           </button>
@@ -203,14 +203,15 @@ export default function ArchitectureCanvas() {
             className={`arch-view-tab ${activeTab === "filetree" ? "active" : ""}`}
             onClick={() => setActiveTab("filetree")}
             style={{ color: activeTab === "filetree" ? "#00ff88" : undefined }}
-            title="Project File Tree using 'tree /F' on Sandbox Environment"
+            title="Windows ASCII directory tree structure (tree /F /A)"
           >
-            <FaFolderOpen color="#00ff88" /> Project File Tree (tree /F)
+            <FaFolderOpen color="#00ff88" /> Project Tree
           </button>
           <button
             className={`arch-view-tab ${activeTab === "mongoschema" ? "active" : ""}`}
             onClick={() => setActiveTab("mongoschema")}
             style={{ color: activeTab === "mongoschema" ? "#00ff88" : undefined }}
+            title="Mongoose schema cards, fields, sub-schemas & Chen ERD"
           >
             <FaDatabase color="#00ff88" /> MongoSchema ERD
           </button>
@@ -218,25 +219,28 @@ export default function ArchitectureCanvas() {
             className="arch-view-tab"
             onClick={() => openBackendRoutesTab && openBackendRoutesTab()}
             style={{ color: "#38bdf8" }}
-            title="Open Dedicated Backend API Routes Tab"
+            title="Backend REST API routes & controller endpoints"
           >
             <FaNetworkWired color="#38bdf8" /> API Routes
           </button>
           <button
             className={`arch-view-tab ${activeTab === "mermaid" ? "active" : ""}`}
             onClick={() => setActiveTab("mermaid")}
+            title="Mermaid architecture flowchart, call sequence, and ERD diagrams"
           >
             <FaCode /> Mermaid Diagrams
           </button>
           <button
             className={`arch-view-tab ${activeTab === "sequence" ? "active" : ""}`}
             onClick={() => setActiveTab("sequence")}
+            title={`Traced execution sequences (${executionSteps.length} steps)`}
           >
-            <FaBolt color="#e3b341" /> Execution Flow ({executionSteps.length} steps)
+            <FaBolt color="#e3b341" /> Execution Flow <span className="arch-tab-badge">{executionSteps.length}</span>
           </button>
           <button
             className={`arch-view-tab ${activeTab === "dictionary" ? "active" : ""}`}
             onClick={() => setActiveTab("dictionary")}
+            title="Workspace symbols, state variables, and function definitions"
           >
             <FaBook /> Symbol Catalog
           </button>

@@ -143,17 +143,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  will-change: transform;
   transform-origin: center center;
 }
 
-/* Ensure SVG renders in high-definition without being squeezed into a tiny strip */
+/* Ensure SVG renders in high-definition without being squeezed or blurred */
 .mermaid-svg-output svg {
-  width: auto !important;
-  height: auto !important;
+  display: block;
   max-width: none !important;
-  min-width: 850px;
-  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.65));
+  shape-rendering: geometricPrecision;
+  text-rendering: geometricPrecision;
 }
 
 .mermaid-raw-code-box {

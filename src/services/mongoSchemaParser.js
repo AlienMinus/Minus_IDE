@@ -45,10 +45,24 @@ function parseSchemaObjectContent(content, prefix = "") {
     const fullKey = prefix ? `${prefix}.${cleanKey}` : cleanKey;
     const rawTrimmed = raw.trim();
 
-    // 1. Array of Embedded Documents: field: [{ ... }]
+    // 1. Array of Embedded Documents or Array of primitives with options: field: [{ ... }]
     if (/^\[\s*\{/.test(rawTrimmed)) {
       const innerMatch = rawTrimmed.match(/\[\s*\{([\s\S]*)\}\s*\]/);
       const innerContent = innerMatch && innerMatch[1] ? innerMatch[1] : "";
+
+      // Check if it's [{ type: String, ... }] (an array of primitives with options like trim, required)
+      const primitiveTypeMatch = innerContent.match(/type\s*:\s*(?:mongoose\.Schema\.Types\.)?([a-zA-Z0-9_.]+)/);
+      if (primitiveTypeMatch && ["String", "Number", "Boolean", "Date", "ObjectId", "Buffer"].includes(primitiveTypeMatch[1])) {
+        fields.push({
+          name: fullKey,
+          type: `${primitiveTypeMatch[1]}[]`,
+          required: innerContent.includes("required: true"),
+          unique: innerContent.includes("unique: true"),
+          index: innerContent.includes("index: true")
+        });
+        return;
+      }
+
       const directSubFields = parseSchemaObjectContent(innerContent);
 
       fields.push({
@@ -252,6 +266,56 @@ function parseSchemaObjectContent(content, prefix = "") {
 }
 
 /**
+ * Extracts a balanced JavaScript object body `{ ... }` starting from or after startIdx
+ */
+function extractBalancedObject(src, startIdx = 0) {
+  const openBraceIdx = src.indexOf("{", startIdx);
+  if (openBraceIdx === -1) return null;
+
+  let depth = 0;
+  let inStr = false;
+  let strChar = "";
+  let endIdx = -1;
+
+  for (let i = openBraceIdx; i < src.length; i++) {
+    const c = src[i];
+    const prev = src[i - 1];
+
+    if (inStr) {
+      if (c === strChar && prev !== "\\") {
+        inStr = false;
+      }
+    } else if (c === '"' || c === "'" || c === "`") {
+      inStr = true;
+      strChar = c;
+    } else if (c === "/" && src[i + 1] === "/") {
+      const nextLine = src.indexOf("\n", i);
+      if (nextLine === -1) break;
+      i = nextLine;
+    } else if (c === "/" && src[i + 1] === "*") {
+      const endComment = src.indexOf("*/", i + 2);
+      if (endComment === -1) break;
+      i = endComment + 1;
+    } else if (c === "{") {
+      depth++;
+    } else if (c === "}") {
+      depth--;
+      if (depth === 0) {
+        endIdx = i;
+        break;
+      }
+    }
+  }
+
+  if (endIdx === -1) return null;
+  return {
+    start: openBraceIdx,
+    end: endIdx,
+    body: src.substring(openBraceIdx + 1, endIdx)
+  };
+}
+
+/**
  * Extracts all Mongoose schemas and models from a single file's content
  */
 export function parseMongooseFile(file) {
@@ -309,17 +373,57 @@ export function parseMongooseFile(file) {
     }
   }
 
-  // 3. Extract all Schema definitions in the file
+  // 3. Extract all Schema definitions in the file using balanced brace parsing
   const allSchemas = new Map();
-  const schemaDefRegex = /(?:const|let|var)\s+([a-zA-Z0-9_]+)\s*=\s*(?:new\s+)?(?:mongoose\.)?Schema\s*\(\s*\{([\s\S]*?)\}\s*(?:,|\))/g;
-  let sMatch;
-  while ((sMatch = schemaDefRegex.exec(content)) !== null) {
-    const sName = sMatch[1];
-    const sBody = sMatch[2];
-    allSchemas.set(sName, {
-      body: sBody,
-      fields: parseSchemaObjectContent(sBody)
-    });
+
+  // Pattern 1: Variable declarations: const userSchema = new mongoose.Schema({ ... })
+  const schemaVarRegex = /(?:const|let|var)\s+([a-zA-Z0-9_]+)\s*=\s*(?:new\s+)?(?:mongoose\.)?Schema\s*\(/g;
+  let vMatch;
+  while ((vMatch = schemaVarRegex.exec(content)) !== null) {
+    const sName = vMatch[1];
+    const obj = extractBalancedObject(content, vMatch.index + vMatch[0].length);
+    if (obj) {
+      allSchemas.set(sName, {
+        body: obj.body,
+        fields: parseSchemaObjectContent(obj.body)
+      });
+    }
+  }
+
+  // Pattern 2: Inline model schemas: mongoose.model('User', new Schema({ ... }))
+  const inlineModelRegex = /mongoose\.model\s*\(\s*['"]([a-zA-Z0-9_]+)['"]\s*,\s*(?:new\s+)?(?:mongoose\.)?Schema\s*\(/g;
+  let iMatch;
+  while ((iMatch = inlineModelRegex.exec(content)) !== null) {
+    const mName = iMatch[1];
+    const sName = `${mName}Schema`;
+    if (!allSchemas.has(sName)) {
+      const obj = extractBalancedObject(content, iMatch.index + iMatch[0].length);
+      if (obj) {
+        allSchemas.set(sName, {
+          body: obj.body,
+          fields: parseSchemaObjectContent(obj.body)
+        });
+        if (!mainSchemaVar) mainSchemaVar = sName;
+      }
+    }
+  }
+
+  // Pattern 3: Any other anonymous Schema({ ... }) if none found yet
+  if (allSchemas.size === 0) {
+    const anonRegex = /(?:new\s+)?(?:mongoose\.)?Schema\s*\(/g;
+    let aMatch;
+    let count = 0;
+    while ((aMatch = anonRegex.exec(content)) !== null) {
+      count++;
+      const sName = count === 1 ? `${modelName}Schema` : `subSchema_${count}`;
+      const obj = extractBalancedObject(content, aMatch.index + aMatch[0].length);
+      if (obj) {
+        allSchemas.set(sName, {
+          body: obj.body,
+          fields: parseSchemaObjectContent(obj.body)
+        });
+      }
+    }
   }
 
   // Determine which schema is the main schema
@@ -346,15 +450,10 @@ export function parseMongooseFile(file) {
     }
   }
 
-  // Fallback if no schema matched by regex
+  // Fallback if no schema matched
   if (!mainSchemaContent) {
-    const mainSchemaMatch = content.match(/(?:new\s+)?(?:mongoose\.)?Schema\s*\(\s*\{([\s\S]*?)\}\s*(?:,\s*\{[\s\S]*?\})?\s*\)/);
-    if (mainSchemaMatch) {
-      mainSchemaContent = mainSchemaMatch[1];
-    } else {
-      const objMatch = content.match(/\{([\s\S]*)\}/);
-      if (objMatch) mainSchemaContent = objMatch[1];
-    }
+    const rawObj = extractBalancedObject(content, 0);
+    if (rawObj) mainSchemaContent = rawObj.body;
   }
 
   // Sub-schemas are all schemas in allSchemas except the main schema

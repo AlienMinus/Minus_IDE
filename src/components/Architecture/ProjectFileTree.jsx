@@ -122,6 +122,43 @@ export default function ProjectFileTree({ onOpenFile }) {
     return lines.join("\n");
   };
 
+  // Filter out node_modules, .git, and cache directories from Windows CLI tree output
+  const filterSandboxTree = (rawStdout) => {
+    if (!rawStdout) return "";
+    const rawText = rawStdout.replace(/\r/g, "");
+    const lines = rawText.split("\n");
+
+    const filteredLines = [];
+    let skippingAtIndent = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      const indentMatch = line.match(/^([|\s]*)/);
+      const indent = indentMatch ? indentMatch[1].length : 0;
+
+      if (skippingAtIndent !== -1) {
+        if (indent > skippingAtIndent) {
+          continue; // skip child lines inside node_modules or .git
+        } else {
+          skippingAtIndent = -1; // back to parent level
+        }
+      }
+
+      const ignoredBranch = line.match(/^([|\s]*)(?:\+---|\\---)(node_modules|\.git|\.cache)$/i);
+      if (ignoredBranch) {
+        const branchIndent = ignoredBranch[1].length;
+        skippingAtIndent = branchIndent;
+        filteredLines.push(`${ignoredBranch[1]}+---${ignoredBranch[2]} (collapsed)`);
+        continue;
+      }
+
+      filteredLines.push(line);
+    }
+
+    return filteredLines.join("\n");
+  };
+
   // Fetch file tree using "tree /F /A" command on sandbox environment
   const runTreeCommand = async (forceVirtual = false) => {
     setLoading(true);
@@ -153,7 +190,8 @@ export default function ProjectFileTree({ onOpenFile }) {
 
         // Validate that sandbox returned an actual populated tree
         if (stdout && hasTreeBranches && !isNoSubfolders) {
-          setTreeOutput(stdout);
+          const filtered = filterSandboxTree(stdout);
+          setTreeOutput(filtered);
           setSource("sandbox");
           setLoading(false);
           return;
@@ -182,12 +220,12 @@ export default function ProjectFileTree({ onOpenFile }) {
   };
 
   // Click on a line to open corresponding file in editor
-  const handleLineClick = (rawLine) => {
+  const handleLineClick = (fileName) => {
     const fileFn = onOpenFile || openFile;
-    if (!fileFn) return;
+    if (!fileFn || !fileName) return;
 
-    const cleaned = rawLine.replace(/^[|\\+\-\s]+/, "").trim();
-    if (!cleaned || /^[a-zA-Z]:/i.test(cleaned) || cleaned.endsWith(".") || !/\.[a-zA-Z0-9]{1,8}$/.test(cleaned)) return;
+    const cleaned = fileName.trim();
+    if (!cleaned) return;
 
     const matchedFile = files.find(f => {
       if (isIgnoredPath(f.path, f.name)) return false;
@@ -204,25 +242,61 @@ export default function ProjectFileTree({ onOpenFile }) {
   // Parse lines for rich rendering
   const parsedLines = useMemo(() => {
     if (!treeOutput) return [];
-    const rawLines = treeOutput.split("\n");
+    const cleanOutput = treeOutput.replace(/\r/g, "");
+    const rawLines = cleanOutput.split("\n");
     const q = search.toLowerCase().trim();
 
     return rawLines.map((line, idx) => {
-      const isBranch = line.includes("+---") || line.includes("\\---") || line.includes("|");
-      const cleanName = line.replace(/^[|\\+\-\s]+/, "").trim();
-      const isHeader = line.startsWith("Folder PATH") || line.startsWith("Volume serial") || line.startsWith("No subfolders");
-      const isDriveRoot = /^[a-zA-Z]:/i.test(cleanName) || cleanName === "C:." || cleanName === "E:.";
-      const isFile = !isHeader && !isDriveRoot && !cleanName.endsWith(".") && /\.[a-zA-Z0-9]{1,8}$/.test(cleanName);
-      const isFolder = isBranch && !isFile && cleanName.length > 0 && !isDriveRoot;
-      const isMatch = q ? line.toLowerCase().includes(q) : false;
+      const isHeader =
+        line.startsWith("Folder PATH") ||
+        line.startsWith("Volume serial") ||
+        line.startsWith("No subfolders");
+
+      const isDriveRoot = idx <= 4 && (/^[a-zA-Z]:(\\|\.|$)/i.test(line.trim()) || line.trim() === "C:." || line.trim() === "E:.");
+
+      const branchMatch = line.match(/^([|\s]*)(\+---|\\---)(.*)$/);
+      let isFolder = false;
+      let isFile = false;
+      let isSpacer = false;
+      let prefix = "";
+      let branchJoint = "";
+      let name = "";
+
+      if (isHeader || isDriveRoot) {
+        name = line;
+      } else if (branchMatch) {
+        isFolder = true;
+        prefix = branchMatch[1];
+        branchJoint = branchMatch[2];
+        name = branchMatch[3].trim();
+      } else if (/^[|\s]*$/.test(line)) {
+        isSpacer = true;
+        prefix = line;
+      } else {
+        const fileMatch = line.match(/^([|\s]+)(.+)$/);
+        if (fileMatch) {
+          isFile = true;
+          prefix = fileMatch[1];
+          name = fileMatch[2].trim();
+        } else {
+          name = line.trim();
+          if (name) isFile = true;
+        }
+      }
+
+      const isMatch = q && name ? name.toLowerCase().includes(q) : false;
 
       return {
         id: idx,
         raw: line,
-        cleanName,
-        isBranch,
-        isFile,
+        isHeader,
+        isDriveRoot,
         isFolder,
+        isFile,
+        isSpacer,
+        prefix,
+        branchJoint,
+        name,
         isMatch
       };
     });
@@ -242,25 +316,25 @@ export default function ProjectFileTree({ onOpenFile }) {
       <div className="project-filetree-toolbar">
         <div className="project-filetree-left">
           <div className="project-filetree-brand">
-            <FaTerminal size={14} color="#00ff88" />
-            <span className="project-filetree-title">PROJECT FILE TREE</span>
-            <span className="project-filetree-cmd-badge">tree /F /A</span>
+            <FaTerminal size={13} color="#00ff88" />
+            <span className="project-filetree-title">File Tree</span>
+            <span className="project-filetree-cmd-badge" title="Windows CLI tree command with files and ASCII branches">tree /F /A</span>
           </div>
 
           <div className="project-filetree-sources">
             <button
               className={`project-filetree-pill-btn ${source === "sandbox" ? "active" : ""}`}
               onClick={() => runTreeCommand(false)}
-              title="Execute live 'tree /F /A' via sandbox command"
+              title="Execute live 'tree /F /A' command in Sandbox OS terminal"
             >
-              ⚡ Sandbox OS
+              <FaTerminal size={10} /> Sandbox OS
             </button>
             <button
               className={`project-filetree-pill-btn ${source === "virtual" ? "active" : ""}`}
               onClick={() => runTreeCommand(true)}
-              title="Render from loaded project files"
+              title="Generate tree hierarchy from workspace AST files"
             >
-              📁 Workspace AST
+              <FaFolder size={10} /> Workspace AST
             </button>
           </div>
         </div>
@@ -270,7 +344,7 @@ export default function ProjectFileTree({ onOpenFile }) {
             <FaSearch size={11} color="#71717a" />
             <input
               type="text"
-              placeholder="Search file in tree..."
+              placeholder="Search file..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="project-filetree-search-input"
@@ -281,19 +355,19 @@ export default function ProjectFileTree({ onOpenFile }) {
             className="project-filetree-btn"
             onClick={() => runTreeCommand(false)}
             disabled={loading}
-            title="Execute 'tree /F /A' on Sandbox Environment"
+            title="Re-run 'tree /F /A' command in sandbox"
           >
             <FaSyncAlt className={loading ? "spinning" : ""} size={11} />
-            {loading ? "Running..." : "⚡ Refresh tree /F"}
+            {loading ? "Running..." : "Refresh"}
           </button>
 
           <button
             className="project-filetree-btn"
             onClick={handleCopy}
-            title="Copy Tree Output to Clipboard"
+            title="Copy ASCII tree output to clipboard"
           >
             {copied ? <FaCheck color="#00ff88" size={11} /> : <FaCopy size={11} />}
-            {copied ? "Copied" : "Copy Tree"}
+            {copied ? "Copied" : "Copy"}
           </button>
         </div>
       </div>
@@ -304,7 +378,7 @@ export default function ProjectFileTree({ onOpenFile }) {
         <span><b>Folders:</b> {totalFoldersCount}</span>
         <span><b>Files:</b> {totalFilesCount}</span>
         <span style={{ color: "#71717a", fontSize: "11px", marginLeft: "auto" }}>
-          💡 Click any file name in the tree to open it directly in the editor
+          💡 Click any file in the tree to open it in the editor
         </span>
       </div>
 
@@ -312,44 +386,63 @@ export default function ProjectFileTree({ onOpenFile }) {
       <div className="project-filetree-viewport">
         <pre className="project-filetree-pre">
           {parsedLines.map((lineObj) => {
-            const { id, raw, cleanName, isFile, isFolder, isMatch } = lineObj;
+            const { id, isHeader, isDriveRoot, isFolder, isFile, isSpacer, prefix, branchJoint, name, isMatch } = lineObj;
+
+            if (isHeader) {
+              return (
+                <div key={id} className="project-filetree-line header-line">
+                  <span className="project-filetree-lineno">{id + 1}</span>
+                  <span className="project-filetree-content header-text">{lineObj.raw}</span>
+                </div>
+              );
+            }
+
+            if (isDriveRoot) {
+              return (
+                <div key={id} className="project-filetree-line root-line">
+                  <span className="project-filetree-lineno">{id + 1}</span>
+                  <span className="project-filetree-content root-text">
+                    <FaFolderOpen size={11} color="#00ff88" style={{ marginRight: "6px" }} />
+                    {activeWorkspacePath || lineObj.raw}
+                  </span>
+                </div>
+              );
+            }
+
+            if (isSpacer) {
+              return (
+                <div key={id} className="project-filetree-line spacer-line">
+                  <span className="project-filetree-lineno">{id + 1}</span>
+                  <span className="project-filetree-content">
+                    <span className="tree-branch-stem">{prefix}</span>
+                  </span>
+                </div>
+              );
+            }
 
             return (
               <div
                 key={id}
                 className={`project-filetree-line ${isFile ? "clickable-file" : ""} ${isMatch ? "highlight-match" : ""}`}
-                onClick={() => isFile && handleLineClick(raw)}
-                title={isFile ? `Click to open ${cleanName} in editor` : undefined}
+                onClick={() => isFile && handleLineClick(name)}
+                title={isFile ? `Open ${name} in editor` : undefined}
               >
                 <span className="project-filetree-lineno">{id + 1}</span>
-
-                {/* Render colored branch and filename */}
                 <span className="project-filetree-content">
-                  {raw.split(/(\+---|\\---|\|)/).map((part, pIdx) => {
-                    if (part === "+---" || part === "\\---") {
-                      return <span key={pIdx} className="tree-branch-joint">{part}</span>;
-                    }
-                    if (part === "|") {
-                      return <span key={pIdx} className="tree-branch-stem">{part}</span>;
-                    }
-                    if (isFile && part.trim() === cleanName) {
-                      return (
-                        <span key={pIdx} className="tree-file-node">
-                          <FaFileCode size={11} className="tree-node-icon file" />
-                          <span className="tree-file-name">{part}</span>
-                        </span>
-                      );
-                    }
-                    if (isFolder && part.trim() === cleanName) {
-                      return (
-                        <span key={pIdx} className="tree-folder-node">
-                          <FaFolder size={11} className="tree-node-icon folder" />
-                          <span className="tree-folder-name">{part}</span>
-                        </span>
-                      );
-                    }
-                    return <span key={pIdx}>{part}</span>;
-                  })}
+                  {prefix && <span className="tree-branch-stem">{prefix}</span>}
+                  {branchJoint && <span className="tree-branch-joint">{branchJoint}</span>}
+                  {isFolder && (
+                    <span className="tree-folder-node">
+                      <FaFolder size={11} className="tree-node-icon folder" />
+                      <span className="tree-folder-name">{name}</span>
+                    </span>
+                  )}
+                  {isFile && (
+                    <span className="tree-file-node">
+                      <FaFileCode size={11} className="tree-node-icon file" />
+                      <span className="tree-file-name">{name}</span>
+                    </span>
+                  )}
                 </span>
               </div>
             );

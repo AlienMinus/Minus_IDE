@@ -15,6 +15,7 @@ import {
 export default function MermaidRenderer({ code, title = "Diagram" }) {
   const containerRef = useRef(null);
   const viewportRef = useRef(null);
+  const naturalSizeRef = useRef({ width: 0, height: 0 });
   const [zoom, setZoom] = useState(100);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -24,6 +25,22 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
+
+  const applySvgZoom = (svgEl, zoomVal, natW, natH) => {
+    if (!svgEl || !natW || !natH) return;
+    const scale = zoomVal / 100;
+    const w = Math.round(natW * scale);
+    const h = Math.round(natH * scale);
+    svgEl.setAttribute("width", w);
+    svgEl.setAttribute("height", h);
+    svgEl.style.width = `${w}px`;
+    svgEl.style.height = `${h}px`;
+    svgEl.style.minWidth = `${w}px`;
+    svgEl.style.minHeight = `${h}px`;
+    svgEl.style.maxWidth = "none";
+    svgEl.style.shapeRendering = "geometricPrecision";
+    svgEl.style.textRendering = "geometricPrecision";
+  };
 
   useEffect(() => {
     let isCancelled = false;
@@ -90,6 +107,25 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
 
         if (!isCancelled && containerRef.current) {
           containerRef.current.innerHTML = svg;
+          const svgEl = containerRef.current.querySelector("svg");
+          if (svgEl) {
+            let natW = 1000;
+            let natH = 600;
+            const viewBox = svgEl.getAttribute("viewBox");
+            if (viewBox) {
+              const parts = viewBox.split(/[\s,]+/).map(Number);
+              if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
+                natW = parts[2];
+                natH = parts[3];
+              }
+            } else {
+              const b = svgEl.getBoundingClientRect();
+              if (b.width > 0) natW = b.width;
+              if (b.height > 0) natH = b.height;
+            }
+            naturalSizeRef.current = { width: natW, height: natH };
+            applySvgZoom(svgEl, zoom, natW, natH);
+          }
           setLoading(false);
         }
       } catch (err) {
@@ -107,6 +143,17 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
       isCancelled = true;
     };
   }, [code]);
+
+  // Apply vector-sharp zoom whenever zoom changes
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const svgEl = containerRef.current.querySelector("svg");
+    if (!svgEl) return;
+    const { width: natW, height: natH } = naturalSizeRef.current;
+    if (natW > 0 && natH > 0) {
+      applySvgZoom(svgEl, zoom, natW, natH);
+    }
+  }, [zoom]);
 
   // Mouse Drag / Pan Handlers
   const handleMouseDown = (e) => {
@@ -280,7 +327,7 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
           ref={containerRef}
           className="mermaid-svg-output"
           style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})`,
+            transform: `translate(${pan.x}px, ${pan.y}px)`,
             display: loading ? "none" : "flex",
             cursor: isDragging ? "grabbing" : "grab"
           }}

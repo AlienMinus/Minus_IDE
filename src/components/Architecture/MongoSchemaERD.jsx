@@ -470,7 +470,7 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
             <button
               className="mongoschema-view-pill"
               onClick={handleExportJson}
-              title="Export complete schema as JSON"
+              title="Download full MongoDB schema specification as JSON"
             >
               <FaDownload size={11} /> Export JSON
             </button>
@@ -483,7 +483,7 @@ export default function MongoSchemaERD({ initialModel = null, onSelectModel = nu
               <FaSyncAlt className={isScanningWorkspace ? "spinning" : ""} size={10} />
               {isScanningWorkspace
                 ? (scanProgress ? `Scanning (${scanProgress.current}/${scanProgress.total})...` : "Scanning...")
-                : "⚡ Scan / Refresh"}
+                : "Scan Codebase"}
             </button>
           </div>
         </div>

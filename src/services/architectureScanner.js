@@ -1,5 +1,6 @@
 // src/services/architectureScanner.js
 // Multi-layer AST & static analysis scanner for Hyperion WebIDE
+import { parseMongooseFile } from "./mongoSchemaParser";
 
 /**
  * Excludes third-party packages, caches, compiled build outputs, and minified bundles.
@@ -670,7 +671,20 @@ export function scanCodebaseArchitecture(files = []) {
 
     let details = {};
     if (layer === "model") {
-      details = extractModelDetails(content);
+      const parsed = parseMongooseFile(file);
+      if (parsed) {
+        details = {
+          ...extractModelDetails(content),
+          fields: parsed.fields,
+          topLevelFields: parsed.topLevelFields,
+          subSchemas: parsed.subSchemas,
+          relations: parsed.relations,
+          indexes: parsed.indexes,
+          collection: parsed.collection
+        };
+      } else {
+        details = extractModelDetails(content);
+      }
     } else if (layer === "backend") {
       details = extractBackendDetails(content);
     } else if (layer === "service") {
