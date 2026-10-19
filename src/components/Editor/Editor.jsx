@@ -7,6 +7,7 @@ import LiveBrowser from "../LiveBrowser/LiveBrowser";
 import ArchitectureCanvas from "../Architecture/ArchitectureCanvas";
 import MongoSchemaERD from "../Architecture/MongoSchemaERD";
 import BackendApiRoutes from "../Architecture/BackendApiRoutes";
+import SeleniumRunner from "../RunDebug/SeleniumRunner";
 import {
   DocxPreview,
   PptxPreview,
@@ -396,6 +397,15 @@ function Editor() {
     return (
       <div className="editor-container">
         <BackendApiRoutes />
+      </div>
+    );
+  }
+
+  // Selenium QA Studio tab
+  if (activeFile.type === "selenium-studio" || activeFile.isSeleniumStudio) {
+    return (
+      <div className="editor-container">
+        <SeleniumRunner />
       </div>
     );
   }

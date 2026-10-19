@@ -212,6 +212,10 @@ export function EditorProvider({ children }) {
       case "backend-routes":
         openBackendRoutesTab();
         break;
+      case "selenium":
+      case "selenium-studio":
+        openSeleniumStudioTab();
+        break;
       default:
         break;
     }
@@ -697,6 +701,28 @@ export function EditorProvider({ children }) {
     });
   }
 
+  function openSeleniumStudioTab() {
+    const tabId = "hyperion-selenium-studio";
+    const name = "Selenium QA Studio";
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name,
+        type: "selenium-studio",
+        isPreview: true,
+        isSeleniumStudio: true
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
   const [isScanningWorkspace, setIsScanningWorkspace] = useState(false);
   const [scanProgress, setScanProgress] = useState(null);
 
@@ -1047,6 +1073,7 @@ export function EditorProvider({ children }) {
         openArchitectureTab,
         openMongoSchemaTab,
         openBackendRoutesTab,
+        openSeleniumStudioTab,
         scanWorkspaceFiles,
         isScanningWorkspace,
         scanProgress,

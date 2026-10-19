@@ -106,6 +106,8 @@ function MainLayout() {
     { id: "view-debug", category: "View", label: "Debug Console", shortcut: "Ctrl+Shift+Y", action: () => openView("debugConsole") },
     { id: "view-ports", category: "View", label: "Ports", action: () => openView("ports") },
     { id: "view-repl", category: "View", label: "REPL", action: () => openView("repl") },
+    { id: "view-selenium", category: "View", label: "Selenium: Run Previewer Automation & QA", action: () => openView("run") },
+    { id: "view-selenium-studio", category: "View", label: "Selenium: Open Full QA Studio", action: () => openView("selenium-studio") },
     
     // Toggles & Layout
     { id: "toggle-wrap", category: "View", label: "Toggle Word Wrap", shortcut: "Alt+Z", action: toggleWordWrap },
