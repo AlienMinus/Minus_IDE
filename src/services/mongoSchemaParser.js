@@ -1,7 +1,7 @@
 // src/services/mongoSchemaParser.js
 // Advanced Mongoose / MongoDB AST & Static Schema Analyzer
 
-import { isIgnoredPath } from "./architectureScanner";
+import { isIgnoredPath } from "./architectureScanner.js";
 
 /**
  * Pluralizes a model name to infer its MongoDB collection name

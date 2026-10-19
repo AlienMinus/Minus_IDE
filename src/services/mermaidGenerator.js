@@ -35,90 +35,93 @@ export function generateArchitectureFlowchart(architectureGraph) {
   const appNode = compNodes.find(n => /^app$/i.test(n.name)) || pageNodes.find(n => /^app$/i.test(n.name));
   const remainingComps = compNodes.filter(n => n !== appNode);
 
-  // 1. TOP TIER: FRONTEND STACKED ON TOP, CONTEXT & OTHER CATEGORIES TO ITS LEFT
-  lines.push('  subgraph TIER_TOP ["🌐 Frontend Application Tier"]');
-  lines.push("    direction LR");
+  // 1. TIER 1 (TOP): FRONTEND PRESENTATION LAYER (Router -> Pages -> Components)
+  const hasFrontend = appNode || pageNodes.length > 0 || remainingComps.length > 0;
+  if (hasFrontend) {
+    lines.push('  subgraph TIER_FRONTEND ["🌐 Presentation Tier (Frontend UI)"]');
+    lines.push("    direction TB");
 
-  // Left column of Top Tier: Context, State, Hooks & Config
-  const hasLeftCategory = ctxNodes.length > 0 || hookNodes.length > 0 || configNodes.length > 0;
-  if (hasLeftCategory) {
-    lines.push('    subgraph STATE_CONFIG ["⚡ Context, State & Config"]');
-    lines.push("      direction TB");
+    if (appNode) {
+      const cleanId = appNode.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push('    subgraph ROUTER_BOX ["🖥️ Application Router & Entry"]');
+      lines.push("      direction TB");
+      lines.push(`      ${cleanId}["<b>${appNode.name}</b><br/><small style='color:#a1a1aa;'>${appNode.fileName}</small>"]:::appStyle`);
+      lines.push("    end");
+    }
+
+    if (pageNodes.length > 0) {
+      lines.push('    subgraph PAGES ["📄 Views & Route Pages"]');
+      lines.push("      direction TB");
+      pageNodes.forEach(node => {
+        const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+        lines.push(`      ${cleanId}["📄 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::pageStyle`);
+      });
+      lines.push("    end");
+    }
+
+    if (remainingComps.length > 0) {
+      lines.push('    subgraph COMPONENTS ["🧩 UI Components & Widgets"]');
+      lines.push("      direction TB");
+      remainingComps.forEach(node => {
+        const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+        lines.push(`      ${cleanId}["🧩 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::compStyle`);
+      });
+      // To prevent components from stretching into one huge horizontal row,
+      // wrap them into rows of 4 using rank-ordering invisible links
+      for (let i = 0; i < remainingComps.length - 4; i += 4) {
+        const fromC = remainingComps[i].id.replace(/[^a-zA-Z0-9_]/g, "_");
+        const toC = remainingComps[i + 4].id.replace(/[^a-zA-Z0-9_]/g, "_");
+        lines.push(`      ${fromC} ~~~ ${toC}`);
+      }
+      lines.push("    end");
+    }
+
+    lines.push("  end");
+  }
+
+  // 2. TIER 2: STATE MANAGEMENT & CLIENT SERVICES TIER (Stacked below Frontend)
+  const hasStateServices = ctxNodes.length > 0 || hookNodes.length > 0 || srvNodes.length > 0;
+  if (hasStateServices) {
+    lines.push('  subgraph TIER_STATE_SERVICES ["⚡ State Management & Client Services Tier"]');
+    lines.push("    direction TB");
+
     if (ctxNodes.length > 0) {
-      lines.push('      subgraph CONTEXTS ["🔄 React Context Providers"]');
-      lines.push("        direction TB");
+      lines.push('    subgraph CONTEXTS ["🔄 React Context & State Providers"]');
+      lines.push("      direction TB");
       ctxNodes.forEach(node => {
         const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
-        lines.push(`        ${cleanId}["🔄 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::ctxStyle`);
+        lines.push(`      ${cleanId}["🔄 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::ctxStyle`);
       });
-      lines.push("      end");
+      lines.push("    end");
     }
+
     if (hookNodes.length > 0) {
-      lines.push('      subgraph HOOKS ["🪝 Custom Hooks"]');
-      lines.push("        direction TB");
+      lines.push('    subgraph HOOKS ["🪝 Custom Hooks"]');
+      lines.push("      direction TB");
       hookNodes.forEach(node => {
         const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
-        lines.push(`        ${cleanId}["🪝 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::hookStyle`);
+        lines.push(`      ${cleanId}["🪝 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::hookStyle`);
       });
-      lines.push("      end");
+      lines.push("    end");
     }
-    if (configNodes.length > 0) {
-      lines.push('      subgraph CONFIG ["⚙️ Config & Env"]');
-      lines.push("        direction TB");
-      configNodes.forEach(node => {
+
+    if (srvNodes.length > 0) {
+      lines.push('    subgraph SERVICES ["🛠️ API Clients & Networking Services"]');
+      lines.push("      direction TB");
+      srvNodes.forEach(node => {
         const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
-        lines.push(`        ${cleanId}["⚙️ <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::configStyle`);
+        lines.push(`      ${cleanId}["🛠️ <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::srvStyle`);
       });
-      lines.push("      end");
+      lines.push("    end");
     }
-    lines.push("    end");
+
+    lines.push("  end");
   }
 
-  // Right column of Top Tier: Frontend Client (Router, Pages, Components)
-  lines.push('    subgraph FRONTEND_CLIENT ["💻 Frontend Views & Components"]');
-  lines.push("      direction TB");
-  if (appNode) {
-    const cleanId = appNode.id.replace(/[^a-zA-Z0-9_]/g, "_");
-    lines.push(`      subgraph ROUTER_BOX ["🖥️ Application Router & Entry"]`);
-    lines.push(`        ${cleanId}["<b>${appNode.name}</b><br/><small style='color:#a1a1aa;'>${appNode.fileName}</small>"]:::appStyle`);
-    lines.push("      end");
-  }
-
-  if (pageNodes.length > 0) {
-    lines.push('      subgraph PAGES ["📄 Views & Pages"]');
-    lines.push("        direction TB");
-    pageNodes.forEach(node => {
-      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
-      lines.push(`        ${cleanId}["📄 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::pageStyle`);
-    });
-    lines.push("      end");
-  }
-
-  if (remainingComps.length > 0) {
-    lines.push('      subgraph COMPONENTS ["🧩 UI Components & Widgets"]');
-    lines.push("        direction TB");
-    remainingComps.forEach(node => {
-      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
-      lines.push(`        ${cleanId}["🧩 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::compStyle`);
-    });
-    lines.push("      end");
-  }
-  lines.push("    end");
-  lines.push("  end");
-
-  // 2. MIDDLE TIER: BACKEND BELOW THAT
-  lines.push('  subgraph TIER_BACKEND ["🚀 Backend Server & API Services"]');
-  lines.push("    direction TB");
-  if (srvNodes.length > 0) {
-    lines.push('    subgraph SERVICES ["⚡ API Clients & Networking Services"]');
-    lines.push("      direction TB");
-    srvNodes.forEach(node => {
-      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
-      lines.push(`      ${cleanId}["⚡ <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::srvStyle`);
-    });
-    lines.push("    end");
-  }
+  // 3. TIER 3: BACKEND SERVER & CONTROLLERS (Stacked below State & Services)
   if (backendNodes.length > 0) {
+    lines.push('  subgraph TIER_BACKEND ["🚀 Backend Server & API Services Tier"]');
+    lines.push("    direction TB");
     lines.push('    subgraph CONTROLLERS ["🚀 Express Controllers & Server"]');
     lines.push("      direction TB");
     backendNodes.forEach(node => {
@@ -126,18 +129,51 @@ export function generateArchitectureFlowchart(architectureGraph) {
       lines.push(`      ${cleanId}["🚀 <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::backendStyle`);
     });
     lines.push("    end");
+    lines.push("  end");
   }
-  lines.push("  end");
 
-  // 3. BOTTOM TIER: DATABASE SECTION AT THE BOTTOM
+  // 4. TIER 4: DATABASE MODELS & SCHEMAS (Stacked at the bottom)
   if (modelNodes.length > 0) {
-    lines.push('  subgraph TIER_DATABASE ["🗄️ MongoDB Database Models & Schemas"]');
+    lines.push('  subgraph TIER_DATABASE ["🗄️ MongoDB Database Models & Schemas Tier"]');
     lines.push("    direction TB");
     modelNodes.forEach(node => {
       const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
       lines.push(`    ${cleanId}[("🗄️ <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>")]:::modelStyle`);
     });
+    for (let i = 0; i < modelNodes.length - 4; i += 4) {
+      const fromM = modelNodes[i].id.replace(/[^a-zA-Z0-9_]/g, "_");
+      const toM = modelNodes[i + 4].id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`    ${fromM} ~~~ ${toM}`);
+    }
     lines.push("  end");
+  }
+
+  // 5. TIER 5 (OPTIONAL): CONFIGURATION & ENVIRONMENT
+  if (configNodes.length > 0) {
+    lines.push('  subgraph TIER_CONFIG ["⚙️ Configuration & Environment Tier"]');
+    lines.push("    direction TB");
+    configNodes.slice(0, 6).forEach(node => {
+      const cleanId = node.id.replace(/[^a-zA-Z0-9_]/g, "_");
+      lines.push(`    ${cleanId}["⚙️ <b>${node.name}</b><br/><small style='color:#a1a1aa;'>${node.fileName}</small>"]:::configStyle`);
+    });
+    lines.push("  end");
+  }
+
+  // Enforce strict vertical stacking between tiers using invisible rank constraints
+  const tierAnchors = [];
+  if (appNode) tierAnchors.push(appNode.id.replace(/[^a-zA-Z0-9_]/g, "_"));
+  else if (pageNodes[0]) tierAnchors.push(pageNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_"));
+  else if (compNodes[0]) tierAnchors.push(compNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_"));
+
+  if (ctxNodes[0]) tierAnchors.push(ctxNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_"));
+  else if (hookNodes[0]) tierAnchors.push(hookNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_"));
+  else if (srvNodes[0]) tierAnchors.push(srvNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_"));
+
+  if (backendNodes[0]) tierAnchors.push(backendNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_"));
+  if (modelNodes[0]) tierAnchors.push(modelNodes[0].id.replace(/[^a-zA-Z0-9_]/g, "_"));
+
+  for (let t = 0; t < tierAnchors.length - 1; t++) {
+    lines.push(`  ${tierAnchors[t]} ~~~ ${tierAnchors[t + 1]}`);
   }
 
   // Connect App Router to Pages if App exists

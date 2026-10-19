@@ -1,6 +1,6 @@
 // src/services/architectureScanner.js
 // Multi-layer AST & static analysis scanner for Hyperion WebIDE
-import { parseMongooseFile } from "./mongoSchemaParser";
+import { parseMongooseFile } from "./mongoSchemaParser.js";
 
 /**
  * Excludes third-party packages, caches, compiled build outputs, and minified bundles.
@@ -52,6 +52,17 @@ export function isIgnoredPath(filePath = "", fileName = "") {
     return true;
   }
 
+  // Binary media assets, audio, images, fonts, documents, and package lockfiles
+  if (
+    /\.(png|jpe?g|gif|webp|ico|svg|mp3|wav|ogg|mp4|webm|pdf|ttf|otf|woff2?|eot|lock)$/i.test(full) ||
+    full.endsWith("package-lock.json") ||
+    full.endsWith("yarn.lock") ||
+    full.endsWith("pnpm-lock.yaml") ||
+    /\.(md|markdown|txt|license)$/i.test(full)
+  ) {
+    return true;
+  }
+
   return false;
 }
 
@@ -67,7 +78,21 @@ export function categorizeFile(file) {
   const name = file.name || "";
   const content = file.content || "";
 
-  // 1. Database Models / Schemas (in any folder)
+  // 1. Config & Environment Files (check first to avoid classifying package.json / .env as backend)
+  if (
+    name === "package.json" ||
+    name.endsWith(".config.js") ||
+    name.endsWith(".config.ts") ||
+    name.endsWith(".config.mjs") ||
+    name.startsWith(".env") ||
+    path.includes("/config/") ||
+    path.startsWith("config/") ||
+    path.includes("/env/")
+  ) {
+    return "config";
+  }
+
+  // 2. Database Models / Schemas (in any folder)
   if (
     path.includes("/models/") ||
     path.includes("/schemas/") ||
@@ -91,50 +116,67 @@ export function categorizeFile(file) {
     return "model";
   }
 
-  // 2. Backend Server, Routes, APIs, Routers, Controllers & Middleware (in any folder)
+  // 3. API Services & Network Clients (check before backend so frontend services aren't miscategorized)
+  if (
+    path.includes("/services/") ||
+    path.startsWith("services/") ||
+    path.includes("/client/") ||
+    path.startsWith("client/") ||
+    path.includes("/fetcher/") ||
+    path.includes("/api-client/") ||
+    (/api\.(js|ts)$/i.test(name) && (path.includes("src/") || path.includes("client/"))) ||
+    /service\.(js|ts)$/i.test(name) ||
+    content.includes("fetchWithTimeout") ||
+    (content.includes("fetch(") && content.includes("http")) ||
+    content.includes("axios.")
+  ) {
+    return "service";
+  }
+
+  // 4. Backend Server, Routes, APIs, Routers, Controllers & Middleware (in backend/server folders)
+  const isFrontendPath = path.startsWith("src/") || path.startsWith("client/");
   const isBackendLocation =
-    path.startsWith("server/") ||
-    path.includes("/server/") ||
-    path.startsWith("backend/") ||
-    path.includes("/backend/") ||
-    path.includes("/routes/") ||
-    path.startsWith("routes/") ||
-    path.includes("/controllers/") ||
-    path.startsWith("controllers/") ||
-    path.includes("/handlers/") ||
-    path.startsWith("handlers/") ||
-    path.includes("/endpoints/") ||
-    path.startsWith("endpoints/") ||
-    path.includes("/api/") ||
-    path.startsWith("api/") ||
-    path.includes("/api-routes/") ||
-    path.includes("/middleware/") ||
-    path.includes("/middlewares/") ||
-    name === "server.js" ||
-    name === "app.js";
+    !isFrontendPath &&
+    (path.startsWith("server/") ||
+      path.includes("/server/") ||
+      path.startsWith("backend/") ||
+      path.includes("/backend/") ||
+      path.includes("/routes/") ||
+      path.startsWith("routes/") ||
+      path.includes("/controllers/") ||
+      path.startsWith("controllers/") ||
+      path.includes("/handlers/") ||
+      path.startsWith("handlers/") ||
+      path.includes("/endpoints/") ||
+      path.startsWith("endpoints/") ||
+      path.includes("/api/") ||
+      path.startsWith("api/") ||
+      path.includes("/api-routes/") ||
+      path.includes("/middleware/") ||
+      path.includes("/middlewares/") ||
+      name === "server.js" ||
+      name === "app.js");
 
   const hasExpressServerCode =
-    content.includes("express(") ||
-    content.includes("express.Router") ||
-    content.includes('require("express")') ||
-    content.includes("require('express')") ||
-    content.includes('from "express"') ||
-    content.includes("from 'express'") ||
-    content.includes("app.listen(") ||
-    content.includes("app.get(") ||
-    content.includes("app.post(") ||
-    content.includes("app.put(") ||
-    content.includes("app.delete(") ||
-    content.includes("app.patch(") ||
-    content.includes("app.use(") ||
-    content.includes("router.get(") ||
-    content.includes("router.post(") ||
-    content.includes("router.put(") ||
-    content.includes("router.delete(") ||
-    content.includes("router.patch(") ||
-    content.includes("res.json(") ||
-    content.includes("res.status(") ||
-    content.includes("res.send(");
+    !isFrontendPath &&
+    (content.includes("express(") ||
+      content.includes("express.Router") ||
+      content.includes('require("express")') ||
+      content.includes("require('express')") ||
+      content.includes('from "express"') ||
+      content.includes("from 'express'") ||
+      content.includes("app.listen(") ||
+      content.includes("app.get(") ||
+      content.includes("app.post(") ||
+      content.includes("app.put(") ||
+      content.includes("app.delete(") ||
+      content.includes("app.patch(") ||
+      content.includes("app.use(") ||
+      content.includes("router.get(") ||
+      content.includes("router.post(") ||
+      content.includes("router.put(") ||
+      content.includes("router.delete(") ||
+      content.includes("router.patch("));
 
   if (isBackendLocation || hasExpressServerCode) {
     // Ensure it's not a frontend React component or context
@@ -708,8 +750,14 @@ export function scanCodebaseArchitecture(files = []) {
     details.schemas = allDeclarations.filter(d => d.kind === "schema");
     details.refs = allDeclarations.filter(d => d.kind === "ref");
 
+    let nodeId = `${layer}-${name}`;
+    let counter = 1;
+    while (nodes.some(n => n.id === nodeId)) {
+      nodeId = `${layer}-${name}_${counter++}`;
+    }
+
     const node = {
-      id: `${layer}-${name}`,
+      id: nodeId,
       fileId: file.id,
       name,
       fileName: file.name,
@@ -721,36 +769,91 @@ export function scanCodebaseArchitecture(files = []) {
     };
 
     nodes.push(node);
-    fileMap.set(name.toLowerCase(), node);
-    fileMap.set(file.name.toLowerCase(), node);
-    if (file.path) {
-      fileMap.set(file.path.toLowerCase().replace(/\\/g, "/"), node);
+    const normPath = (file.path || file.name || "").toLowerCase().replace(/\\/g, "/");
+    fileMap.set(normPath, node);
+    const lowerName = name.toLowerCase();
+    if (!fileMap.has(lowerName)) {
+      fileMap.set(lowerName, node);
     }
+    // Also track all nodes per basename in an array for layer disambiguation
+    if (!fileMap.has(`_list_${lowerName}`)) {
+      fileMap.set(`_list_${lowerName}`, []);
+    }
+    fileMap.get(`_list_${lowerName}`).push(node);
   });
 
   // Build architectural connections (edges)
   nodes.forEach(sourceNode => {
     // 1. Connection via Imports
     sourceNode.imports.forEach(imp => {
-      const sourceBasename = imp.source.split("/").pop()?.replace(/\.[^/.]+$/, "").toLowerCase();
-      if (sourceBasename && fileMap.has(sourceBasename)) {
-        const targetNode = fileMap.get(sourceBasename);
-        if (targetNode && targetNode.id !== sourceNode.id) {
-          edges.push({
-            id: `${sourceNode.id}->${targetNode.id}`,
-            source: sourceNode.id,
-            target: targetNode.id,
-            label: `imports ${imp.symbols.slice(0, 2).join(", ")}`,
-            kind: "import"
-          });
+      let targetNode = null;
+
+      // A. Relative path resolution (e.g. ./models/Hero from server/server.js)
+      if (imp.source.startsWith(".")) {
+        const sourceDir = (sourceNode.filePath || "").replace(/\\/g, "/").split("/").slice(0, -1).join("/");
+        const parts = (sourceDir ? sourceDir + "/" + imp.source : imp.source).split("/");
+        const resolvedParts = [];
+        for (const part of parts) {
+          if (part === "." || part === "") continue;
+          if (part === "..") resolvedParts.pop();
+          else resolvedParts.push(part);
         }
+        const resolvedPath = resolvedParts.join("/").toLowerCase();
+        const candidates = [
+          resolvedPath,
+          `${resolvedPath}.js`,
+          `${resolvedPath}.jsx`,
+          `${resolvedPath}.ts`,
+          `${resolvedPath}.tsx`,
+          `${resolvedPath}/index.js`,
+          `${resolvedPath}/index.jsx`,
+          `${resolvedPath}/index.ts`,
+          `${resolvedPath}/index.tsx`
+        ];
+        for (const cand of candidates) {
+          if (fileMap.has(cand)) {
+            targetNode = fileMap.get(cand);
+            break;
+          }
+        }
+      }
+
+      // B. Basename resolution with subsystem/layer affinity
+      if (!targetNode) {
+        const sourceBasename = imp.source.split("/").pop()?.replace(/\.[^/.]+$/, "").toLowerCase();
+        if (sourceBasename && fileMap.has(`_list_${sourceBasename}`)) {
+          const matches = fileMap.get(`_list_${sourceBasename}`);
+          if (matches.length === 1) {
+            targetNode = matches[0];
+          } else {
+            const isBackendSource = sourceNode.layer === "backend" || sourceNode.layer === "model";
+            if (isBackendSource) {
+              targetNode = matches.find(m => m.layer === "model" || m.layer === "backend" || m.layer === "util") || matches[0];
+            } else {
+              targetNode = matches.find(m => m.layer !== "model" && m.layer !== "backend") || matches[0];
+            }
+          }
+        } else if (sourceBasename && fileMap.has(sourceBasename)) {
+          targetNode = fileMap.get(sourceBasename);
+        }
+      }
+
+      if (targetNode && targetNode.id !== sourceNode.id) {
+        edges.push({
+          id: `${sourceNode.id}->${targetNode.id}`,
+          source: sourceNode.id,
+          target: targetNode.id,
+          label: `imports ${imp.symbols.slice(0, 2).join(", ")}`,
+          kind: "import"
+        });
       }
     });
 
-    // 2. Connection via Backend Endpoint -> Models Queried
+    // 2. Connection via Backend Endpoint -> Models Queried (strictly match model layer)
     if (sourceNode.layer === "backend" && sourceNode.details.queriedModels) {
       sourceNode.details.queriedModels.forEach(modelName => {
-        const modelNode = fileMap.get(modelName.toLowerCase());
+        const lowerM = modelName.toLowerCase();
+        const modelNode = nodes.find(n => n.layer === "model" && (n.name.toLowerCase() === lowerM || n.fileName.toLowerCase().replace(/\.[^/.]+$/, "") === lowerM));
         if (modelNode) {
           edges.push({
             id: `${sourceNode.id}->${modelNode.id}-query`,
