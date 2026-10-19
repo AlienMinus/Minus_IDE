@@ -33,13 +33,17 @@ import {
   generateJsonReport
 } from "../../services/seleniumEngine";
 import { HyperionQAAgent } from "../../services/seleniumAgent";
+import LiveBrowser from "../LiveBrowser/LiveBrowser";
 import useEditor from "../../hooks/useEditor";
 import useFile from "../../hooks/useFile";
 import "./SeleniumRunner.css";
 
-export default function SeleniumRunner() {
+export default function SeleniumRunner({ isStudioMode = false }) {
   const { openLiveBrowserTab, openFile, files: editorFiles } = useEditor();
   const { createFile, files: workspaceFiles } = useFile() || {};
+
+  // Split-view state for side-by-side previewing inside Selenium Studio
+  const [showSplitPreview, setShowSplitPreview] = useState(isStudioMode);
 
   // Active Sub-tab inside Selenium Runner: "tests" | "agent" | "reports"
   const [activeTab, setActiveTab] = useState("tests");
@@ -116,13 +120,26 @@ export default function SeleniumRunner() {
 
     checkConnection();
     const interval = setInterval(checkConnection, 1500);
-    return () => clearInterval(interval);
+
+    const handleLoaded = () => {
+      checkConnection();
+      handleGenerateTests();
+    };
+    window.addEventListener("hyperion:previewer-loaded", handleLoaded);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("hyperion:previewer-loaded", handleLoaded);
+    };
   }, []);
 
   // Generate initial test suites when previewer becomes available or on load
-  const handleGenerateTests = () => {
+  const handleGenerateTests = async () => {
     const iframe = getActivePreviewerIframe();
-    const doc = getSafeIframeDocument(iframe);
+    let doc = getSafeIframeDocument(iframe);
+    if (!doc && driverRef.current) {
+      doc = await driverRef.current.getOrFetchDocument();
+    }
     const suites = generateTestSuites({
       previewerDoc: doc,
       files: editorFiles || workspaceFiles || []
@@ -148,7 +165,8 @@ export default function SeleniumRunner() {
 
   // Open Previewer tab if not open
   const handleLaunchPreviewer = () => {
-    openLiveBrowserTab("http://localhost:5173", "Live Browser Preview");
+    const target = previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174";
+    openLiveBrowserTab(target, "Live Browser Preview");
   };
 
   // Toggle selection
@@ -213,12 +231,24 @@ export default function SeleniumRunner() {
 
   const handleRunAll = async (onlySelected = false) => {
     if (isRunning) return;
+
+    // Ensure previewer iframe exists or auto-launch previewer tab
+    const existingIframe = getActivePreviewerIframe();
+    if (!existingIframe && !showSplitPreview) {
+      const target = previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174";
+      if (openLiveBrowserTab) {
+        openLiveBrowserTab(target, "Live Browser Preview");
+        await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+
     setIsRunning(true);
     setIsPaused(false);
     abortFlagRef.current = false;
 
     const driver = driverRef.current;
     driver.speed = speed;
+    await driver.getOrFetchDocument();
 
     const testsToRun = [];
     testSuites.forEach((suite) => {
@@ -281,6 +311,17 @@ export default function SeleniumRunner() {
 
   const handleStartAgent = async () => {
     if (isAgentRunning) return;
+
+    // Ensure previewer iframe exists or auto-launch previewer tab
+    const existingIframe = getActivePreviewerIframe();
+    if (!existingIframe && !showSplitPreview) {
+      const target = previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174";
+      if (openLiveBrowserTab) {
+        openLiveBrowserTab(target, "Live Browser Preview");
+        await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+
     setIsAgentRunning(true);
     setAgentThoughts([]);
     setAgentFindings([]);
@@ -426,7 +467,8 @@ export default function SeleniumRunner() {
   };
 
   return (
-    <div className="selenium-runner-container">
+    <div className={`selenium-runner-root ${showSplitPreview ? "has-split" : ""}`}>
+      <div className="selenium-runner-container">
       {/* Target Previewer Connection Header */}
       <div className="selenium-target-bar">
         <div className="target-indicator-group">
@@ -445,15 +487,36 @@ export default function SeleniumRunner() {
           </div>
         </div>
 
-        {!isPreviewerConnected && (
+        <div className="target-actions-group">
+          {!isPreviewerConnected ? (
+            <button
+              className="selenium-launch-btn"
+              onClick={handleLaunchPreviewer}
+              title="Launch previewer tab in editor"
+            >
+              <FaExternalLinkAlt /> Launch Previewer
+            </button>
+          ) : (
+            <button
+              className="selenium-bridge-btn"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent("hyperion:enable-automation-bridge"));
+                handleGenerateTests();
+              }}
+              title="Activate / Sync Same-Origin Automation Bridge for live DOM access"
+            >
+              ⚡ Sync Bridge
+            </button>
+          )}
+
           <button
-            className="selenium-launch-btn"
-            onClick={handleLaunchPreviewer}
-            title="Launch previewer tab in editor"
+            className={`selenium-split-toggle-btn ${showSplitPreview ? "active" : ""}`}
+            onClick={() => setShowSplitPreview(!showSplitPreview)}
+            title="Toggle Side-by-Side Live Preview Pane"
           >
-            <FaExternalLinkAlt /> Launch Previewer
+            <FaDesktop /> {showSplitPreview ? "Hide Preview" : "Split Preview"}
           </button>
-        )}
+        </div>
       </div>
 
       {/* Navigation Sub-Tabs */}
@@ -957,6 +1020,16 @@ export default function SeleniumRunner() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      </div>
+      {showSplitPreview && (
+        <div className="selenium-runner-preview-pane">
+          <LiveBrowser
+            initialUrl={previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174"}
+            title="Live Automation Target Preview"
+            onClose={() => setShowSplitPreview(false)}
+          />
         </div>
       )}
     </div>

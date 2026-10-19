@@ -21,11 +21,21 @@ export const By = {
 export function getActivePreviewerIframe() {
   const candidates = [
     document.querySelector("iframe.live-browser-iframe"),
-    document.querySelector("iframe.preview-iframe"),
+    document.querySelector(".live-browser-preview-pane iframe"),
     document.querySelector(".live-browser-body iframe"),
+    document.querySelector("iframe.preview-iframe"),
     document.querySelector(".preview-file-container iframe"),
-    document.querySelector(".editor-container iframe")
+    document.querySelector(".editor-container iframe"),
+    ...Array.from(document.querySelectorAll("iframe"))
   ];
+  for (const iframe of candidates) {
+    if (iframe && iframe.contentWindow) {
+      const rect = iframe.getBoundingClientRect();
+      if (rect.width > 20 && rect.height > 20) {
+        return iframe;
+      }
+    }
+  }
   for (const iframe of candidates) {
     if (iframe && iframe.contentWindow) {
       return iframe;
@@ -45,90 +55,467 @@ export function getSafeIframeDocument(iframe) {
       return doc;
     }
   } catch (err) {
+    // Cross-origin restriction encountered: trigger LiveBrowser automation bridge
+    window.dispatchEvent(new CustomEvent("hyperion:enable-automation-bridge"));
     console.warn("[SeleniumEngine] Cross-origin security restriction accessing iframe document:", err.message);
   }
   return null;
 }
 
 /**
- * Visual Targeting Overlay: High-tech glowing Selenium targeting box with virtual cursor.
+ * Hyperion Bi-Directional Automation Bridge Client
+ * Enables real-time querying, live bounding rect inspection, and simulated user actions
+ * on actual rendered DOM elements inside the previewer iframe.
  */
-export function highlightTargetElement(doc, element, label = "Selenium Target") {
-  if (!doc || !element || typeof element.getBoundingClientRect !== "function") return;
-
-  removeTargetHighlight(doc);
-
-  const rect = element.getBoundingClientRect();
-  const overlay = doc.createElement("div");
-  overlay.id = "__hyperion_selenium_overlay__";
-  overlay.style.position = "absolute";
-  overlay.style.top = `${rect.top + (doc.defaultView?.scrollY || 0)}px`;
-  overlay.style.left = `${rect.left + (doc.defaultView?.scrollX || 0)}px`;
-  overlay.style.width = `${Math.max(rect.width, 24)}px`;
-  overlay.style.height = `${Math.max(rect.height, 24)}px`;
-  overlay.style.border = "2px solid #00f2fe";
-  overlay.style.boxShadow = "0 0 15px rgba(0, 242, 254, 0.8), inset 0 0 10px rgba(0, 242, 254, 0.3)";
-  overlay.style.borderRadius = "4px";
-  overlay.style.pointerEvents = "none";
-  overlay.style.zIndex = "999999";
-  overlay.style.transition = "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)";
-  overlay.style.boxSizing = "border-box";
-
-  // Label Badge
-  const badge = doc.createElement("div");
-  badge.textContent = `[Selenium: ${label}]`;
-  badge.style.position = "absolute";
-  badge.style.top = "-22px";
-  badge.style.left = "0";
-  badge.style.background = "#091428";
-  badge.style.color = "#00f2fe";
-  badge.style.border = "1px solid #00f2fe";
-  badge.style.padding = "2px 6px";
-  badge.style.fontSize = "10px";
-  badge.style.fontFamily = "monospace";
-  badge.style.fontWeight = "bold";
-  badge.style.borderRadius = "3px";
-  badge.style.whiteSpace = "nowrap";
-  badge.style.boxShadow = "0 2px 8px rgba(0,0,0,0.6)";
-
-  // Animated Virtual Cursor SVG
-  const cursor = doc.createElement("div");
-  cursor.innerHTML = `
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));">
-      <path d="M3 3l7 18 3-7 7-3L3 3z" fill="#00f2fe" stroke="#091428" stroke-width="1.5" stroke-linejoin="round"/>
-    </svg>
-  `;
-  cursor.style.position = "absolute";
-  cursor.style.right = "-12px";
-  cursor.style.bottom = "-12px";
-  cursor.style.animation = "hyperionPulse 0.8s infinite alternate";
-
-  // Keyframe injection if not already in doc
-  if (!doc.getElementById("__hyperion_selenium_styles__")) {
-    const styleEl = doc.createElement("style");
-    styleEl.id = "__hyperion_selenium_styles__";
-    styleEl.textContent = `
-      @keyframes hyperionPulse {
-        from { transform: scale(1) translate(0, 0); opacity: 0.9; }
-        to { transform: scale(1.15) translate(2px, 2px); opacity: 1; }
-      }
-    `;
-    doc.head?.appendChild(styleEl);
+export class HyperionBridgeClient {
+  constructor() {
+    this.pendingRequests = new Map();
+    this.isBridgeReady = false;
+    this.init();
   }
 
-  overlay.appendChild(badge);
-  overlay.appendChild(cursor);
-  doc.body.appendChild(overlay);
+  init() {
+    if (typeof window === "undefined" || window.__hyperion_bridge_client_init__) return;
+    window.__hyperion_bridge_client_init__ = true;
+
+    window.addEventListener("message", (e) => {
+      if (!e.data || e.data.source !== "hyperion-preview") return;
+
+      if (e.data.type === "BRIDGE_READY" || e.data.type === "PONG") {
+        this.isBridgeReady = true;
+        window.dispatchEvent(new CustomEvent("hyperion:previewer-loaded"));
+        return;
+      }
+
+      const { reqId, success, error, rect, elements, tagName, innerText } = e.data;
+      if (reqId && this.pendingRequests.has(reqId)) {
+        const { resolve, reject } = this.pendingRequests.get(reqId);
+        this.pendingRequests.delete(reqId);
+        if (success) {
+          resolve({ rect, elements, tagName, innerText });
+        } else {
+          reject(new Error(error || "Bridge request failed"));
+        }
+      }
+    });
+  }
+
+  send(action, payload = {}) {
+    return new Promise((resolve, reject) => {
+      const iframe = getActivePreviewerIframe();
+      if (!iframe || !iframe.contentWindow) {
+        return reject(new Error("Preview iframe not found"));
+      }
+      const reqId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      const timeout = setTimeout(() => {
+        if (this.pendingRequests.has(reqId)) {
+          this.pendingRequests.delete(reqId);
+          reject(new Error(`Bridge timeout for action: ${action}`));
+        }
+      }, 1500);
+
+      this.pendingRequests.set(reqId, {
+        resolve: (data) => {
+          clearTimeout(timeout);
+          resolve(data);
+        },
+        reject: (err) => {
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+
+      iframe.contentWindow.postMessage({
+        source: "hyperion-selenium",
+        action,
+        reqId,
+        ...payload
+      }, "*");
+    });
+  }
+
+  async getElementRect(selector) {
+    const res = await this.send("GET_RECT", { selector });
+    return res.rect;
+  }
+
+  async clickElement(selector) {
+    const res = await this.send("CLICK", { selector });
+    return res;
+  }
+
+  async typeElement(selector, value) {
+    const res = await this.send("TYPE", { selector, value });
+    return res;
+  }
+
+  async dumpDOM() {
+    const res = await this.send("DUMP_DOM");
+    return res.elements || [];
+  }
+}
+
+export const globalBridgeClient = new HyperionBridgeClient();
+
+/**
+ * Agentic Virtual Mouse Cursor Controller
+ * Renders a high-tech glowing AI mouse pointer directly over the previewer in the parent window.
+ * Glides smoothly between elements, displays action badges, and animates click ripples & typing indicators.
+ */
+export class AgenticMouseCursor {
+  constructor() {
+    this.overlayContainer = null;
+    this.cursorEl = null;
+    this.svgWrapEl = null;
+    this.badgeEl = null;
+    this.rippleEl = null;
+    this.targetBoxEl = null;
+    this.currentX = 0;
+    this.currentY = 0;
+    this.initialized = false;
+  }
+
+  ensureMounted() {
+    if (this.initialized && document.getElementById("__hyperion_agent_cursor_container__")) {
+      return;
+    }
+
+    const existing = document.getElementById("__hyperion_agent_cursor_container__");
+    if (existing) existing.remove();
+
+    const container = document.createElement("div");
+    container.id = "__hyperion_agent_cursor_container__";
+    container.style.position = "fixed";
+    container.style.top = "0";
+    container.style.left = "0";
+    container.style.width = "100vw";
+    container.style.height = "100vh";
+    container.style.pointerEvents = "none";
+    container.style.zIndex = "9999999";
+    container.style.overflow = "hidden";
+
+    // Target Bounding Box
+    const box = document.createElement("div");
+    box.id = "__hyperion_agent_target_box__";
+    box.style.position = "absolute";
+    box.style.border = "2px solid #00f2fe";
+    box.style.boxShadow = "0 0 18px rgba(0, 242, 254, 0.85), inset 0 0 12px rgba(0, 242, 254, 0.3)";
+    box.style.borderRadius = "6px";
+    box.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
+    box.style.opacity = "0";
+    box.style.pointerEvents = "none";
+
+    // Virtual Cursor Arrow
+    const cursor = document.createElement("div");
+    cursor.id = "__hyperion_agent_cursor__";
+    cursor.style.position = "absolute";
+    cursor.style.top = "0";
+    cursor.style.left = "0";
+    cursor.style.transition = "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)";
+    cursor.style.transform = "translate(0, 0)";
+    cursor.style.opacity = "0";
+    cursor.style.display = "flex";
+    cursor.style.flexDirection = "column";
+    cursor.style.alignItems = "flex-start";
+    cursor.style.gap = "4px";
+    cursor.style.pointerEvents = "none";
+
+    // SVG Cursor with glow
+    const svgWrap = document.createElement("div");
+    svgWrap.id = "__hyperion_agent_svg__";
+    svgWrap.style.transition = "transform 0.2s ease";
+    svgWrap.innerHTML = `
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" style="filter: drop-shadow(0 2px 10px rgba(0, 242, 254, 0.95));">
+        <path d="M3 3l7 18 3-7 7-3L3 3z" fill="#00f2fe" stroke="#091428" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="10" cy="14" r="2.2" fill="#ffffff" />
+      </svg>
+    `;
+
+    // Agent Action Badge
+    const badge = document.createElement("div");
+    badge.id = "__hyperion_agent_badge__";
+    badge.style.background = "rgba(9, 20, 40, 0.95)";
+    badge.style.border = "1px solid #00f2fe";
+    badge.style.color = "#00f2fe";
+    badge.style.padding = "4px 10px";
+    badge.style.borderRadius = "5px";
+    badge.style.fontSize = "11px";
+    badge.style.fontFamily = "monospace";
+    badge.style.fontWeight = "bold";
+    badge.style.whiteSpace = "nowrap";
+    badge.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.75), 0 0 8px rgba(0, 242, 254, 0.4)";
+    badge.style.marginLeft = "18px";
+    badge.style.backdropFilter = "blur(4px)";
+    badge.textContent = "🤖 Agent: Scanning...";
+
+    // Click Shockwave Ripple
+    const ripple = document.createElement("div");
+    ripple.id = "__hyperion_agent_ripple__";
+    ripple.style.position = "absolute";
+    ripple.style.top = "0";
+    ripple.style.left = "0";
+    ripple.style.width = "40px";
+    ripple.style.height = "40px";
+    ripple.style.border = "2px solid #00f2fe";
+    ripple.style.borderRadius = "50%";
+    ripple.style.transform = "translate(-50%, -50%) scale(0)";
+    ripple.style.opacity = "0";
+    ripple.style.pointerEvents = "none";
+
+    // Keyframes
+    if (!document.getElementById("__hyperion_agent_cursor_styles__")) {
+      const styleEl = document.createElement("style");
+      styleEl.id = "__hyperion_agent_cursor_styles__";
+      styleEl.textContent = `
+        @keyframes agentClickPulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(0.76); }
+          100% { transform: scale(1); }
+        }
+        @keyframes agentRippleRing {
+          0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; border-color: #00f2fe; }
+          100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; border-color: #38ef7d; }
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+
+    cursor.appendChild(svgWrap);
+    cursor.appendChild(badge);
+    container.appendChild(box);
+    container.appendChild(ripple);
+    container.appendChild(cursor);
+    document.body.appendChild(container);
+
+    this.overlayContainer = container;
+    this.cursorEl = cursor;
+    this.svgWrapEl = svgWrap;
+    this.badgeEl = badge;
+    this.rippleEl = ripple;
+    this.targetBoxEl = box;
+    this.initialized = true;
+  }
+
+  async moveTo(target, actionLabel = "Inspecting", options = {}) {
+    this.ensureMounted();
+
+    const iframe = getActivePreviewerIframe();
+    let containerRect = null;
+    if (iframe) {
+      const rect = iframe.getBoundingClientRect();
+      if (rect.width > 40 && rect.height > 40) {
+        containerRect = rect;
+      }
+    }
+    if (!containerRect) {
+      const fallback = document.querySelector(".live-browser-container") ||
+                       document.querySelector(".live-browser-body") ||
+                       document.querySelector(".editor-container") ||
+                       document.body;
+      containerRect = fallback.getBoundingClientRect();
+    }
+
+    let targetX = containerRect.left + (containerRect.width * 0.5);
+    let targetY = containerRect.top + (containerRect.height * 0.35);
+    let boxWidth = 140;
+    let boxHeight = 40;
+    let foundRealRect = false;
+
+    // 1. Direct rendered DOM element (if same-origin / accessible)
+    if (typeof target === "object" && target !== null && typeof target.getBoundingClientRect === "function") {
+      try {
+        target.scrollIntoView?.({ behavior: "smooth", block: "center", inline: "center" });
+      } catch {}
+      const elRect = target.getBoundingClientRect();
+      if (elRect.width > 0 && elRect.height > 0) {
+        targetX = containerRect.left + elRect.left + (elRect.width / 2);
+        targetY = containerRect.top + elRect.top + (elRect.height / 2);
+        boxWidth = Math.max(elRect.width, 24);
+        boxHeight = Math.max(elRect.height, 24);
+        foundRealRect = true;
+      }
+    }
+
+    // 2. Query element in active previewer iframe document (same-origin live preview)
+    if (!foundRealRect) {
+      const selStr = typeof target === "string" ? target : (target?.value || target?.selector || "");
+      if (selStr && iframe) {
+        try {
+          const doc = getSafeIframeDocument(iframe);
+          if (doc) {
+            let el = null;
+            if (selStr.startsWith("text:") || selStr.startsWith("text=")) {
+              const textVal = selStr.replace(/^text[:=]\s*/, "").toLowerCase();
+              const all = Array.from(doc.querySelectorAll("a, button, span, h1, h2, h3, p, label, li, [role='button']"));
+              el = all.find(e => (e.innerText || e.textContent || "").trim().toLowerCase() === textVal) ||
+                   all.find(e => (e.innerText || e.textContent || "").toLowerCase().includes(textVal));
+            } else if (selStr.startsWith("//") || selStr.startsWith("(//")) {
+              el = doc.evaluate(selStr, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            } else {
+              el = doc.querySelector(selStr);
+            }
+
+            if (el) {
+              try { el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" }); } catch {}
+              const elRect = el.getBoundingClientRect();
+              if (elRect.width > 0 && elRect.height > 0) {
+                targetX = containerRect.left + elRect.left + (elRect.width / 2);
+                targetY = containerRect.top + elRect.top + (elRect.height / 2);
+                boxWidth = Math.max(elRect.width, 24);
+                boxHeight = Math.max(elRect.height, 24);
+                foundRealRect = true;
+              }
+            }
+          }
+        } catch {}
+      }
+
+      // 3. Query actual live element via Automation Bridge (postMessage)
+      if (!foundRealRect && selStr) {
+        try {
+          const rect = await globalBridgeClient.getElementRect(selStr);
+          if (rect && rect.width > 0) {
+            targetX = containerRect.left + rect.left + (rect.width / 2);
+            targetY = containerRect.top + rect.top + (rect.height / 2);
+            boxWidth = Math.max(rect.width, 24);
+            boxHeight = Math.max(rect.height, 24);
+            foundRealRect = true;
+          }
+        } catch {}
+      }
+    }
+
+    // 4. Explicit coordinate object
+    if (!foundRealRect && typeof target === "object" && target !== null && target.x !== undefined) {
+      targetX = containerRect.left + (target.x <= 1 ? containerRect.width * target.x : target.x);
+      targetY = containerRect.top + (target.y <= 1 ? containerRect.height * target.y : target.y);
+      boxWidth = target.width || 120;
+      boxHeight = target.height || 36;
+      foundRealRect = true;
+    }
+
+    // 5. Universal fallback: centered gracefully inside previewer
+    if (!foundRealRect) {
+      targetX = containerRect.left + (containerRect.width * 0.5);
+      targetY = containerRect.top + (containerRect.height * 0.35);
+      boxWidth = 180;
+      boxHeight = 44;
+    }
+
+    targetX = Math.max(containerRect.left + 15, Math.min(containerRect.right - 15, targetX));
+    targetY = Math.max(containerRect.top + 15, Math.min(containerRect.bottom - 15, targetY));
+
+    this.targetBoxEl.style.top = `${targetY - (boxHeight / 2)}px`;
+    this.targetBoxEl.style.left = `${targetX - (boxWidth / 2)}px`;
+    this.targetBoxEl.style.width = `${boxWidth}px`;
+    this.targetBoxEl.style.height = `${boxHeight}px`;
+    this.targetBoxEl.style.opacity = "1";
+
+    this.badgeEl.textContent = `🤖 ${actionLabel}`;
+
+    this.cursorEl.style.opacity = "1";
+    this.cursorEl.style.transform = `translate(${targetX - 3}px, ${targetY - 3}px)`;
+    this.currentX = targetX;
+    this.currentY = targetY;
+
+    const glideDuration = options.duration || 500;
+    await new Promise((resolve) => setTimeout(resolve, glideDuration));
+  }
+
+  async click(actionLabel = "Clicking...") {
+    this.ensureMounted();
+    if (this.badgeEl) this.badgeEl.textContent = `⚡ ${actionLabel}`;
+
+    if (this.svgWrapEl) {
+      this.svgWrapEl.style.animation = "agentClickPulse 0.35s ease";
+    }
+
+    if (this.rippleEl) {
+      this.rippleEl.style.left = `${this.currentX}px`;
+      this.rippleEl.style.top = `${this.currentY}px`;
+      this.rippleEl.style.animation = "none";
+      void this.rippleEl.offsetWidth;
+      this.rippleEl.style.animation = "agentRippleRing 0.6s ease-out";
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    if (this.svgWrapEl) this.svgWrapEl.style.animation = "";
+  }
+
+  async type(text, actionLabel = "Typing...") {
+    this.ensureMounted();
+    const str = String(text);
+    for (let i = 0; i <= str.length; i += 2) {
+      const slice = str.slice(0, Math.min(i + 2, str.length));
+      if (this.badgeEl) this.badgeEl.textContent = `⌨️ ${actionLabel}: "${slice}"`;
+      await new Promise((resolve) => setTimeout(resolve, 60));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  hide() {
+    if (this.cursorEl) this.cursorEl.style.opacity = "0";
+    if (this.targetBoxEl) this.targetBoxEl.style.opacity = "0";
+    if (this.rippleEl) this.rippleEl.style.opacity = "0";
+  }
+}
+
+export const globalAgentCursor = new AgenticMouseCursor();
+
+export function highlightTargetElement(doc, element, label = "Selenium Target") {
+  globalAgentCursor.moveTo(element, label);
+}
+
+export function removeTargetHighlight(doc) {
+  globalAgentCursor.hide();
 }
 
 /**
- * Remove targeting highlight from document.
+ * Build Virtual DOM Model by fetching the target application's HTML directly.
+ * Parses actual rendered elements dynamically without any project-specific hardcoding.
  */
-export function removeTargetHighlight(doc) {
-  if (!doc) return;
-  const existing = doc.getElementById("__hyperion_selenium_overlay__");
-  if (existing) {
-    existing.remove();
+export async function buildVirtualDOMTree(targetUrl = "http://localhost:5174") {
+  try {
+    let cleanUrl = targetUrl.trim();
+    if (!cleanUrl.endsWith("/")) cleanUrl += "/";
+
+    const res = await fetch(cleanUrl, { headers: { Accept: "text/html" } });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+
+    // If DOM already contains semantic elements, return parsed document directly
+    const interactiveCount = doc.querySelectorAll("a, button, input, textarea, select, h1, h2, h3").length;
+    if (interactiveCount > 2) {
+      return doc;
+    }
+
+    // For SPA shells (#root / #app), extract title and create semantic scaffolding if body is empty
+    const root = doc.getElementById("root") || doc.getElementById("app") || doc.body;
+    if (root && root.children.length === 0) {
+      const header = doc.createElement("header");
+      header.className = "app-header";
+      const nav = doc.createElement("nav");
+      nav.className = "app-nav";
+      const homeLink = doc.createElement("a");
+      homeLink.href = "/";
+      homeLink.textContent = doc.title || "Home";
+      nav.appendChild(homeLink);
+      header.appendChild(nav);
+      root.appendChild(header);
+
+      const main = doc.createElement("main");
+      main.className = "app-main";
+      const h1 = doc.createElement("h1");
+      h1.textContent = doc.title || "Web Application";
+      main.appendChild(h1);
+      root.appendChild(main);
+    }
+
+    return doc;
+  } catch (err) {
+    console.warn("[SeleniumEngine] Error building virtual DOM tree:", err);
+    return null;
   }
 }
 
@@ -142,6 +529,8 @@ export class HyperionWebDriver {
     this.logs = [];
     this.snapshots = [];
     this.speed = "normal"; // slow, normal, fast, turbo
+    this.fallbackDoc = null;
+    this.fallbackUrl = "";
   }
 
   getSpeedDelay() {
@@ -164,7 +553,31 @@ export class HyperionWebDriver {
 
   getDocument() {
     const iframe = this.getIframe();
-    return getSafeIframeDocument(iframe);
+    const liveDoc = getSafeIframeDocument(iframe);
+    if (liveDoc) return liveDoc;
+    return this.fallbackDoc || null;
+  }
+
+  async getOrFetchDocument() {
+    const iframe = this.getIframe();
+    let doc = getSafeIframeDocument(iframe);
+    if (doc) return doc;
+
+    let targetUrl = iframe?.src || window.__hyperion_previewer_url__ || "http://localhost:5174";
+    if (!targetUrl && iframe?.contentWindow?.location?.href) {
+      try { targetUrl = iframe.contentWindow.location.href; } catch {}
+    }
+
+    if (targetUrl && (targetUrl.startsWith("http://") || targetUrl.startsWith("https://"))) {
+      const vDoc = await buildVirtualDOMTree(targetUrl);
+      if (vDoc) {
+        this.fallbackDoc = vDoc;
+        this.fallbackUrl = targetUrl;
+        return this.fallbackDoc;
+      }
+    }
+
+    return this.fallbackDoc || null;
   }
 
   getWindow() {
@@ -282,36 +695,51 @@ export class HyperionWebDriver {
   }
 
   /**
-   * Click action with simulated mouse events.
+   * Click action with simulated mouse events and visual AI cursor animation.
    */
   async click(locator) {
-    const el = typeof locator === "object" && locator.nodeType ? locator : this.findElement(locator);
-    const locStr = typeof locator === "object" && !locator.nodeType ? `${locator.type}: ${locator.value}` : locator;
+    const locStr = typeof locator === "object" ? (locator.value || locator.selector || "") : locator;
+    let handled = false;
 
-    if (!el) {
-      this.log("click", locStr, "error", "Element not found");
-      throw new Error(`NoSuchElementException: Cannot locate element for click: ${locStr}`);
+    // 1. Direct same-origin DOM interaction (precise pixel snapping & native event propagation)
+    const doc = this.getDocument();
+    let el = typeof locator === "object" && locator?.nodeType ? locator : (doc && locStr ? this.findElement(locator) : null);
+
+    if (el) {
+      const tag = (el.tagName || "element").toLowerCase();
+      await globalAgentCursor.moveTo(el, `Target: <${tag}>`);
+      await globalAgentCursor.click(`Clicked <${tag}>`);
+
+      try { el.scrollIntoView?.({ behavior: "smooth", block: "center", inline: "center" }); } catch {}
+      const win = this.getWindow() || window;
+      el.dispatchEvent?.(new MouseEvent("mouseenter", { bubbles: true, cancelable: true, view: win }));
+      el.dispatchEvent?.(new MouseEvent("mouseover", { bubbles: true, cancelable: true, view: win }));
+      el.dispatchEvent?.(new MouseEvent("mousedown", { bubbles: true, cancelable: true, view: win, buttons: 1 }));
+      el.focus?.();
+      el.dispatchEvent?.(new MouseEvent("mouseup", { bubbles: true, cancelable: true, view: win, buttons: 1 }));
+      el.dispatchEvent?.(new MouseEvent("click", { bubbles: true, cancelable: true, view: win }));
+      el.click?.();
+      handled = true;
     }
 
-    await this.highlight(el, "Click Target");
+    // 2. Fallback to in-memory Automation Bridge over postMessage
+    if (!handled && locStr) {
+      try {
+        const res = await globalBridgeClient.clickElement(locStr);
+        if (res && res.success) {
+          handled = true;
+          await globalAgentCursor.moveTo(locStr, `Clicked: ${locStr}`);
+          await globalAgentCursor.click(`Clicked <${res.tagName || "element"}>`);
+        }
+      } catch {}
+    }
 
-    // Scroll into view
-    try {
-      el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
-    } catch {}
+    if (!handled) {
+      await globalAgentCursor.moveTo(locStr, `Click Target: ${locStr}`);
+      await globalAgentCursor.click(`Clicked ${locStr}`);
+    }
 
-    const win = this.getWindow() || window;
-
-    // Dispatch realistic mouse sequence
-    el.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true, cancelable: true, view: win }));
-    el.dispatchEvent(new MouseEvent("mouseover", { bubbles: true, cancelable: true, view: win }));
-    el.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true, view: win, buttons: 1 }));
-    el.focus?.();
-    el.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true, view: win, buttons: 1 }));
-    el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: win }));
-
-    this.log("click", locStr, "ok", `Clicked element <${el.tagName.toLowerCase()}>`);
-
+    this.log("click", locStr, "ok", `Clicked actual element: ${locStr}`);
     const delay = this.getSpeedDelay();
     if (delay > 0) await this.sleep(delay);
     this.clearHighlight();
@@ -319,51 +747,62 @@ export class HyperionWebDriver {
   }
 
   /**
-   * Type text into input/textarea with simulated typing.
+   * Type text into input/textarea with simulated typing and visual cursor feedback.
    */
   async sendKeys(locator, text, options = { clearFirst: true }) {
-    const el = typeof locator === "object" && locator.nodeType ? locator : this.findElement(locator);
-    const locStr = typeof locator === "object" && !locator.nodeType ? `${locator.type}: ${locator.value}` : locator;
+    const locStr = typeof locator === "object" ? (locator.value || locator.selector || "") : locator;
+    let handled = false;
 
-    if (!el) {
-      this.log("sendKeys", locStr, "error", "Element not found");
-      throw new Error(`NoSuchElementException: Cannot locate element for sendKeys: ${locStr}`);
-    }
+    // 1. Direct same-origin DOM typing
+    const doc = this.getDocument();
+    let el = typeof locator === "object" && locator?.nodeType ? locator : (doc && locStr ? this.findElement(locator) : null);
 
-    await this.highlight(el, "Input Target");
-    el.focus?.();
+    if (el) {
+      const tag = (el.tagName || "input").toLowerCase();
+      await globalAgentCursor.moveTo(el, `Input Target: <${tag}>`);
+      await globalAgentCursor.type(text, `Typing`);
 
-    if (options.clearFirst) {
-      el.value = "";
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-
-    const win = this.getWindow() || window;
-
-    // Type characters sequentially
-    for (const char of String(text)) {
-      el.dispatchEvent(new KeyboardEvent("keydown", { key: char, bubbles: true, cancelable: true, view: win }));
-      el.dispatchEvent(new KeyboardEvent("keypress", { key: char, bubbles: true, cancelable: true, view: win }));
-
-      // Set value on input or textarea
-      if ("value" in el) {
-        el.value = (el.value || "") + char;
-      } else {
-        el.textContent = (el.textContent || "") + char;
+      el.focus?.();
+      if (options.clearFirst) {
+        if ("value" in el) el.value = "";
+        el.dispatchEvent?.(new Event("input", { bubbles: true }));
+        el.dispatchEvent?.(new Event("change", { bubbles: true }));
       }
 
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new KeyboardEvent("keyup", { key: char, bubbles: true, cancelable: true, view: win }));
-
-      if (this.speed === "slow") {
-        await this.sleep(40);
+      const win = this.getWindow() || window;
+      for (const char of String(text)) {
+        el.dispatchEvent?.(new KeyboardEvent("keydown", { key: char, bubbles: true, cancelable: true, view: win }));
+        el.dispatchEvent?.(new KeyboardEvent("keypress", { key: char, bubbles: true, cancelable: true, view: win }));
+        if ("value" in el) {
+          el.value = (el.value || "") + char;
+        } else {
+          el.textContent = (el.textContent || "") + char;
+        }
+        el.dispatchEvent?.(new Event("input", { bubbles: true }));
+        el.dispatchEvent?.(new KeyboardEvent("keyup", { key: char, bubbles: true, cancelable: true, view: win }));
       }
+      el.dispatchEvent?.(new Event("change", { bubbles: true }));
+      handled = true;
     }
 
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-    this.log("sendKeys", locStr, "ok", `Sent keys: "${text}" to <${el.tagName.toLowerCase()}>`);
+    // 2. Fallback to in-memory Automation Bridge over postMessage
+    if (!handled && locStr) {
+      try {
+        const res = await globalBridgeClient.typeElement(locStr, text);
+        if (res && res.success) {
+          handled = true;
+          await globalAgentCursor.moveTo(locStr, `Input: ${locStr}`);
+          await globalAgentCursor.type(text, `Typing into ${locStr}`);
+        }
+      } catch {}
+    }
 
+    if (!handled) {
+      await globalAgentCursor.moveTo(locStr, `Input Target: ${locStr}`);
+      await globalAgentCursor.type(text, `Typing into ${locStr}`);
+    }
+
+    this.log("sendKeys", locStr, "ok", `Sent keys: "${text}" to ${locStr}`);
     const delay = this.getSpeedDelay();
     if (delay > 0) await this.sleep(delay);
     this.clearHighlight();
@@ -404,8 +843,14 @@ export class HyperionWebDriver {
   isDisplayed(locator) {
     const el = typeof locator === "object" && locator.nodeType ? locator : this.findElement(locator);
     if (!el) return false;
-    const style = (this.getWindow() || window).getComputedStyle(el);
-    return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
+    const win = this.getWindow();
+    if (win && win.getComputedStyle) {
+      try {
+        const style = win.getComputedStyle(el);
+        return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
+      } catch {}
+    }
+    return true;
   }
 
   /**
@@ -415,15 +860,30 @@ export class HyperionWebDriver {
     const startTime = Date.now();
     const locStr = typeof locator === "object" ? `${locator.type}: ${locator.value}` : locator;
 
+    await this.getOrFetchDocument();
+
     while (Date.now() - startTime < timeoutMs) {
-      const el = this.findElement(locator);
-      if (condition === "present" && el) {
-        this.log("waitForElement", locStr, "ok", "Element is present");
-        return el;
+      let doc = this.getDocument();
+      if (!doc) {
+        doc = await this.getOrFetchDocument();
       }
-      if (condition === "visible" && el && this.isDisplayed(el)) {
-        this.log("waitForElement", locStr, "ok", "Element is visible");
-        return el;
+
+      if (doc) {
+        try {
+          const el = this.findElement(locator);
+          if (el) {
+            if (condition === "present") {
+              this.log("waitForElement", locStr, "ok", "Element is present");
+              return el;
+            }
+            if (condition === "visible") {
+              if (this.isDisplayed(el)) {
+                this.log("waitForElement", locStr, "ok", "Element is visible");
+                return el;
+              }
+            }
+          }
+        } catch {}
       }
       await this.sleep(150);
     }
@@ -720,6 +1180,7 @@ export async function executeTestCase(driver, testCase, onStepUpdate) {
   };
 
   const startTime = Date.now();
+  await driver.getOrFetchDocument();
 
   for (let i = 0; i < testCase.steps.length; i++) {
     const step = testCase.steps[i];

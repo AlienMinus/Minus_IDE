@@ -405,7 +405,7 @@ function Editor() {
   if (activeFile.type === "selenium-studio" || activeFile.isSeleniumStudio) {
     return (
       <div className="editor-container">
-        <SeleniumRunner />
+        <SeleniumRunner isStudioMode={true} />
       </div>
     );
   }

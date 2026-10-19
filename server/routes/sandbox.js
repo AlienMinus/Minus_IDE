@@ -17,6 +17,185 @@ import {
 
 const router = express.Router();
 
+// GET /preview-proxy - In-memory transparent HTML proxy with automation bridge
+router.get('/preview-proxy', async (req, res) => {
+  const targetUrl = req.query.url || 'http://localhost:5174';
+  try {
+    let cleanUrl = targetUrl.trim();
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'http://' + cleanUrl;
+    }
+    const parsedTarget = new URL(cleanUrl);
+    const targetOrigin = parsedTarget.origin;
+
+    const fetchRes = await fetch(cleanUrl, {
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': req.headers['user-agent'] || 'HyperionIDE-Preview'
+      }
+    });
+
+    if (!fetchRes.ok) {
+      res.status(fetchRes.status);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(`<h3>Preview Proxy Error: Target returned status ${fetchRes.status}</h3>`);
+    }
+
+    let html = await fetchRes.text();
+
+    if (!html.includes('<base ') && !html.includes('<base>')) {
+      const baseTag = `<base href="${targetOrigin}/">`;
+      if (html.includes('<head>')) {
+        html = html.replace('<head>', `<head>\n  ${baseTag}`);
+      } else if (html.includes('<html>')) {
+        html = html.replace('<html>', `<html>\n<head>${baseTag}</head>`);
+      } else {
+        html = `${baseTag}\n${html}`;
+      }
+    }
+
+    const bridgeScript = `
+    <!-- Hyperion IDE In-Memory Automation Bridge (Zero files modified on disk) -->
+    <script>
+      (function() {
+        if (window.__hyperion_bridge_active__) return;
+        window.__hyperion_bridge_active__ = true;
+
+        function resolveEl(sel) {
+          if (!sel || typeof sel !== 'string') return null;
+          try {
+            if (sel.startsWith('text:') || sel.startsWith('text=')) {
+              const textVal = sel.replace(/^text[:=]\\s*/, '').toLowerCase();
+              const all = Array.from(document.querySelectorAll('a, button, span, h1, h2, h3, p, label, li, [role="button"]'));
+              for (const el of all) {
+                if ((el.innerText || el.textContent || '').trim().toLowerCase() === textVal) return el;
+              }
+              for (const el of all) {
+                if ((el.innerText || el.textContent || '').toLowerCase().includes(textVal)) return el;
+              }
+              return null;
+            }
+            if (sel.startsWith('//') || sel.startsWith('(//')) {
+              return document.evaluate(sel, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            }
+            return document.querySelector(sel);
+          } catch (e) { return null; }
+        }
+
+        window.addEventListener('message', function(e) {
+          if (!e.data || e.data.source !== 'hyperion-selenium') return;
+          const { action, selector, value, reqId } = e.data;
+
+          try {
+            if (action === 'PING') {
+              window.parent.postMessage({ source: 'hyperion-preview', type: 'PONG', url: window.location.href, title: document.title, ready: true }, '*');
+              return;
+            }
+
+            if (action === 'DUMP_DOM') {
+              const items = Array.from(document.querySelectorAll('a, button, input, textarea, select, h1, h2, h3, img, [role="button"]')).map(el => {
+                const r = el.getBoundingClientRect();
+                return {
+                  tagName: el.tagName.toLowerCase(),
+                  id: el.id || '',
+                  className: el.className || '',
+                  text: (el.innerText || el.textContent || '').trim().slice(0, 60),
+                  rect: { left: r.left, top: r.top, width: r.width, height: r.height }
+                };
+              });
+              window.parent.postMessage({ source: 'hyperion-preview', reqId, success: true, elements: items }, '*');
+              return;
+            }
+
+            if (action === 'GET_RECT') {
+              const el = resolveEl(selector);
+              if (!el) {
+                window.parent.postMessage({ source: 'hyperion-preview', reqId, success: false, error: 'Element not found' }, '*');
+                return;
+              }
+              const r = el.getBoundingClientRect();
+              window.parent.postMessage({
+                source: 'hyperion-preview',
+                reqId,
+                success: true,
+                tagName: el.tagName.toLowerCase(),
+                innerText: (el.innerText || el.textContent || '').trim().slice(0, 50),
+                rect: { left: r.left, top: r.top, width: r.width, height: r.height }
+              }, '*');
+              return;
+            }
+
+            if (action === 'CLICK') {
+              const el = resolveEl(selector);
+              if (!el) {
+                window.parent.postMessage({ source: 'hyperion-preview', reqId, success: false, error: 'Element not found' }, '*');
+                return;
+              }
+              try { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); } catch {}
+              const r = el.getBoundingClientRect();
+              el.focus?.();
+              el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+              el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+              el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, buttons: 1 }));
+              el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, buttons: 1 }));
+              el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+              el.click?.();
+              window.parent.postMessage({
+                source: 'hyperion-preview',
+                reqId,
+                success: true,
+                tagName: el.tagName.toLowerCase(),
+                rect: { left: r.left, top: r.top, width: r.width, height: r.height }
+              }, '*');
+              return;
+            }
+
+            if (action === 'TYPE') {
+              const el = resolveEl(selector);
+              if (!el) {
+                window.parent.postMessage({ source: 'hyperion-preview', reqId, success: false, error: 'Element not found' }, '*');
+                return;
+              }
+              try { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); } catch {}
+              const r = el.getBoundingClientRect();
+              el.focus?.();
+              el.value = value;
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+              window.parent.postMessage({
+                source: 'hyperion-preview',
+                reqId,
+                success: true,
+                rect: { left: r.left, top: r.top, width: r.width, height: r.height }
+              }, '*');
+              return;
+            }
+          } catch (err) {
+            window.parent.postMessage({ source: 'hyperion-preview', reqId, success: false, error: err.message }, '*');
+          }
+        });
+
+        window.parent.postMessage({ source: 'hyperion-preview', type: 'BRIDGE_READY', url: window.location.href, title: document.title }, '*');
+      })();
+    </script>
+`;
+
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', `${bridgeScript}\n</body>`);
+    } else {
+      html += bridgeScript;
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.send(html);
+  } catch (err) {
+    res.status(500);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(`<h3>Proxy Error: ${err.message}</h3>`);
+  }
+});
+
 // GET /workspace/file - Serve local file directly for media preview
 router.get('/workspace/file', (req, res) => {
   try {

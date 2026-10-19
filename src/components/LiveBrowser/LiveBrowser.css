@@ -124,6 +124,43 @@
   box-shadow: 0 0 6px #3fb950;
 }
 
+.bridge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 242, 254, 0.15);
+  color: #00f2fe;
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.bridge-badge:hover {
+  background: rgba(0, 242, 254, 0.25);
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+}
+
+.bridge-dot {
+  width: 5px;
+  height: 5px;
+  background: #00f2fe;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #00f2fe;
+  animation: bridgePulse 1.5s infinite;
+}
+
+@keyframes bridgePulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
 .live-browser-actions {
   display: flex;
   align-items: center;

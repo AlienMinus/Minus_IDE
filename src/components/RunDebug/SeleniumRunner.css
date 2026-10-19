@@ -1,5 +1,31 @@
 /* Selenium Runner Styles - Hyperion IDE */
 
+.selenium-runner-root {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+.selenium-runner-root.has-split .selenium-runner-container {
+  width: 460px;
+  min-width: 380px;
+  max-width: 620px;
+  border-right: 1px solid #2d2d2d;
+  flex-shrink: 0;
+}
+
+.selenium-runner-preview-pane {
+  flex: 1;
+  height: 100%;
+  background: #0d1117;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .selenium-runner-container {
   display: flex;
   flex-direction: column;
@@ -93,6 +119,61 @@
 
 .selenium-launch-btn:hover {
   background: #0856b3;
+}
+
+.selenium-bridge-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 242, 254, 0.15);
+  color: #00f2fe;
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.selenium-bridge-btn:hover {
+  background: rgba(0, 242, 254, 0.25);
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+}
+
+.target-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.selenium-split-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #21262d;
+  color: #8b949e;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.selenium-split-toggle-btn:hover {
+  background: #30363d;
+  color: #c9d1d9;
+}
+
+.selenium-split-toggle-btn.active {
+  background: rgba(0, 242, 254, 0.15);
+  border-color: #00f2fe;
+  color: #00f2fe;
 }
 
 /* Sub-Tab Navigation Bar */

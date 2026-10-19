@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import "./LiveBrowser.css";
 import {
   FaArrowLeft,
@@ -16,18 +16,34 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
   const [history, setHistory] = useState([initialUrl]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [iframeKey, setIframeKey] = useState(Date.now());
+  const [iframeKey, setIframeKey] = useState(0);
   const iframeRef = useRef(null);
 
   useEffect(() => {
     if (initialUrl && initialUrl !== url) {
       setUrl(initialUrl);
       setInputUrl(initialUrl);
-      setHistory(prev => [...prev, initialUrl]);
-      setHistoryIndex(prev => prev + 1);
+      setHistory((prev) => [...prev, initialUrl]);
+      setHistoryIndex((prev) => prev + 1);
       setIframeKey(Date.now());
     }
   }, [initialUrl]);
+
+  useEffect(() => {
+    window.__hyperion_previewer_url__ = url;
+  }, [url]);
+
+  // If loading a local development server on another port, transparently route through
+  // the in-memory preview proxy to enable same-origin DOM access, accurate element bounding rects,
+  // and real synthetic interaction without modifying ANY user files on disk.
+  const iframeSrc = useMemo(() => {
+    if (!url) return "about:blank";
+    const clean = url.trim();
+    if (/^http:\/\/(localhost|127\.0\.0\.1):(?!5173\b)\d+/i.test(clean)) {
+      return `/api/sandbox/preview-proxy?url=${encodeURIComponent(clean)}`;
+    }
+    return clean;
+  }, [url]);
 
   const handleNavigate = (targetUrl) => {
     let clean = targetUrl.trim();
@@ -37,8 +53,8 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
     }
     setUrl(clean);
     setInputUrl(clean);
-    setHistory(prev => [...prev.slice(0, historyIndex + 1), clean]);
-    setHistoryIndex(prev => prev + 1);
+    setHistory((prev) => [...prev.slice(0, historyIndex + 1), clean]);
+    setHistoryIndex((prev) => prev + 1);
     setIsLoading(true);
     setIframeKey(Date.now());
   };
@@ -155,11 +171,14 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
         <iframe
           key={iframeKey}
           ref={iframeRef}
-          src={url}
+          src={iframeSrc}
           className="live-browser-iframe"
           title={title || "Live Web Preview"}
           sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
-          onLoad={() => setIsLoading(false)}
+          onLoad={() => {
+            setIsLoading(false);
+            window.dispatchEvent(new CustomEvent("hyperion:previewer-loaded"));
+          }}
         />
       </div>
     </div>
