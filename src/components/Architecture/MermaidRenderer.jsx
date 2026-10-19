@@ -9,10 +9,11 @@ import {
   FaDownload,
   FaCode,
   FaCheck,
-  FaSpinner
+  FaSpinner,
+  FaCube
 } from "react-icons/fa";
 
-export default function MermaidRenderer({ code, title = "Diagram" }) {
+export default function MermaidRenderer({ code, title = "Diagram", onSwitchTo3D }) {
   const containerRef = useRef(null);
   const viewportRef = useRef(null);
   const naturalSizeRef = useRef({ width: 0, height: 0 });
@@ -285,6 +286,21 @@ export default function MermaidRenderer({ code, title = "Diagram" }) {
           >
             Reset
           </button>
+          {onSwitchTo3D && (
+            <button
+              className="mermaid-btn"
+              onClick={onSwitchTo3D}
+              style={{
+                background: "rgba(56, 189, 248, 0.16)",
+                borderColor: "rgba(56, 189, 248, 0.45)",
+                color: "#38bdf8",
+                fontWeight: "600"
+              }}
+              title="Switch to Interactive 3D Architecture Canvas"
+            >
+              <FaCube size={11} /> 3D View
+            </button>
+          )}
           <button
             className="mermaid-btn"
             onClick={handleDownloadSvg}

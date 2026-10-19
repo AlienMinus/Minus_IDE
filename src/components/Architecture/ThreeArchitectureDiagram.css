@@ -1,0 +1,349 @@
+/* src/components/Architecture/ThreeArchitectureDiagram.css */
+
+.three-arch-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #080a0f;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 1. TOP TOOLBAR */
+.three-arch-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #0f131a;
+  border-bottom: 1px solid #1e2430;
+  z-index: 10;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.three-arch-toolbar-left,
+.three-arch-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.three-arch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1a202c;
+  border: 1px solid #2d3748;
+  color: #cbd5e1;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.three-arch-btn:hover {
+  background: #283141;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.three-arch-btn.active {
+  background: rgba(14, 99, 156, 0.35);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.three-arch-btn.switch-2d {
+  background: rgba(0, 255, 136, 0.12);
+  border-color: rgba(0, 255, 136, 0.35);
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.three-arch-btn.switch-2d:hover {
+  background: rgba(0, 255, 136, 0.22);
+  border-color: #00ff88;
+  color: #ffffff;
+}
+
+/* LAYER FILTER PILLS */
+.three-arch-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.three-arch-filter-pill {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: #161b24;
+  border: 1px solid #242c3b;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.three-arch-filter-pill:hover {
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.three-arch-filter-pill.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+/* SEARCH INPUT */
+.three-arch-search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #161b24;
+  border: 1px solid #242c3b;
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+
+.three-arch-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e2e8f0;
+  font-size: 11px;
+  width: 130px;
+}
+
+.three-arch-search-input::placeholder {
+  color: #64748b;
+}
+
+/* 2. THREE.JS CANVAS CONTAINER */
+.three-arch-viewport {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  outline: none;
+  cursor: grab;
+}
+
+.three-arch-viewport.dragging {
+  cursor: grabbing;
+}
+
+/* 3. TIER FLOATING LEGEND HUD (LEFT) */
+.three-arch-legend {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(13, 17, 24, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 10px 14px;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.three-arch-legend-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.three-arch-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #cbd5e1;
+  margin-bottom: 5px;
+}
+
+.three-arch-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* 4. NODE INSPECTION CARD (BOTTOM RIGHT HUD) */
+.three-arch-inspector {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 330px;
+  max-height: 440px;
+  background: rgba(11, 15, 23, 0.94);
+  border: 1px solid #38bdf8;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(14px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideInUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.three-arch-inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(17, 24, 39, 0.85);
+  border-bottom: 1px solid #1f2937;
+}
+
+.three-arch-inspector-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.three-arch-inspector-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+}
+
+.three-arch-inspector-close:hover {
+  color: #f87171;
+}
+
+.three-arch-inspector-body {
+  padding: 12px 14px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.three-arch-prop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+
+.three-arch-prop-label {
+  color: #64748b;
+}
+
+.three-arch-prop-val {
+  color: #e2e8f0;
+  font-family: 'Consolas', monospace;
+  font-weight: 600;
+}
+
+.three-arch-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.three-arch-inspector-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.three-arch-sec-title {
+  font-size: 10.5px;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.three-arch-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.three-arch-chip {
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #1a2230;
+  border: 1px solid #2d3748;
+  color: #cbd5e1;
+  font-family: 'Consolas', monospace;
+}
+
+.three-arch-open-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px;
+  background: #0284c7;
+  border: none;
+  border-radius: 5px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.15s ease;
+}
+
+.three-arch-open-btn:hover {
+  background: #0369a1;
+}
+
+/* 5. CAMERA HELP TIP (BOTTOM LEFT) */
+.three-arch-help-tip {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  font-size: 10.5px;
+  color: #64748b;
+  background: rgba(13, 17, 24, 0.7);
+  padding: 4px 10px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 5;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+

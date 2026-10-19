@@ -34,6 +34,7 @@ import MermaidRenderer from "./MermaidRenderer";
 import MongoSchemaERD from "./MongoSchemaERD";
 import BackendApiRoutes from "./BackendApiRoutes";
 import ProjectFileTree from "./ProjectFileTree";
+import ThreeArchitectureDiagram from "./ThreeArchitectureDiagram";
 
 export default function ArchitectureCanvas() {
   const { files = [], openFile, scanWorkspaceFiles, isScanningWorkspace, scanProgress, openBackendRoutesTab } = useEditor();
@@ -650,13 +651,27 @@ export default function ArchitectureCanvas() {
       {activeTab === "mermaid" && (
         <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%", overflow: "hidden" }}>
           {/* Sub-toolbar to pick diagram type */}
-          <div style={{ display: "flex", gap: "8px", padding: "8px 16px", background: "#1c1c1c", borderBottom: "1px solid #2d2d30" }}>
+          <div style={{ display: "flex", gap: "8px", padding: "8px 16px", background: "#1c1c1c", borderBottom: "1px solid #2d2d30", alignItems: "center", flexWrap: "wrap" }}>
             <button
               className={`mermaid-btn ${mermaidDiagramType === "flowchart" ? "active" : ""}`}
               onClick={() => setMermaidDiagramType("flowchart")}
               style={{ background: mermaidDiagramType === "flowchart" ? "#0e639c" : "#2d2d30" }}
             >
               🏗️ Architecture Flowchart
+            </button>
+            <button
+              className={`mermaid-btn ${mermaidDiagramType === "3d" ? "active" : ""}`}
+              onClick={() => setMermaidDiagramType("3d")}
+              style={{
+                background: mermaidDiagramType === "3d" ? "#0e639c" : "#2d2d30",
+                color: mermaidDiagramType === "3d" ? "#ffffff" : "#38bdf8",
+                fontWeight: "600",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px"
+              }}
+            >
+              <FaCube size={11} color="#38bdf8" /> 🧊 3D Architecture View
             </button>
             <button
               className={`mermaid-btn ${mermaidDiagramType === "sequence" ? "active" : ""}`}
@@ -676,7 +691,17 @@ export default function ArchitectureCanvas() {
 
           <div style={{ flex: 1, minHeight: 0 }}>
             {mermaidDiagramType === "flowchart" && (
-              <MermaidRenderer code={mermaidFlowchart} title="Architecture & Component Flowchart" />
+              <MermaidRenderer
+                code={mermaidFlowchart}
+                title="Architecture & Component Flowchart"
+                onSwitchTo3D={() => setMermaidDiagramType("3d")}
+              />
+            )}
+            {mermaidDiagramType === "3d" && (
+              <ThreeArchitectureDiagram
+                architectureGraph={architecture}
+                onSwitchTo2D={() => setMermaidDiagramType("flowchart")}
+              />
             )}
             {mermaidDiagramType === "sequence" && (
               <MermaidRenderer code={mermaidSequence} title="Runtime Execution Call Sequence Diagram" />
