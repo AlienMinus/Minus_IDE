@@ -135,7 +135,18 @@ function MainLayout() {
     { id: "git-pull", category: "Git", label: "Git: Pull (Rebase / Merge)", action: () => openView("git") },
     { id: "git-sync", category: "Git", label: "Git: Synchronize (Pull and Push)", action: () => openView("git") },
     { id: "git-publish", category: "Git", label: "Git: Publish to GitHub", action: () => openView("git") },
-    { id: "git-branch", category: "Git", label: "Git: Switch or Create Branch...", action: () => openView("git") }
+    { id: "git-branch", category: "Git", label: "Git: Switch or Create Branch...", action: () => openView("git") },
+
+    // Preferences & Settings
+    { id: "pref-settings", category: "Preferences", label: "Preferences: Open Settings (UI)", shortcut: "Ctrl+,", action: () => openView("settings") },
+    { id: "pref-theme", category: "Preferences", label: "Preferences: Color Theme", action: () => openView("settings") },
+
+    // Help
+    { id: "help-welcome", category: "Help", label: "Help: Welcome", action: () => window.dispatchEvent(new CustomEvent("hyperion:show-help-modal", { detail: { topic: "welcome" } })) },
+    { id: "help-docs", category: "Help", label: "Help: Documentation", action: () => window.dispatchEvent(new CustomEvent("hyperion:show-help-modal", { detail: { topic: "documentation" } })) },
+    { id: "help-shortcuts", category: "Help", label: "Help: Keyboard Shortcuts Reference", shortcut: "Ctrl+K Ctrl+S", action: () => window.dispatchEvent(new CustomEvent("hyperion:show-help-modal", { detail: { topic: "keyboardShortcuts" } })) },
+    { id: "help-notes", category: "Help", label: "Help: Release Notes", action: () => window.dispatchEvent(new CustomEvent("hyperion:show-help-modal", { detail: { topic: "releaseNotes" } })) },
+    { id: "help-about", category: "Help", label: "Help: About Hyperion IDE", action: () => window.dispatchEvent(new CustomEvent("hyperion:show-help-modal", { detail: { topic: "about" } })) }
   ];
 
   const viewOnlyCommands = allCommands.filter((c) => c.category === "View" && !c.label.startsWith("Toggle"));

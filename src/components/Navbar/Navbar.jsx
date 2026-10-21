@@ -1226,6 +1226,53 @@ function Navbar({ isChatOpen, toggleChat }) {
         setMenuPosition({ top: rect.bottom + 5, left: rect.left });
     };
 
+    const helpMenuItems = helpMenu.map((item) => {
+        switch (item.id) {
+            case "showAllCommands":
+                return {
+                    ...item,
+                    onClick: () => {
+                        setCommandPaletteMode("commands");
+                        setIsCommandPaletteOpen(true);
+                        setOpenMenu(null);
+                    }
+                };
+            case "askVSCode":
+                return {
+                    ...item,
+                    onClick: () => {
+                        if (!isChatOpen) toggleChat();
+                        setOpenMenu(null);
+                    }
+                };
+            case "youtube":
+                return {
+                    ...item,
+                    onClick: () => {
+                        window.open("https://www.youtube.com", "_blank", "noopener,noreferrer");
+                        setOpenMenu(null);
+                    }
+                };
+            case "keyboardShortcuts":
+                return {
+                    ...item,
+                    onClick: () => {
+                        setHelpModalTopic("keyboardShortcuts");
+                        setOpenMenu(null);
+                    }
+                };
+            default:
+                if (item.type === "separator") return item;
+                return {
+                    ...item,
+                    onClick: () => {
+                        setHelpModalTopic(item.id);
+                        setOpenMenu(null);
+                    }
+                };
+        }
+    });
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             const menuRefs = [fileRef, editRef, viewRef, terminalRef, helpRef, dropdownRef].filter(Boolean);
@@ -1346,9 +1393,13 @@ function Navbar({ isChatOpen, toggleChat }) {
             {openMenu === 'edit' && <DropdownMenu ref={dropdownRef} menu={editMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
             {openMenu === 'view' && <DropdownMenu ref={dropdownRef} menu={viewMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
             {openMenu === 'terminal' && <DropdownMenu ref={dropdownRef} menu={terminalMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
-            {openMenu === 'help' && <DropdownMenu ref={dropdownRef} menu={helpMenu} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
+            {openMenu === 'help' && <DropdownMenu ref={dropdownRef} menu={helpMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
 
-
+            <HelpModal
+                topic={helpModalTopic}
+                isOpen={!!helpModalTopic}
+                onClose={() => setHelpModalTopic(null)}
+            />
         </header>
     );
 
