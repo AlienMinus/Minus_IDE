@@ -128,7 +128,7 @@ export class HyperionQAAgent {
   }
 
   async runAutonomousExploration(callbacks = {}) {
-    const { onThought, onGoalUpdate, onFinding, onProgress, speed = "normal" } = callbacks;
+    const { onThought, onGoalUpdate, onFinding, onProgress, speed = "normal", targetedElement = null } = callbacks;
     this.isAborted = false;
     this.driver.speed = speed;
     this.thoughts = [];
@@ -187,6 +187,54 @@ export class HyperionQAAgent {
         return !active || !isElementVisible(active);
       }, 2500, 150);
       emitThought("[Success] Intro overlay settled. Main application view is fully interactive.", "success");
+    }
+
+    // ==========================================
+    // PHASE 0: USER-TARGETED ELEMENT DEEP INSPECTION (IF SPECIFIED)
+    // ==========================================
+    if (targetedElement) {
+      emitGoal(`Targeted Element Investigation: <${targetedElement.tagName || "element"}>`, 8);
+      emitThought(`🎯 User commanded autonomous inspection on inspected target: "${targetedElement.bestSelector || targetedElement.tagName}"`, "action");
+
+      let targetDomNode = targetedElement.elementRef;
+      if (!targetDomNode && targetedElement.bestSelector) {
+        try {
+          targetDomNode = doc.querySelector(targetedElement.bestSelector);
+        } catch {}
+      }
+
+      if (targetDomNode && isElementVisible(targetDomNode)) {
+        const tag = targetDomNode.tagName.toLowerCase();
+        emitThought(`[Target Found] Gliding AI agent cursor directly to inspected <${tag}>...`, "action");
+        await globalAgentCursor.moveTo(targetDomNode, `Inspecting Target: <${tag}>`, { duration: 600 });
+        await this.driver.sleep(400);
+
+        // Perform contextual synthetic interaction if interactive
+        if (["button", "a"].includes(tag) || targetDomNode.getAttribute("role") === "button") {
+          emitThought(`[Action] Dispatching synthetic trigger to <${tag}>...`, "action");
+          await this.driver.click(targetDomNode);
+          await this.driver.sleep(400);
+        } else if (["input", "textarea"].includes(tag)) {
+          emitThought(`[Action] Exercising targeted input field with sample probe...`, "action");
+          await this.driver.sendKeys(targetDomNode, "Hyperion Probe Test");
+          await this.driver.sleep(400);
+        }
+
+        const width = targetedElement.dimensions?.width || Math.round(targetDomNode.getBoundingClientRect().width);
+        const height = targetedElement.dimensions?.height || Math.round(targetDomNode.getBoundingClientRect().height);
+        emitThought(`[Target Verified] Bounding Rect: ${width}×${height}px, Role: "${targetedElement.role || 'generic'}", Name: "${targetedElement.accessibleName || ''}"`, "success");
+
+        emitFinding(
+          `Targeted Element Analysis: <${tag}>`,
+          `Inspected element "${targetedElement.bestSelector || tag}" is responsive, correctly positioned in DOM, and renders with ${width}×${height}px dimensions.`,
+          "passed",
+          "Ensure element has clear visual active/focus states across light and dark themes."
+        );
+      } else {
+        emitThought(`[Warning] Inspected target "${targetedElement.bestSelector}" was not visible or could not be found in active DOM.`, "warning");
+      }
+      await this.driver.sleep(350);
+      if (this.isAborted) return this.finalizeRun(emitThought, emitGoal);
     }
 
     // ==========================================

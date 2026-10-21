@@ -7,8 +7,10 @@ import {
   FaExternalLinkAlt,
   FaLock,
   FaGlobe,
-  FaTimes
+  FaTimes,
+  FaCrosshairs
 } from "react-icons/fa";
+import { globalElementInspector } from "../../services/elementInspector";
 
 export default function LiveBrowser({ initialUrl = "http://localhost:5173", title, onClose }) {
   const [url, setUrl] = useState(initialUrl);
@@ -17,7 +19,30 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
+  const [isInspectActive, setIsInspectActive] = useState(false);
   const iframeRef = useRef(null);
+
+  // Sync inspection mode state with global inspector
+  useEffect(() => {
+    const handleInspectModeChange = (e) => {
+      setIsInspectActive(!!e.detail?.active);
+    };
+    window.addEventListener("hyperion:inspect-mode-changed", handleInspectModeChange);
+
+    // Global shortcut Ctrl+Shift+C (Cmd+Shift+C on Mac) to toggle inspect & select
+    const handleInspectKeyShortcut = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "C" || e.key === "c")) {
+        e.preventDefault();
+        globalElementInspector.toggle();
+      }
+    };
+    window.addEventListener("keydown", handleInspectKeyShortcut, true);
+
+    return () => {
+      window.removeEventListener("hyperion:inspect-mode-changed", handleInspectModeChange);
+      window.removeEventListener("keydown", handleInspectKeyShortcut, true);
+    };
+  }, []);
 
   useEffect(() => {
     if (initialUrl && initialUrl !== url) {
@@ -160,6 +185,13 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
 
         {/* Browser Actions */}
         <div className="live-browser-actions">
+          <button
+            className={`browser-btn action-btn inspect-btn ${isInspectActive ? "active" : ""}`}
+            onClick={() => globalElementInspector.toggle()}
+            title={isInspectActive ? "Exit Inspect Mode (Esc)" : "Inspect & Select Element in Preview (Ctrl+Shift+C)"}
+          >
+            <FaCrosshairs />
+          </button>
           <button
             className="browser-btn action-btn"
             onClick={handleOpenExternal}

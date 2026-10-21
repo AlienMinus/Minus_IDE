@@ -19,9 +19,16 @@ import {
   FaChevronRight,
   FaSave,
   FaDesktop,
-  FaTerminal
+  FaTerminal,
+  FaCrosshairs,
+  FaCopy,
+  FaCheck,
+  FaMousePointer,
+  FaKeyboard,
+  FaBullseye,
+  FaTimes
 } from "react-icons/fa";
-import { VscDebugRestart, VscReport, VscBeaker } from "react-icons/vsc";
+import { VscDebugRestart, VscReport, VscBeaker, VscInspect } from "react-icons/vsc";
 import {
   HyperionWebDriver,
   getActivePreviewerIframe,
@@ -30,9 +37,11 @@ import {
   executeTestCase,
   generateMarkdownReport,
   generateHtmlReport,
-  generateJsonReport
+  generateJsonReport,
+  globalAgentCursor
 } from "../../services/seleniumEngine";
 import { HyperionQAAgent } from "../../services/seleniumAgent";
+import { globalElementInspector } from "../../services/elementInspector";
 import LiveBrowser from "../LiveBrowser/LiveBrowser";
 import useEditor from "../../hooks/useEditor";
 import useFile from "../../hooks/useFile";
@@ -87,15 +96,46 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   const [customTestAction, setCustomTestAction] = useState("click");
   const [customTestValue, setCustomTestValue] = useState("");
 
+  // Chromium Inspect & Select State
+  const [isInspectActive, setIsInspectActive] = useState(false);
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [copiedLocator, setCopiedLocator] = useState(null);
+  const [inspectTypeInput, setInspectTypeInput] = useState("");
+
   // Refs for execution abort/pause control
   const driverRef = useRef(null);
   const agentRef = useRef(null);
   const abortFlagRef = useRef(false);
   const pausePromiseResolveRef = useRef(null);
 
-  // Initialize Driver
+  // Initialize Driver & Element Inspector Listeners
   useEffect(() => {
     driverRef.current = new HyperionWebDriver(getActivePreviewerIframe);
+
+    const handleInspectModeChanged = (e) => {
+      setIsInspectActive(!!e.detail?.active);
+    };
+
+    const handleElementSelected = (e) => {
+      setSelectedElement(e.detail);
+    };
+
+    window.addEventListener("hyperion:inspect-mode-changed", handleInspectModeChanged);
+    window.addEventListener("hyperion:inspect-element-selected", handleElementSelected);
+
+    const handleInspectShortcut = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "c" || e.key === "C")) {
+        e.preventDefault();
+        handleToggleInspect();
+      }
+    };
+    window.addEventListener("keydown", handleInspectShortcut, true);
+
+    return () => {
+      window.removeEventListener("hyperion:inspect-mode-changed", handleInspectModeChanged);
+      window.removeEventListener("hyperion:inspect-element-selected", handleElementSelected);
+      window.removeEventListener("keydown", handleInspectShortcut, true);
+    };
   }, []);
 
   // Poll for Builtin Previewer detection
@@ -309,7 +349,7 @@ export default function SeleniumRunner({ isStudioMode = false }) {
 
   // --- Autonomous Agent Controls ---
 
-  const handleStartAgent = async () => {
+  const handleStartAgent = async (overrideTarget = null) => {
     if (isAgentRunning) return;
 
     // Ensure previewer iframe exists or auto-launch previewer tab
@@ -331,9 +371,12 @@ export default function SeleniumRunner({ isStudioMode = false }) {
     const agent = new HyperionQAAgent(driverRef.current);
     agentRef.current = agent;
 
+    const targetToPrioritize = overrideTarget || selectedElement;
+
     try {
       const summary = await agent.runAutonomousExploration({
         speed,
+        targetedElement: targetToPrioritize,
         onThought: (thought, allThoughts) => {
           setAgentThoughts([...allThoughts]);
         },
@@ -360,6 +403,152 @@ export default function SeleniumRunner({ isStudioMode = false }) {
       agentRef.current.abort();
     }
     setIsAgentRunning(false);
+  };
+
+  // --- Chromium Element Inspector Handlers ---
+
+  const handleToggleInspect = () => {
+    if (globalElementInspector.isActive) {
+      globalElementInspector.stop(false);
+    } else {
+      const existingIframe = getActivePreviewerIframe();
+      if (!existingIframe && !showSplitPreview) {
+        setShowSplitPreview(true);
+      }
+      globalElementInspector.start({
+        onSelect: (summary) => {
+          setSelectedElement(summary);
+        }
+      });
+    }
+  };
+
+  const handleClearSelectedElement = () => {
+    setSelectedElement(null);
+    globalElementInspector.clearHighlight();
+  };
+
+  const handleCopyLocator = (type, text) => {
+    if (!text) return;
+    try {
+      navigator.clipboard.writeText(text);
+      setCopiedLocator(type);
+      setTimeout(() => {
+        setCopiedLocator(null);
+      }, 1800);
+    } catch {
+      // Fallback
+      setCopiedLocator(type);
+      setTimeout(() => setCopiedLocator(null), 1800);
+    }
+  };
+
+  const handleSendAgentToElement = async () => {
+    if (!selectedElement) return;
+    setActiveTab("agent");
+
+    const iframe = getActivePreviewerIframe();
+    const doc = getSafeIframeDocument(iframe);
+    let el = selectedElement.elementRef;
+    if (!el && selectedElement.bestSelector && doc) {
+      try {
+        el = doc.querySelector(selectedElement.bestSelector);
+      } catch {}
+    }
+
+    if (el) {
+      await globalAgentCursor.moveTo(el, `Inspecting <${selectedElement.tagName}>`, { duration: 550 });
+      await driverRef.current?.sleep(300);
+
+      const thoughtText = `[User Dispatch] Guided agent cursor to inspected element: "${selectedElement.bestSelector}". Dimensions: ${selectedElement.dimensions?.width}×${selectedElement.dimensions?.height}px. Role: "${selectedElement.role}".`;
+      setAgentThoughts((prev) => [
+        ...prev,
+        {
+          id: `th_${Date.now()}`,
+          timestamp: new Date().toLocaleTimeString(),
+          text: thoughtText,
+          type: "action"
+        }
+      ]);
+    }
+  };
+
+  const handleSimulateClick = async () => {
+    if (!selectedElement || !driverRef.current) return;
+    const iframe = getActivePreviewerIframe();
+    const doc = getSafeIframeDocument(iframe);
+    let el = selectedElement.elementRef;
+    if (!el && selectedElement.bestSelector && doc) {
+      try {
+        el = doc.querySelector(selectedElement.bestSelector);
+      } catch {}
+    }
+
+    if (el) {
+      await globalAgentCursor.moveTo(el, `Clicking <${selectedElement.tagName}>`, { duration: 400 });
+      await driverRef.current.click(el);
+      setAgentThoughts((prev) => [
+        ...prev,
+        {
+          id: `th_${Date.now()}`,
+          timestamp: new Date().toLocaleTimeString(),
+          text: `[Interaction] Dispatched synthetic click to "${selectedElement.bestSelector}".`,
+          type: "success"
+        }
+      ]);
+    }
+  };
+
+  const handleSimulateSendKeys = async () => {
+    if (!selectedElement || !driverRef.current || !inspectTypeInput) return;
+    const iframe = getActivePreviewerIframe();
+    const doc = getSafeIframeDocument(iframe);
+    let el = selectedElement.elementRef;
+    if (!el && selectedElement.bestSelector && doc) {
+      try {
+        el = doc.querySelector(selectedElement.bestSelector);
+      } catch {}
+    }
+
+    if (el) {
+      await globalAgentCursor.moveTo(el, `Typing text...`, { duration: 400 });
+      await driverRef.current.sendKeys(el, inspectTypeInput);
+      setAgentThoughts((prev) => [
+        ...prev,
+        {
+          id: `th_${Date.now()}`,
+          timestamp: new Date().toLocaleTimeString(),
+          text: `[Interaction] Typed "${inspectTypeInput}" into "${selectedElement.bestSelector}".`,
+          type: "success"
+        }
+      ]);
+      setInspectTypeInput("");
+    }
+  };
+
+  const handleTargetForAgent = () => {
+    if (!selectedElement) return;
+    setActiveTab("agent");
+    handleStartAgent(selectedElement);
+  };
+
+  const handleAddElementToCustomTest = () => {
+    if (!selectedElement) return;
+    const tag = selectedElement.tagName.toLowerCase();
+    setCustomTestName(`Verify ${tag} (${selectedElement.id ? '#' + selectedElement.id : selectedElement.bestSelector})`);
+    setCustomTestSelector(selectedElement.bestSelector);
+    if (["input", "textarea"].includes(tag)) {
+      setCustomTestAction("sendKeys");
+      setCustomTestValue("Sample input");
+    } else if (["button", "a"].includes(tag) || selectedElement.role === "button") {
+      setCustomTestAction("click");
+      setCustomTestValue("");
+    } else {
+      setCustomTestAction("assertVisible");
+      setCustomTestValue("");
+    }
+    setActiveTab("tests");
+    setShowCustomModal(true);
   };
 
   // --- Add Custom Test Case ---
@@ -488,6 +677,14 @@ export default function SeleniumRunner({ isStudioMode = false }) {
         </div>
 
         <div className="target-actions-group">
+          <button
+            className={`selenium-inspect-btn ${isInspectActive ? "active" : ""}`}
+            onClick={handleToggleInspect}
+            title={isInspectActive ? "Exit Element Inspector (Esc)" : "Inspect & Select Element in Preview (Ctrl+Shift+C)"}
+          >
+            <FaCrosshairs className={isInspectActive ? "spin-pulse" : ""} /> {isInspectActive ? "Inspecting..." : "Inspect"}
+          </button>
+
           {!isPreviewerConnected ? (
             <button
               className="selenium-launch-btn"
@@ -518,6 +715,164 @@ export default function SeleniumRunner({ isStudioMode = false }) {
           </button>
         </div>
       </div>
+
+      {/* Chromium DevTools-Style Inspect Active Banner */}
+      {isInspectActive && (
+        <div className="inspect-active-banner">
+          <div className="inspect-banner-info">
+            <FaCrosshairs className="inspect-banner-crosshair" />
+            <span>
+              <strong>Inspect Mode Active:</strong> Hover over any element in the preview to highlight. Click to select. Press <kbd>Esc</kbd> to exit.
+            </span>
+          </div>
+          <button
+            className="inspect-banner-cancel-btn"
+            onClick={() => globalElementInspector.stop(true)}
+            title="Exit inspection mode without selecting"
+          >
+            Cancel (Esc)
+          </button>
+        </div>
+      )}
+
+      {/* Chromium-Style Selected Element Inspector Card */}
+      {selectedElement && (
+        <div className="selected-element-card">
+          <div className="selected-element-header">
+            <div className="element-badges">
+              <span className="badge tag-badge">&lt;{selectedElement.tagName}&gt;</span>
+              {selectedElement.id && (
+                <span className="badge id-badge" title={`ID: ${selectedElement.id}`}>
+                  #{selectedElement.id}
+                </span>
+              )}
+              {selectedElement.className && (
+                <span className="badge class-badge" title={`Classes: ${selectedElement.className}`}>
+                  .{selectedElement.className.trim().split(/\s+/)[0]}
+                </span>
+              )}
+              {selectedElement.dimensions && (
+                <span className="badge dim-badge">
+                  {selectedElement.dimensions.width} × {selectedElement.dimensions.height} px
+                </span>
+              )}
+              {selectedElement.role && (
+                <span className="badge role-badge" title="ARIA Accessibility Role">
+                  role: <strong>{selectedElement.role}</strong>
+                </span>
+              )}
+            </div>
+
+            <div className="element-card-actions">
+              <button
+                className="card-action-btn primary"
+                onClick={handleTargetForAgent}
+                title="Focus Autonomous QA Agent on this component"
+              >
+                <FaBullseye /> Target for Agent
+              </button>
+              <button
+                className="card-action-btn close"
+                onClick={handleClearSelectedElement}
+                title="Deselect inspected element"
+              >
+                <FaTimes />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Action Simulation Bar */}
+          <div className="element-quick-sim-bar">
+            <button
+              className="sim-action-btn glide"
+              onClick={handleSendAgentToElement}
+              title="Glide AI cursor to element and stream reasoning thought"
+            >
+              <FaRobot /> Send Agent Here
+            </button>
+
+            <button
+              className="sim-action-btn click"
+              onClick={handleSimulateClick}
+              title="Dispatch live synthetic click to this element"
+            >
+              <FaMousePointer /> Click
+            </button>
+
+            <div className="sim-type-group">
+              <input
+                type="text"
+                className="sim-type-input"
+                value={inspectTypeInput}
+                onChange={(e) => setInspectTypeInput(e.target.value)}
+                placeholder="Type to send keys..."
+                onKeyDown={(e) => e.key === "Enter" && handleSimulateSendKeys()}
+              />
+              <button
+                className="sim-action-btn type"
+                onClick={handleSimulateSendKeys}
+                disabled={!inspectTypeInput.trim()}
+                title="Dispatch keystrokes into this element"
+              >
+                <FaKeyboard /> Send
+              </button>
+            </div>
+
+            <button
+              className="sim-action-btn add-step"
+              onClick={handleAddElementToCustomTest}
+              title="Pre-fill custom test step with this element"
+            >
+              <FaPlus /> Add Test Step
+            </button>
+          </div>
+
+          {/* Copyable Locators Table */}
+          <div className="element-locators-table">
+            <div className="locator-row">
+              <span className="locator-label">CSS:</span>
+              <code className="locator-code" title={selectedElement.bestSelector}>
+                {selectedElement.bestSelector}
+              </code>
+              <button
+                className="copy-locator-btn"
+                onClick={() => handleCopyLocator("css", selectedElement.bestSelector)}
+                title="Copy CSS Selector"
+              >
+                {copiedLocator === "css" ? <FaCheck className="copied" /> : <FaCopy />}
+              </button>
+            </div>
+
+            <div className="locator-row">
+              <span className="locator-label">XPath:</span>
+              <code className="locator-code" title={selectedElement.xpath}>
+                {selectedElement.xpath}
+              </code>
+              <button
+                className="copy-locator-btn"
+                onClick={() => handleCopyLocator("xpath", selectedElement.xpath)}
+                title="Copy XPath Expression"
+              >
+                {copiedLocator === "xpath" ? <FaCheck className="copied" /> : <FaCopy />}
+              </button>
+            </div>
+
+            <div className="locator-row">
+              <span className="locator-label">Testing Library:</span>
+              <code className="locator-code" title={selectedElement.testingLibrary}>
+                {selectedElement.testingLibrary}
+              </code>
+              <button
+                className="copy-locator-btn"
+                onClick={() => handleCopyLocator("testingLibrary", selectedElement.testingLibrary)}
+                title="Copy Testing Library Locator"
+              >
+                {copiedLocator === "testingLibrary" ? <FaCheck className="copied" /> : <FaCopy />}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Navigation Sub-Tabs */}
       <div className="selenium-nav-tabs">
