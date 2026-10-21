@@ -1,7 +1,7 @@
 [
   {
     "id": "dark-modern",
-    "name": "Dark Modern (Visual Studio)",
+    "name": "Hyperion Dark Modern",
     "type": "dark",
     "ui": {
       "bgPrimary": "#1e1e1e",
@@ -20,7 +20,7 @@
   },
   {
     "id": "dark-plus",
-    "name": "Dark+ (default dark)",
+    "name": "Hyperion Dark+",
     "type": "dark",
     "ui": {
       "bgPrimary": "#1e1e1e",
@@ -153,7 +153,7 @@
   },
   {
     "id": "light-modern",
-    "name": "Light Modern (Visual Studio)",
+    "name": "Hyperion Light Modern",
     "type": "light",
     "ui": {
       "bgPrimary": "#ffffff",

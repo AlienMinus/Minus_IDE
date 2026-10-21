@@ -197,7 +197,7 @@ export default function SettingsPage() {
       desc: "Controls spacing density across sidebars, tabs, and explorer trees.",
       type: "select",
       options: [
-        { value: "comfortable", label: "Comfortable (Standard VS Code spacing)" },
+        { value: "comfortable", label: "Comfortable (Standard Hyperion spacing)" },
         { value: "compact", label: "Compact (High information density)" }
       ]
     },
@@ -276,11 +276,12 @@ export default function SettingsPage() {
       key: "ai.model",
       category: "ai",
       label: "AI Assistant: Model Engine",
-      desc: "Underlying DeepMind Gemini LLM powering code generation & reasoning.",
+      desc: "Underlying AI model engine powering code generation, security analysis & reasoning.",
       type: "select",
       options: [
-        { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Ultra-fast real-time reasoning)" },
-        { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro (Deep agentic architectural analysis)" }
+        { value: "meta-llama/Llama-3.1-8B-Instruct", label: "Meta LLaMA 3.1 8B Instruct (Recommended)" },
+        { value: "Qwen/Qwen2.5-Coder-32B-Instruct", label: "Qwen 2.5 Coder 32B (Code Specialized)" },
+        { value: "deepseek-ai/DeepSeek-R1", label: "DeepSeek R1 (Advanced Reasoning)" }
       ]
     },
     {

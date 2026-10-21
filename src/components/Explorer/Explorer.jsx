@@ -34,7 +34,7 @@ function Explorer() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [contextMenu, setContextMenu] = useState({ isOpen: false, position: null, file: null });
 
-  // VS Code-style inline file/folder creation
+  // Hyperion IDE-style inline file/folder creation
   const [inlineCreation, setInlineCreation] = useState(null); // { type: 'file' | 'folder', parentFolderId: string | null, targetFolder: object | null }
   const [inlineName, setInlineName] = useState("");
   const inlineInputRef = useRef(null);

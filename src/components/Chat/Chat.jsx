@@ -64,6 +64,11 @@ function Chat() {
 
   const [selectedModel, setSelectedModel] = useState(() => {
     try {
+      const storedSettings = localStorage.getItem("hyperion_settings");
+      if (storedSettings) {
+        const parsed = JSON.parse(storedSettings);
+        if (parsed["ai.model"]) return parsed["ai.model"];
+      }
       return localStorage.getItem(MODEL_STORAGE_KEY) || "meta-llama/Llama-3.1-8B-Instruct";
     } catch {
       return "meta-llama/Llama-3.1-8B-Instruct";
@@ -105,8 +110,28 @@ function Chat() {
     setSelectedModel(newModel);
     try {
       localStorage.setItem(MODEL_STORAGE_KEY, newModel);
+      const storedSettings = localStorage.getItem("hyperion_settings");
+      const current = storedSettings ? JSON.parse(storedSettings) : {};
+      current["ai.model"] = newModel;
+      localStorage.setItem("hyperion_settings", JSON.stringify(current));
+      window.dispatchEvent(new CustomEvent("hyperion:settings-changed", { detail: { settings: current } }));
     } catch {}
   };
+
+  // Keep chat model in sync if changed from Settings page
+  useEffect(() => {
+    const handleSettingsUpdate = (e) => {
+      const model = e.detail?.settings?.["ai.model"];
+      if (model && model !== selectedModel) {
+        setSelectedModel(model);
+        try {
+          localStorage.setItem(MODEL_STORAGE_KEY, model);
+        } catch {}
+      }
+    };
+    window.addEventListener("hyperion:settings-changed", handleSettingsUpdate);
+    return () => window.removeEventListener("hyperion:settings-changed", handleSettingsUpdate);
+  }, [selectedModel]);
 
   const handleClearHistory = () => {
     const reset = [{
@@ -130,7 +155,9 @@ function Chat() {
   useEffect(() => {
     getAiStatus().then((status) => {
       setAiStatus(status);
-      if (status.defaultModel) {
+      const stored = localStorage.getItem("hyperion_settings");
+      const hasStoredModel = stored && JSON.parse(stored)["ai.model"];
+      if (!hasStoredModel && !localStorage.getItem(MODEL_STORAGE_KEY) && status?.defaultModel) {
         setSelectedModel(status.defaultModel);
       }
     });

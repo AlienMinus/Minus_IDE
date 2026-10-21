@@ -1,5 +1,5 @@
 /* ========================================================
-   VS Code Native Image Viewer (Natural Size / No Fit)
+   Hyperion IDE Native Image Viewer (Natural Size / No Fit)
    ======================================================== */
 .image-preview-root {
   width: 100%;
@@ -14,7 +14,7 @@
   box-sizing: border-box;
 }
 
-/* Floating VS Code Status Toolbar */
+/* Floating Hyperion IDE Status Toolbar */
 .image-preview-toolbar {
   position: absolute;
   top: 14px;

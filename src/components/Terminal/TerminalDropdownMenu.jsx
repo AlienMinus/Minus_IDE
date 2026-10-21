@@ -111,7 +111,7 @@ export default function TerminalDropdownMenu({ isOpen, onClose, anchorRef }) {
     onClose();
     if (createOrOpenFile) {
       createOrOpenFile(
-        ".vscode/settings.json",
+        ".hyperion/settings.json",
         JSON.stringify(
           {
             "terminal.integrated.defaultProfile.windows": defaultProfile,

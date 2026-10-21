@@ -8,7 +8,7 @@
   box-sizing: border-box;
 }
 
-/* Single unified VS Code panel header */
+/* Single unified Hyperion IDE panel header */
 .bottom-header {
   height: 35px;
   min-height: 35px;
@@ -348,7 +348,7 @@
 }
 
 /* ========================================================
-   PROBLEMS VIEW (VS Code Intelligent Diagnostics Panel)
+   PROBLEMS VIEW (Hyperion IDE Intelligent Diagnostics Panel)
    ======================================================== */
 .problems-panel-container {
   display: flex;
@@ -545,7 +545,7 @@
 }
 
 /* ========================================================
-   PORTS VIEW (VS Code Active Ports & Dev Servers Table)
+   PORTS VIEW (Hyperion IDE Active Ports & Dev Servers Table)
    ======================================================== */
 .ports-panel-container {
   display: flex;

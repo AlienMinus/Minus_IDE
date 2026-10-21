@@ -45,7 +45,7 @@ Hyperion features a built-in automated QA testing suite located in the **Run & D
 
 ### 5. 🎨 Multi-Theme Engine
 Persisted themes available via the Manage menu (`Themes >`) or Settings:
-- **Dark Modern (Visual Studio)** — Default
+- **Hyperion Dark Modern** — Default
 - **Dark+ (default dark)**
 - **GitHub Dark Default**
 - **One Dark Pro (Atom)**
@@ -53,7 +53,7 @@ Persisted themes available via the Manage menu (`Themes >`) or Settings:
 - **Monokai Classic**
 - **Nord Arctic Ice**
 - **SynthWave '84 (Cyberpunk Neon)**
-- **Light Modern (Visual Studio)**
+- **Hyperion Light Modern**
 - **GitHub Light Default**
 - **Solarized Light**
 
@@ -110,7 +110,7 @@ WebIDE/
 │   │   ├── Architecture/   # Three.js 3D diagram, ERD, and blueprint canvas
 │   │   ├── Editor/         # Monaco Editor wrapper and custom tab handlers
 │   │   ├── Help/           # HelpModal & Help topics
-│   │   ├── LiveBrowser/    # VS Code-style Simple Browser previewer
+│   │   ├── LiveBrowser/    # Hyperion IDE-style Simple Browser previewer
 │   │   ├── Navbar/         # Top menu bar, window controls, and dropdowns
 │   │   ├── RunDebug/       # RunDebug panel, SeleniumRunner & QA Studio
 │   │   ├── Sidebar/        # Activity bar & Manage Gear context menu

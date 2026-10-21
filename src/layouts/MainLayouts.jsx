@@ -238,7 +238,7 @@ function MainLayout() {
       {!isZenMode && isStatusBarVisible && <StatusBar />}
       <TaskPicker />
 
-      {/* VS Code Command Palette & Open View Switcher */}
+      {/* Hyperion IDE Command Palette & Open View Switcher */}
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}

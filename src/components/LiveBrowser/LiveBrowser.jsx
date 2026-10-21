@@ -150,7 +150,7 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5174", titl
 
   return (
     <div className="live-browser-container">
-      {/* VS Code Simple Browser Navigation Bar */}
+      {/* Hyperion IDE Simple Browser Navigation Bar */}
       <div className="live-browser-toolbar">
         <div className="live-browser-nav-buttons">
           <button

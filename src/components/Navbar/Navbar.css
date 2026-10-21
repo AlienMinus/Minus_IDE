@@ -160,7 +160,7 @@
     color: white;
 }
 
-/* Layout Controls (VS Code top-right green toggles) */
+/* Layout Controls (Hyperion IDE top-right green toggles) */
 .layout-controls {
     display: flex;
     align-items: center;

@@ -342,7 +342,7 @@ function Editor() {
     );
   }
 
-  // 1. Live Browser Preview tab (VS Code Simple Browser style)
+  // 1. Live Browser Preview tab (Hyperion IDE Simple Browser style)
   if (activeFile.isLiveUrl || activeFile.type === "browser") {
     return (
       <div className="editor-container">

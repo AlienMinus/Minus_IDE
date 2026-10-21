@@ -98,7 +98,7 @@ export default function ImagePreview({ src, fileName }) {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      {/* VS Code Floating Zoom & Info Toolbar */}
+      {/* Hyperion IDE Floating Zoom & Info Toolbar */}
       <div className="image-preview-toolbar" onMouseDown={(e) => e.stopPropagation()}>
         <button
           className="img-tool-btn"

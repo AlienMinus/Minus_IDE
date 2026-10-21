@@ -643,8 +643,8 @@ export const helpMenu = [
     },
 
     {
-        id: "askVSCode",
-        label: "Ask @vscode",
+        id: "askHyperion",
+        label: "Ask Hyperion Assistant",
         onClick: () => {}
     },
 

@@ -25,7 +25,8 @@ import {
 } from "react-icons/vsc";
 
 import { fileMenu, editMenu, viewMenu, terminalMenu, helpMenu } from "../../data/menu.jsx";
-import HelpModal from "../Help/HelpModal";
+import Modal from "../Modal";
+import { getHelpTopicContent } from "../../data/helpTopics";
 import { getLanguageFromFileName, readFileContent, flattenFiles } from "../../services/fileService";
 import { getRecentWorkspaces, clearRecentWorkspaces } from "../../services/workspacePersistence";
 import { cloneRepository, getRepoRemoteUrl } from "../../services/gitService";
@@ -111,6 +112,8 @@ function Navbar({ isChatOpen, toggleChat }) {
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [searchQuery, setSearchQuery] = useState("");
     const [helpModalTopic, setHelpModalTopic] = useState(null);
+    const [checkingUpdate, setCheckingUpdate] = useState(false);
+    const [updateDone, setUpdateDone] = useState(false);
     const closeTimer = useRef(null);
 
     // Global listener to trigger help modal topics
@@ -123,6 +126,18 @@ function Navbar({ isChatOpen, toggleChat }) {
         window.addEventListener("hyperion:show-help-modal", handleHelpEvent);
         return () => window.removeEventListener("hyperion:show-help-modal", handleHelpEvent);
     }, []);
+
+    useEffect(() => {
+        if (helpModalTopic === "checkUpdates") {
+            setCheckingUpdate(true);
+            setUpdateDone(false);
+            const timer = setTimeout(() => {
+                setCheckingUpdate(false);
+                setUpdateDone(true);
+            }, 1200);
+            return () => clearTimeout(timer);
+        }
+    }, [helpModalTopic]);
 
     const clearCloseTimer = () => {
         if (closeTimer.current) {
@@ -1237,7 +1252,8 @@ function Navbar({ isChatOpen, toggleChat }) {
                         setOpenMenu(null);
                     }
                 };
-            case "askVSCode":
+            case "askHyperion":
+            case "askHyperion IDE":
                 return {
                     ...item,
                     onClick: () => {
@@ -1395,11 +1411,20 @@ function Navbar({ isChatOpen, toggleChat }) {
             {openMenu === 'terminal' && <DropdownMenu ref={dropdownRef} menu={terminalMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
             {openMenu === 'help' && <DropdownMenu ref={dropdownRef} menu={helpMenuItems} position={menuPosition} onItemClick={() => setOpenMenu(null)} />}
 
-            <HelpModal
-                topic={helpModalTopic}
-                isOpen={!!helpModalTopic}
-                onClose={() => setHelpModalTopic(null)}
-            />
+            {(() => {
+                if (!helpModalTopic) return null;
+                const helpData = getHelpTopicContent(helpModalTopic, () => setHelpModalTopic(null), { checkingUpdate, updateDone });
+                return (
+                    <Modal
+                        isOpen={Boolean(helpModalTopic)}
+                        title={helpData.title}
+                        width={helpData.width}
+                        onClose={() => setHelpModalTopic(null)}
+                    >
+                        {helpData.content}
+                    </Modal>
+                );
+            })()}
         </header>
     );
 

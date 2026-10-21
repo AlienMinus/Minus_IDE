@@ -396,7 +396,8 @@ export async function executeCommand({
   command,
   cwd,
   virtualFiles = [],
-  timeoutMs = 30000
+  timeoutMs = 30000,
+  profile = 'powershell'
 }) {
   const startTime = Date.now();
   const paths = getRuntimePaths();
@@ -480,8 +481,13 @@ export async function executeCommand({
       runner = bash;
       runnerArgs = ['-c', trimmed];
     } else {
+      if (isWindows && (profile === 'powershell' || !profile || profile === 'default')) {
+      runner = 'powershell.exe';
+      runnerArgs = ['-NoLogo', '-ExecutionPolicy', 'Bypass', '-Command', trimmed];
+    } else {
       runner = process.env.COMSPEC || 'cmd.exe';
       runnerArgs = ['/d', '/s', '/c', trimmed];
+    }
     }
 
     const env = {
@@ -547,7 +553,8 @@ export function streamCommand({
   virtualFiles = [],
   onChunk,
   onExit,
-  timeoutMs = 0
+  timeoutMs = 0,
+  profile = 'powershell'
 }) {
   const paths = getRuntimePaths();
   const trimmed = (command || '').trim();

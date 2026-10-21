@@ -749,13 +749,13 @@ export function TerminalProvider({ children }) {
     }, [activeFile, files, activeTerminal?.cwd, currentWorkspacePath, appendToTerminal, runActiveFile, runCodeSnippet]);
 
     /**
-     * Configure Tasks... (Opens .vscode/tasks.json)
+     * Configure Tasks... (Opens .hyperion/tasks.json)
      */
     const configureTasks = useCallback(() => {
         if (createOrOpenFile) {
-            createOrOpenFile(".vscode/tasks.json", DEFAULT_TASKS_JSON);
+            createOrOpenFile(".hyperion/tasks.json", DEFAULT_TASKS_JSON);
             appendToTerminal([
-                "\x1b[36m[Hyperion] Opened .vscode/tasks.json in the editor.\x1b[0m",
+                "\x1b[36m[Hyperion] Opened .hyperion/tasks.json in the editor.\x1b[0m",
                 "$ "
             ]);
         }
@@ -766,9 +766,9 @@ export function TerminalProvider({ children }) {
      */
     const configureDefaultBuildTask = useCallback(() => {
         if (createOrOpenFile) {
-            createOrOpenFile(".vscode/tasks.json", DEFAULT_TASKS_JSON);
+            createOrOpenFile(".hyperion/tasks.json", DEFAULT_TASKS_JSON);
             appendToTerminal([
-                "\x1b[36m[Hyperion] Configured default build task in .vscode/tasks.json\x1b[0m",
+                "\x1b[36m[Hyperion] Configured default build task in .hyperion/tasks.json\x1b[0m",
                 "$ "
             ]);
         }

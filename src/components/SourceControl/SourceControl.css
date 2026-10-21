@@ -182,7 +182,7 @@
   text-align: center;
 }
 
-/* Non-Git Repo State (VS Code Style) */
+/* Non-Git Repo State (Hyperion IDE Style) */
 .sc-no-repo-state {
   display: flex;
   flex-direction: column;

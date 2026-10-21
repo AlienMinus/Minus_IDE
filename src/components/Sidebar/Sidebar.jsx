@@ -158,7 +158,7 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
                         </span>
                     </button>
 
-                    {/* Manage Context Menu matching VS Code / screenshot */}
+                    {/* Manage Context Menu matching Hyperion IDE / screenshot */}
                     {isManageOpen && (
                         <div
                             ref={manageMenuRef}

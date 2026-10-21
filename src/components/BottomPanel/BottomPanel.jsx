@@ -254,7 +254,7 @@ function PortsView({ openLiveBrowserTab }) {
                     <span
                       className="port-address-link"
                       onClick={() => openLiveBrowserTab && openLiveBrowserTab(p.address, `Preview: Port ${p.port}`)}
-                      title="Open in VS Code Live Browser"
+                      title="Open in Hyperion Live Browser"
                     >
                       {p.address}
                     </span>
@@ -389,7 +389,7 @@ function BottomPanel() {
 
   return (
     <div className="bottom-panel">
-      {/* Unified VS Code Panel Header */}
+      {/* Unified Hyperion Panel Header */}
       <div className="bottom-header">
         <div className="bottom-tabs">
           {tabs.map((tab) => (
@@ -520,7 +520,7 @@ function BottomPanel() {
               <button
                 className="term-header-btn preview-btn"
                 onClick={handleOpenBrowserPreview}
-                title="Open Live Preview in Editor (VS Code Simple Browser)"
+                title="Open Live Preview in Editor (Hyperion Simple Browser)"
                 aria-label="Open Live Preview"
               >
                 <FaGlobe className="action-icon" />
