@@ -1,0 +1,211 @@
+[
+  {
+    "id": "dark-modern",
+    "name": "Dark Modern (Visual Studio)",
+    "type": "dark",
+    "ui": {
+      "bgPrimary": "#1e1e1e",
+      "bgSecondary": "#252526",
+      "bgTertiary": "#181818",
+      "textPrimary": "#cccccc",
+      "textSecondary": "#8b949e",
+      "accentColor": "#00f2fe",
+      "borderColor": "#2d2d2d",
+      "tabActiveBg": "#1e1e1e",
+      "editorBg": "#1e1e1e",
+      "sidebarBg": "#252526",
+      "activityBarBg": "#181818",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "dark-plus",
+    "name": "Dark+ (default dark)",
+    "type": "dark",
+    "ui": {
+      "bgPrimary": "#1e1e1e",
+      "bgSecondary": "#252526",
+      "bgTertiary": "#333333",
+      "textPrimary": "#d4d4d4",
+      "textSecondary": "#999999",
+      "accentColor": "#0e639c",
+      "borderColor": "#3c3c3c",
+      "tabActiveBg": "#1e1e1e",
+      "editorBg": "#1e1e1e",
+      "sidebarBg": "#252526",
+      "activityBarBg": "#333333",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "github-dark",
+    "name": "GitHub Dark Default",
+    "type": "dark",
+    "ui": {
+      "bgPrimary": "#0d1117",
+      "bgSecondary": "#161b22",
+      "bgTertiary": "#010409",
+      "textPrimary": "#c9d1d9",
+      "textSecondary": "#8b949e",
+      "accentColor": "#58a6ff",
+      "borderColor": "#30363d",
+      "tabActiveBg": "#0d1117",
+      "editorBg": "#0d1117",
+      "sidebarBg": "#161b22",
+      "activityBarBg": "#010409",
+      "statusBarBg": "#161b22"
+    }
+  },
+  {
+    "id": "one-dark-pro",
+    "name": "One Dark Pro (Atom)",
+    "type": "dark",
+    "ui": {
+      "bgPrimary": "#282c34",
+      "bgSecondary": "#21252b",
+      "bgTertiary": "#1b1d23",
+      "textPrimary": "#abb2bf",
+      "textSecondary": "#5c6370",
+      "accentColor": "#61afef",
+      "borderColor": "#181a1f",
+      "tabActiveBg": "#282c34",
+      "editorBg": "#282c34",
+      "sidebarBg": "#21252b",
+      "activityBarBg": "#1b1d23",
+      "statusBarBg": "#21252b"
+    }
+  },
+  {
+    "id": "dracula",
+    "name": "Dracula Official",
+    "type": "dark",
+    "ui": {
+      "bgPrimary": "#282a36",
+      "bgSecondary": "#21222c",
+      "bgTertiary": "#191a21",
+      "textPrimary": "#f8f8f2",
+      "textSecondary": "#6272a4",
+      "accentColor": "#bd93f9",
+      "borderColor": "#44475a",
+      "tabActiveBg": "#282a36",
+      "editorBg": "#282a36",
+      "sidebarBg": "#21222c",
+      "activityBarBg": "#191a21",
+      "statusBarBg": "#6272a4"
+    }
+  },
+  {
+    "id": "monokai",
+    "name": "Monokai Classic",
+    "type": "dark",
+    "ui": {
+      "bgPrimary": "#272822",
+      "bgSecondary": "#1e1f1c",
+      "bgTertiary": "#141411",
+      "textPrimary": "#f8f8f2",
+      "textSecondary": "#75715e",
+      "accentColor": "#a6e22e",
+      "borderColor": "#3e3d32",
+      "tabActiveBg": "#272822",
+      "editorBg": "#272822",
+      "sidebarBg": "#1e1f1c",
+      "activityBarBg": "#141411",
+      "statusBarBg": "#49483e"
+    }
+  },
+  {
+    "id": "nord",
+    "name": "Nord Arctic Ice",
+    "type": "dark",
+    "ui": {
+      "bgPrimary": "#2e3440",
+      "bgSecondary": "#242933",
+      "bgTertiary": "#1e222a",
+      "textPrimary": "#d8dee9",
+      "textSecondary": "#4c566a",
+      "accentColor": "#88c0d0",
+      "borderColor": "#3b4252",
+      "tabActiveBg": "#2e3440",
+      "editorBg": "#2e3440",
+      "sidebarBg": "#242933",
+      "activityBarBg": "#1e222a",
+      "statusBarBg": "#3b4252"
+    }
+  },
+  {
+    "id": "synthwave-84",
+    "name": "SynthWave '84 (Cyberpunk Neon)",
+    "type": "dark",
+    "ui": {
+      "bgPrimary": "#262335",
+      "bgSecondary": "#1a1826",
+      "bgTertiary": "#14121d",
+      "textPrimary": "#f92aad",
+      "textSecondary": "#848bbd",
+      "accentColor": "#00f2fe",
+      "borderColor": "#34294f",
+      "tabActiveBg": "#262335",
+      "editorBg": "#262335",
+      "sidebarBg": "#1a1826",
+      "activityBarBg": "#14121d",
+      "statusBarBg": "#ff7edb"
+    }
+  },
+  {
+    "id": "light-modern",
+    "name": "Light Modern (Visual Studio)",
+    "type": "light",
+    "ui": {
+      "bgPrimary": "#ffffff",
+      "bgSecondary": "#f3f3f3",
+      "bgTertiary": "#2c2c2c",
+      "textPrimary": "#3b3b3b",
+      "textSecondary": "#6e6e6e",
+      "accentColor": "#007acc",
+      "borderColor": "#e5e5e5",
+      "tabActiveBg": "#ffffff",
+      "editorBg": "#ffffff",
+      "sidebarBg": "#f3f3f3",
+      "activityBarBg": "#2c2c2c",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "github-light",
+    "name": "GitHub Light Default",
+    "type": "light",
+    "ui": {
+      "bgPrimary": "#ffffff",
+      "bgSecondary": "#f6f8fa",
+      "bgTertiary": "#24292f",
+      "textPrimary": "#24292f",
+      "textSecondary": "#57606a",
+      "accentColor": "#0969da",
+      "borderColor": "#d0d7de",
+      "tabActiveBg": "#ffffff",
+      "editorBg": "#ffffff",
+      "sidebarBg": "#f6f8fa",
+      "activityBarBg": "#24292f",
+      "statusBarBg": "#0969da"
+    }
+  },
+  {
+    "id": "solarized-light",
+    "name": "Solarized Light",
+    "type": "light",
+    "ui": {
+      "bgPrimary": "#fdf6e3",
+      "bgSecondary": "#eee8d5",
+      "bgTertiary": "#073642",
+      "textPrimary": "#657b83",
+      "textSecondary": "#93a1a1",
+      "accentColor": "#268bd2",
+      "borderColor": "#d33682",
+      "tabActiveBg": "#fdf6e3",
+      "editorBg": "#fdf6e3",
+      "sidebarBg": "#eee8d5",
+      "activityBarBg": "#073642",
+      "statusBarBg": "#2aa198"
+    }
+  }
+]

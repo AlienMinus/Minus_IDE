@@ -8,6 +8,7 @@ import ArchitectureCanvas from "../Architecture/ArchitectureCanvas";
 import MongoSchemaERD from "../Architecture/MongoSchemaERD";
 import BackendApiRoutes from "../Architecture/BackendApiRoutes";
 import SeleniumRunner from "../RunDebug/SeleniumRunner";
+import SettingsPage from "../../pages/SettingsPage/SettingsPage";
 import {
   DocxPreview,
   PptxPreview,
@@ -406,6 +407,15 @@ function Editor() {
     return (
       <div className="editor-container">
         <SeleniumRunner isStudioMode={true} />
+      </div>
+    );
+  }
+
+  // Settings tab
+  if (activeFile.type === "settings" || activeFile.isSettings) {
+    return (
+      <div className="editor-container">
+        <SettingsPage />
       </div>
     );
   }

@@ -1,0 +1,338 @@
+/* Settings Page Styles - Hyperion IDE */
+
+.settings-page-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary, #1e1e1e);
+  color: var(--text-primary, #cccccc);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--bg-secondary, #252526);
+  border-bottom: 1px solid var(--border-color, #2d2d2d);
+  flex-shrink: 0;
+}
+
+.settings-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-title-icon {
+  font-size: 16px;
+  color: var(--accent-color, #00f2fe);
+}
+
+.settings-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: #ffffff;
+}
+
+.settings-save-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  animation: fadeInToast 0.2s ease;
+}
+
+@keyframes fadeInToast {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.settings-search-box {
+  flex: 1;
+  max-width: 550px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.settings-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #8b949e;
+  font-size: 12px;
+}
+
+.settings-search-input {
+  width: 100%;
+  background: #14171d;
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  color: #ffffff;
+  padding: 6px 10px 6px 30px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.settings-search-input:focus {
+  border-color: var(--accent-color, #00f2fe);
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.25);
+}
+
+.settings-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #21262d;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.settings-mode-btn:hover {
+  background: #30363d;
+  border-color: #8b949e;
+}
+
+.settings-mode-btn.active {
+  background: rgba(0, 242, 254, 0.2);
+  border-color: var(--accent-color, #00f2fe);
+  color: var(--accent-color, #00f2fe);
+}
+
+.settings-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.settings-nav-sidebar {
+  width: 220px;
+  background: var(--bg-secondary, #252526);
+  border-right: 1px solid var(--border-color, #2d2d2d);
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.settings-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  color: #8b949e;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.settings-cat-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+}
+
+.settings-cat-btn.active {
+  background: rgba(0, 242, 254, 0.08);
+  border-left-color: var(--accent-color, #00f2fe);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.cat-icon {
+  font-size: 13px;
+}
+
+.settings-content-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  gap: 20px;
+  transition: background 0.15s ease;
+}
+
+.setting-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+.setting-row.modified {
+  border-left: 3px solid var(--accent-color, #00f2fe);
+}
+
+.setting-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setting-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.setting-desc {
+  font-size: 11px;
+  color: #8b949e;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.setting-key-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.setting-control-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.setting-select,
+.setting-number-input,
+.setting-text-input {
+  background: #0f141c;
+  border: 1px solid #30363d;
+  color: #f0f6fc;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  outline: none;
+  min-width: 140px;
+}
+
+.setting-select:focus,
+.setting-number-input:focus,
+.setting-text-input:focus {
+  border-color: var(--accent-color, #00f2fe);
+}
+
+.setting-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-color, #00f2fe);
+  cursor: pointer;
+}
+
+.setting-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.setting-reset-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #f87171;
+}
+
+/* JSON Mode */
+.settings-json-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px;
+  gap: 8px;
+}
+
+.json-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #8b949e;
+  font-size: 11px;
+}
+
+.json-save-btn {
+  background: #238636;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.json-save-btn:hover {
+  background: #2ea043;
+}
+
+.json-error-banner {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid #ef4444;
+  padding: 6px 12px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+.json-textarea {
+  flex: 1;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  color: #79c0ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  padding: 12px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+
+.settings-empty {
+  color: #8b949e;
+  font-size: 13px;
+  padding: 24px;
+  text-align: center;
+}

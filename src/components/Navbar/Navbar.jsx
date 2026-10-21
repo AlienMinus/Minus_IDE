@@ -25,6 +25,7 @@ import {
 } from "react-icons/vsc";
 
 import { fileMenu, editMenu, viewMenu, terminalMenu, helpMenu } from "../../data/menu.jsx";
+import HelpModal from "../Help/HelpModal";
 import { getLanguageFromFileName, readFileContent, flattenFiles } from "../../services/fileService";
 import { getRecentWorkspaces, clearRecentWorkspaces } from "../../services/workspacePersistence";
 import { cloneRepository, getRepoRemoteUrl } from "../../services/gitService";
@@ -109,7 +110,19 @@ function Navbar({ isChatOpen, toggleChat }) {
     const [selectedMenu, setSelectedMenu] = useState(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [searchQuery, setSearchQuery] = useState("");
+    const [helpModalTopic, setHelpModalTopic] = useState(null);
     const closeTimer = useRef(null);
+
+    // Global listener to trigger help modal topics
+    useEffect(() => {
+        const handleHelpEvent = (e) => {
+            if (e.detail?.topic) {
+                setHelpModalTopic(e.detail.topic);
+            }
+        };
+        window.addEventListener("hyperion:show-help-modal", handleHelpEvent);
+        return () => window.removeEventListener("hyperion:show-help-modal", handleHelpEvent);
+    }, []);
 
     const clearCloseTimer = () => {
         if (closeTimer.current) {

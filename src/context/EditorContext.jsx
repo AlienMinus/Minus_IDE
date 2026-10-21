@@ -216,6 +216,10 @@ export function EditorProvider({ children }) {
       case "selenium-studio":
         openSeleniumStudioTab();
         break;
+      case "settings":
+      case "preferences":
+        openSettingsTab();
+        break;
       default:
         break;
     }
@@ -723,6 +727,39 @@ export function EditorProvider({ children }) {
     });
   }
 
+  function openSettingsTab() {
+    const tabId = "hyperion-settings-page";
+    const name = "Settings";
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name,
+        type: "settings",
+        isPreview: true,
+        isSettings: true
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
+  useEffect(() => {
+    const handleSettingsShortcut = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === ",") {
+        e.preventDefault();
+        openSettingsTab();
+      }
+    };
+    window.addEventListener("keydown", handleSettingsShortcut);
+    return () => window.removeEventListener("keydown", handleSettingsShortcut);
+  }, []);
+
   const [isScanningWorkspace, setIsScanningWorkspace] = useState(false);
   const [scanProgress, setScanProgress] = useState(null);
 
@@ -1074,6 +1111,7 @@ export function EditorProvider({ children }) {
         openMongoSchemaTab,
         openBackendRoutesTab,
         openSeleniumStudioTab,
+        openSettingsTab,
         scanWorkspaceFiles,
         isScanningWorkspace,
         scanProgress,

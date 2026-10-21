@@ -34,7 +34,23 @@ export function getActivePreviewerIframe() {
     document.querySelector(".preview-file-container iframe"),
     document.querySelector(".editor-container iframe"),
     ...Array.from(document.querySelectorAll("iframe"))
-  ];
+  ].filter(Boolean);
+
+  // 1. Prefer iframes that are mounted, visible, and have a non-blank URL
+  for (const iframe of candidates) {
+    if (iframe && iframe.contentWindow) {
+      const rect = iframe.getBoundingClientRect();
+      const src = iframe.src || "";
+      let href = "";
+      try { href = iframe.contentWindow.location?.href || ""; } catch {}
+      const isNotBlank = (src && src !== "about:blank") || (href && href !== "about:blank");
+      if (rect.width > 20 && rect.height > 20 && isNotBlank) {
+        return iframe;
+      }
+    }
+  }
+
+  // 2. Visible iframes
   for (const iframe of candidates) {
     if (iframe && iframe.contentWindow) {
       const rect = iframe.getBoundingClientRect();
@@ -43,6 +59,8 @@ export function getActivePreviewerIframe() {
       }
     }
   }
+
+  // 3. Any iframe candidate
   for (const iframe of candidates) {
     if (iframe && iframe.contentWindow) {
       return iframe;
@@ -839,6 +857,70 @@ export class HyperionWebDriver {
     const delay = this.getSpeedDelay();
     if (delay > 0) await this.sleep(delay);
     this.clearHighlight();
+    return true;
+  }
+
+  /**
+   * Smoothly scroll the previewer window or a scrollable container.
+   */
+  async scrollBy(deltaY = 400, deltaX = 0, smooth = true) {
+    const iframe = this.getIframe();
+    const doc = this.getDocument();
+    if (!doc) return false;
+    const win = this.getWindow() || doc.defaultView || window;
+
+    try {
+      if (win.scrollBy) {
+        win.scrollBy({ top: deltaY, left: deltaX, behavior: smooth ? "smooth" : "auto" });
+      } else if (doc.documentElement) {
+        doc.documentElement.scrollTop += deltaY;
+        doc.documentElement.scrollLeft += deltaX;
+      }
+    } catch {
+      try {
+        doc.body.scrollTop += deltaY;
+      } catch {}
+    }
+
+    if (iframe) {
+      globalAgentCursor.updatePositionForActiveTarget();
+    }
+
+    this.log("scrollBy", `y:${deltaY}`, "ok", `Scrolled window by ${deltaY}px`);
+    const delay = this.getSpeedDelay();
+    await this.sleep(smooth ? Math.max(delay, 350) : delay);
+    return true;
+  }
+
+  /**
+   * Smoothly scroll the previewer window to exact coordinates.
+   */
+  async scrollTo(top = 0, left = 0, smooth = true) {
+    const iframe = this.getIframe();
+    const doc = this.getDocument();
+    if (!doc) return false;
+    const win = this.getWindow() || doc.defaultView || window;
+
+    try {
+      if (win.scrollTo) {
+        win.scrollTo({ top, left, behavior: smooth ? "smooth" : "auto" });
+      } else if (doc.documentElement) {
+        doc.documentElement.scrollTop = top;
+        doc.documentElement.scrollLeft = left;
+      }
+    } catch {
+      try {
+        doc.body.scrollTop = top;
+      } catch {}
+    }
+
+    if (iframe) {
+      globalAgentCursor.updatePositionForActiveTarget();
+    }
+
+    this.log("scrollTo", `top:${top}`, "ok", `Scrolled window to ${top}px`);
+    const delay = this.getSpeedDelay();
+    await this.sleep(smooth ? Math.max(delay, 350) : delay);
     return true;
   }
 

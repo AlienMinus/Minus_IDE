@@ -1,0 +1,377 @@
+/* Help Modal Styles - Hyperion IDE */
+
+.help-content-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #cccccc;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.help-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0, 242, 254, 0.08);
+  border: 1px solid rgba(0, 242, 254, 0.25);
+  border-radius: 6px;
+  padding: 14px 18px;
+}
+
+.help-hero-icon {
+  font-size: 38px;
+  color: #00f2fe;
+  flex-shrink: 0;
+}
+
+.help-hero h3 {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  color: #ffffff;
+}
+
+.help-hero p {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.help-card {
+  background: #181d28;
+  border: 1px solid #283143;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.help-card h4 {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  color: #38bdf8;
+}
+
+.help-card p {
+  margin: 0;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.help-docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.help-doc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.doc-icon {
+  font-size: 18px;
+  color: #38bdf8;
+  margin-top: 2px;
+}
+
+.help-doc-item strong {
+  color: #f0f6fc;
+  font-size: 12px;
+}
+
+.help-doc-item p {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.help-tips-list {
+  padding-left: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.help-tips-list code,
+.shortcuts-table kbd,
+.help-content-view kbd {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: #58a6ff;
+}
+
+.walkthrough-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.step-num {
+  width: 24px;
+  height: 24px;
+  background: #00f2fe;
+  color: #0b0f19;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-item strong {
+  color: #f0f6fc;
+  font-size: 13px;
+}
+
+.step-item p {
+  margin: 3px 0 0 0;
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.release-badge {
+  display: inline-block;
+  background: rgba(0, 242, 254, 0.15);
+  color: #00f2fe;
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 4px;
+}
+
+.release-features-list {
+  padding-left: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.shortcuts-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcut-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: #161b22;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.video-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.video-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.video-item:hover {
+  background: #21262d;
+  border-color: #58a6ff;
+}
+
+.video-icon {
+  font-size: 24px;
+  color: #f87171;
+  flex-shrink: 0;
+}
+
+.video-item strong {
+  display: block;
+  font-size: 13px;
+  color: #f0f6fc;
+}
+
+.video-item span {
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.help-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0969da;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s ease;
+}
+
+.help-cta-btn:hover {
+  background: #0856b3;
+}
+
+.issue-meta-box {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #8b949e;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  align-self: flex-start;
+}
+
+.process-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.process-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 8px 12px;
+  background: #161b22;
+  font-weight: 700;
+  font-size: 11px;
+  color: #8b949e;
+  border-bottom: 1px solid #30363d;
+}
+
+.process-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: #0d1117;
+}
+
+.status-online {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.update-checking,
+.update-done {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.update-spin {
+  font-size: 32px;
+  color: #00f2fe;
+  animation: spinUpdate 1s linear infinite;
+}
+
+@keyframes spinUpdate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.update-check {
+  font-size: 36px;
+  color: #4ade80;
+}
+
+.about-view {
+  align-items: center;
+  text-align: center;
+  padding: 10px;
+}
+
+.about-logo {
+  font-size: 42px;
+  color: #00f2fe;
+}
+
+.about-view h3 {
+  margin: 4px 0 0 0;
+  font-size: 16px;
+  color: #ffffff;
+}
+
+.about-version {
+  color: #8b949e;
+  font-size: 12px;
+}
+
+.about-meta {
+  margin-top: 10px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 14px;
+  text-align: left;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}

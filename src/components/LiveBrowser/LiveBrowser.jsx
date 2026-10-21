@@ -12,10 +12,19 @@ import {
 } from "react-icons/fa";
 import { globalElementInspector } from "../../services/elementInspector";
 
-export default function LiveBrowser({ initialUrl = "http://localhost:5173", title, onClose }) {
-  const [url, setUrl] = useState(initialUrl);
-  const [inputUrl, setInputUrl] = useState(initialUrl);
-  const [history, setHistory] = useState([initialUrl]);
+const resolveTargetUrl = (target) => {
+  if (!target || target === "about:blank" || target.trim() === "") {
+    return (window.__hyperion_previewer_url__ && window.__hyperion_previewer_url__ !== "about:blank")
+      ? window.__hyperion_previewer_url__
+      : "http://localhost:5174";
+  }
+  return target;
+};
+
+export default function LiveBrowser({ initialUrl = "http://localhost:5174", title, onClose }) {
+  const [url, setUrl] = useState(() => resolveTargetUrl(initialUrl));
+  const [inputUrl, setInputUrl] = useState(() => resolveTargetUrl(initialUrl));
+  const [history, setHistory] = useState(() => [resolveTargetUrl(initialUrl)]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -45,25 +54,30 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
   }, []);
 
   useEffect(() => {
-    if (initialUrl && initialUrl !== url) {
-      setUrl(initialUrl);
-      setInputUrl(initialUrl);
-      setHistory((prev) => [...prev, initialUrl]);
+    const valid = resolveTargetUrl(initialUrl);
+    if (valid && valid !== url && valid !== "about:blank") {
+      setUrl(valid);
+      setInputUrl(valid);
+      setHistory((prev) => [...prev, valid]);
       setHistoryIndex((prev) => prev + 1);
       setIframeKey(Date.now());
     }
   }, [initialUrl]);
 
   useEffect(() => {
-    window.__hyperion_previewer_url__ = url;
+    if (url && url !== "about:blank") {
+      window.__hyperion_previewer_url__ = url;
+    }
   }, [url]);
 
   // Synchronize address bar when client-side routing occurs inside previewer iframe
   useEffect(() => {
     const handleMsg = (e) => {
       if (e.data && e.data.source === "hyperion-preview" && e.data.type === "LOCATION_CHANGE" && e.data.url) {
-        setInputUrl(e.data.url);
-        window.__hyperion_previewer_url__ = e.data.url;
+        if (e.data.url !== "about:blank") {
+          setInputUrl(e.data.url);
+          window.__hyperion_previewer_url__ = e.data.url;
+        }
       }
     };
     window.addEventListener("message", handleMsg);
@@ -74,8 +88,8 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
   // the in-memory preview proxy to enable same-origin DOM access, accurate element bounding rects,
   // and real synthetic interaction without modifying ANY user files on disk.
   const iframeSrc = useMemo(() => {
-    if (!url) return "about:blank";
-    const clean = url.trim();
+    const target = resolveTargetUrl(url);
+    const clean = target.trim();
     if (/^http:\/\/(localhost|127\.0\.0\.1):(?!5173\b)\d+/i.test(clean)) {
       return `/api/sandbox/preview-proxy?url=${encodeURIComponent(clean)}`;
     }

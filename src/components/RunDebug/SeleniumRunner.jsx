@@ -60,7 +60,11 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   // Previewer Connection state
   const [isPreviewerConnected, setIsPreviewerConnected] = useState(false);
   const [previewerTitle, setPreviewerTitle] = useState("");
-  const [previewerUrl, setPreviewerUrl] = useState("");
+  const [previewerUrl, setPreviewerUrl] = useState(
+    () => (window.__hyperion_previewer_url__ && window.__hyperion_previewer_url__ !== "about:blank")
+      ? window.__hyperion_previewer_url__
+      : "http://localhost:5174"
+  );
 
   // Test Runner State
   const [testSuites, setTestSuites] = useState([]);
@@ -147,14 +151,29 @@ export default function SeleniumRunner({ isStudioMode = false }) {
         const doc = getSafeIframeDocument(iframe);
         setPreviewerTitle(doc?.title || iframe.title || "Live Previewer Attached");
         try {
-          setPreviewerUrl(iframe.contentWindow?.location?.href || iframe.src || "http://localhost:5173");
+          const href = iframe.contentWindow?.location?.href;
+          if (href && href !== "about:blank" && !href.startsWith("chrome-error://")) {
+            setPreviewerUrl(href);
+            window.__hyperion_previewer_url__ = href;
+          } else if (iframe.src && iframe.src !== "about:blank") {
+            setPreviewerUrl(iframe.src);
+            window.__hyperion_previewer_url__ = iframe.src;
+          } else {
+            // Keep existing non-blank URL or fallback to default
+            setPreviewerUrl((prev) => (prev && prev !== "about:blank" ? prev : (window.__hyperion_previewer_url__ || "http://localhost:5174")));
+          }
         } catch {
-          setPreviewerUrl(iframe.src || "http://localhost:5173");
+          if (iframe.src && iframe.src !== "about:blank") {
+            setPreviewerUrl(iframe.src);
+            window.__hyperion_previewer_url__ = iframe.src;
+          } else {
+            setPreviewerUrl((prev) => (prev && prev !== "about:blank" ? prev : (window.__hyperion_previewer_url__ || "http://localhost:5174")));
+          }
         }
       } else {
         setIsPreviewerConnected(false);
         setPreviewerTitle("");
-        setPreviewerUrl("");
+        setPreviewerUrl((prev) => (prev && prev !== "about:blank" ? prev : (window.__hyperion_previewer_url__ || "http://localhost:5174")));
       }
     };
 
@@ -1381,7 +1400,13 @@ export default function SeleniumRunner({ isStudioMode = false }) {
       {showSplitPreview && (
         <div className="selenium-runner-preview-pane">
           <LiveBrowser
-            initialUrl={previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174"}
+            initialUrl={
+              (previewerUrl && previewerUrl !== "about:blank")
+                ? previewerUrl
+                : ((window.__hyperion_previewer_url__ && window.__hyperion_previewer_url__ !== "about:blank")
+                    ? window.__hyperion_previewer_url__
+                    : "http://localhost:5174")
+            }
             title="Live Automation Target Preview"
             onClose={() => setShowSplitPreview(false)}
           />
