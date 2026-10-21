@@ -1317,7 +1317,7 @@ function Navbar({ isChatOpen, toggleChat }) {
                 </button>
 
                 <h2 className="logo">
-                    <img src="/favicon-nobg.png" alt="Favicon" className="logo-image" />yperion IDE
+                    <img src="/favicon-nobg.png" alt="Favicon" className="logo-image" />Hyperion IDE
                 </h2>
 
 

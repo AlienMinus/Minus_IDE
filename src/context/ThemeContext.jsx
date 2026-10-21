@@ -38,6 +38,10 @@ export function ThemeProvider({ children }) {
     root.style.setProperty("--status-bar-bg", ui.statusBarBg);
 
     const themeType = (activeTheme.type === "light" || activeTheme.id.includes("light")) ? "light" : "dark";
+    root.style.setProperty("--card-bg", ui.cardBg || (themeType === "light" ? "#ffffff" : ui.bgSecondary));
+    root.style.setProperty("--input-bg", ui.inputBg || (themeType === "light" ? "#ffffff" : ui.bgPrimary));
+    root.style.setProperty("--hover-bg", themeType === "light" ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.06)");
+
     root.setAttribute("data-theme-type", themeType);
     root.setAttribute("data-theme-category", activeTheme.category || themeType);
     root.setAttribute("data-theme-id", activeTheme.id);

@@ -15,7 +15,7 @@
       "tabActiveBg": "#ffffff",
       "editorBg": "#ffffff",
       "sidebarBg": "#f8f9fa",
-      "activityBarBg": "#2d3748",
+      "activityBarBg": "#f0f2f5",
       "statusBarBg": "#0066cc"
     }
   },
@@ -55,7 +55,7 @@
       "tabActiveBg": "#ffffff",
       "editorBg": "#ffffff",
       "sidebarBg": "#f3f3f3",
-      "activityBarBg": "#333333",
+      "activityBarBg": "#f3f3f3",
       "statusBarBg": "#0366d6"
     }
   },
@@ -75,7 +75,7 @@
       "tabActiveBg": "#ffffff",
       "editorBg": "#ffffff",
       "sidebarBg": "#f5f5f5",
-      "activityBarBg": "#2c2c2c",
+      "activityBarBg": "#f3f3f3",
       "statusBarBg": "#007acc"
     }
   },
@@ -95,7 +95,7 @@
       "tabActiveBg": "#ffffff",
       "editorBg": "#ffffff",
       "sidebarBg": "#f8f8f8",
-      "activityBarBg": "#2c2c2c",
+      "activityBarBg": "#f8f8f8",
       "statusBarBg": "#005fb8"
     }
   },
@@ -115,7 +115,7 @@
       "tabActiveBg": "#ffffff",
       "editorBg": "#ffffff",
       "sidebarBg": "#f3f3f3",
-      "activityBarBg": "#2c2c2c",
+      "activityBarBg": "#f8f8f8",
       "statusBarBg": "#007acc"
     }
   },
@@ -135,7 +135,7 @@
       "tabActiveBg": "#f5f5f5",
       "editorBg": "#f5f5f5",
       "sidebarBg": "#edece8",
-      "activityBarBg": "#c4c2be",
+      "activityBarBg": "#ede8e8",
       "statusBarBg": "#7289a5"
     }
   },
@@ -155,7 +155,7 @@
       "tabActiveBg": "#fdf6e3",
       "editorBg": "#fdf6e3",
       "sidebarBg": "#eee8d5",
-      "activityBarBg": "#073642",
+      "activityBarBg": "#eee8d5",
       "statusBarBg": "#2aa198"
     }
   },
@@ -175,7 +175,7 @@
       "tabActiveBg": "#faf7f9",
       "editorBg": "#faf7f9",
       "sidebarBg": "#f2ecf0",
-      "activityBarBg": "#4a2840",
+      "activityBarBg": "#f2ecf0",
       "statusBarBg": "#c026d3"
     }
   },

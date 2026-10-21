@@ -3,7 +3,7 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background: #1e1e1e;
+  background: var(--editor-bg, var(--bg-primary, #1e1e1e));
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -11,8 +11,8 @@
 .live-browser-toolbar {
   height: 38px;
   min-height: 38px;
-  background: #252526;
-  border-bottom: 1px solid #333333;
+  background: var(--bg-secondary, #252526);
+  border-bottom: 1px solid var(--border-color, #333333);
   display: flex;
   align-items: center;
   padding: 0 10px;
@@ -30,7 +30,7 @@
 .browser-btn {
   background: transparent;
   border: none;
-  color: #cccccc;
+  color: var(--text-primary, #cccccc);
   width: 26px;
   height: 26px;
   border-radius: 4px;
@@ -43,8 +43,8 @@
 }
 
 .browser-btn:hover:not(:disabled) {
-  background: #37373d;
-  color: #ffffff;
+  background: var(--bg-tertiary, #37373d);
+  color: var(--text-primary, #ffffff);
 }
 
 .browser-btn:disabled {
@@ -66,8 +66,8 @@
   flex: 1;
   max-width: 700px;
   height: 26px;
-  background: #1e1e1e;
-  border: 1px solid #3c3c3c;
+  background: var(--input-bg, var(--bg-primary, #1e1e1e));
+  border: 1px solid var(--border-color, #3c3c3c);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -77,11 +77,11 @@
 }
 
 .live-browser-address-bar:focus-within {
-  border-color: #007acc;
+  border-color: var(--accent-color, #007acc);
 }
 
 .address-bar-icon {
-  color: #858585;
+  color: var(--text-secondary, #858585);
   font-size: 11px;
   display: flex;
   align-items: center;
@@ -95,7 +95,7 @@
   flex: 1;
   background: transparent;
   border: none;
-  color: #cccccc;
+  color: var(--text-primary, #cccccc);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
   font-size: 12px;
   outline: none;

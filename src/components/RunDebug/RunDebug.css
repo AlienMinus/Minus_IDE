@@ -28,7 +28,7 @@
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #8b949e;
+  color: var(--text-secondary, #8b949e);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -36,13 +36,13 @@
 }
 
 .rundebug-tab-btn:hover {
-  color: #e6edf3;
-  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary, #e6edf3);
+  background: var(--hover-bg, rgba(255, 255, 255, 0.03));
 }
 
 .rundebug-tab-btn.active {
-  color: #00f2fe;
-  border-bottom: 2px solid #00f2fe;
+  color: var(--accent-color, #00f2fe);
+  border-bottom: 2px solid var(--accent-color, #00f2fe);
   background: rgba(0, 242, 254, 0.05);
 }
 
@@ -53,7 +53,7 @@
 .rundebug-popout-btn {
   background: transparent;
   border: none;
-  color: #8b949e;
+  color: var(--text-secondary, #8b949e);
   padding: 0 10px;
   height: 100%;
   cursor: pointer;
@@ -65,7 +65,7 @@
 }
 
 .rundebug-popout-btn:hover {
-  color: #00f2fe;
+  color: var(--accent-color, #00f2fe);
 }
 
 .rundebug-header {
@@ -74,14 +74,14 @@
   display: flex;
   align-items: center;
   padding: 0 12px;
-  border-bottom: 1px solid #333333;
+  border-bottom: 1px solid var(--border-color, #333333);
 }
 
 .rundebug-title {
   font-weight: 600;
   font-size: 11px;
   letter-spacing: 0.5px;
-  color: #bbbbbb;
+  color: var(--text-primary, #bbbbbb);
 }
 
 .rundebug-selenium-jump-btn {
@@ -169,18 +169,19 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: #2d2d30;
-  border: 1px solid #3c3c3c;
-  color: #cccccc;
+  background: var(--bg-tertiary, #2d2d30);
+  border: 1px solid var(--border-color, #3c3c3c);
+  color: var(--text-primary, #cccccc);
   padding: 6px 12px;
   border-radius: 3px;
   font-size: 11px;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .rundebug-secondary-btn:hover {
-  background: #3e3e42;
-  color: #ffffff;
+  background: var(--bg-secondary, #3e3e42);
+  color: var(--text-primary, #ffffff);
 }
 
 .rundebug-section {
@@ -192,13 +193,13 @@
 .rundebug-section-header {
   font-size: 11px;
   font-weight: 600;
-  color: #858585;
+  color: var(--text-secondary, #858585);
   letter-spacing: 0.5px;
 }
 
 .rundebug-target-card {
-  background: #1e1e1e;
-  border: 1px solid #333333;
+  background: var(--card-bg, var(--bg-secondary, #1e1e1e));
+  border: 1px solid var(--border-color, #333333);
   padding: 8px 10px;
   border-radius: 4px;
   display: flex;
@@ -208,13 +209,13 @@
 
 .target-label {
   font-size: 10px;
-  color: #858585;
+  color: var(--text-secondary, #858585);
 }
 
 .target-value {
   font-size: 12px;
   font-weight: 600;
-  color: #9cdcfe;
+  color: var(--accent-color, #9cdcfe);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -237,9 +238,10 @@
   align-items: center;
   gap: 8px;
   font-size: 11px;
-  color: #aaaaaa;
+  color: var(--text-primary, #aaaaaa);
   padding: 4px 6px;
-  background: #1e1e1e;
+  background: var(--card-bg, var(--bg-secondary, #1e1e1e));
+  border: 1px solid var(--border-color, #2d2d2d);
   border-radius: 3px;
 }
 

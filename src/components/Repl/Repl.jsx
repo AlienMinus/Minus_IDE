@@ -16,9 +16,42 @@ import { SiPython, SiNodedotjs } from "react-icons/si";
 import { startReplSession, evalReplCode, exitReplSession } from "../../services/sandboxService";
 import { EditorContext } from "../../context/EditorContext";
 import { FileContext } from "../../context/FileContext";
+import useTheme from "../../hooks/useTheme";
 import { getStoredWorkspaceState } from "../../services/workspacePersistence";
 
 export default function Repl() {
+  const { currentTheme, isDark } = useTheme();
+
+  const getXtermTheme = (theme, dark) => {
+    const ui = theme?.ui || {};
+    const bg = ui.editorBg || ui.bgPrimary || (dark ? "#181818" : "#ffffff");
+    const fg = ui.textPrimary || (dark ? "#d4d4d4" : "#1f2328");
+    const cursor = ui.accentColor || (dark ? "#ffffff" : "#0969da");
+    const selectBg = dark ? "rgba(255, 255, 255, 0.2)" : "rgba(9, 105, 218, 0.25)";
+    return {
+      background: bg,
+      foreground: fg,
+      cursor: cursor,
+      cursorAccent: bg,
+      selectionBackground: selectBg,
+      black: dark ? "#1e1e1e" : "#24292e",
+      brightBlack: dark ? "#808080" : "#6a737d",
+      red: "#f44747",
+      brightRed: "#f44747",
+      green: "#6a9955",
+      brightGreen: "#3fb950",
+      yellow: "#dcdcaa",
+      brightYellow: "#d7ba7d",
+      blue: "#569cd6",
+      brightBlue: "#2188ff",
+      magenta: "#c586c0",
+      brightMagenta: "#bc8cff",
+      cyan: "#4ec9b0",
+      brightCyan: "#39c5bb",
+      white: dark ? "#d4d4d4" : "#24292e",
+      brightWhite: dark ? "#ffffff" : "#000000"
+    };
+  };
   const terminalRef = useRef(null);
   const xtermRef = useRef(null);
   const fitAddonRef = useRef(null);
@@ -92,28 +125,7 @@ export default function Repl() {
       fontSize: 14,
       fontFamily: "'Cascadia Code', Consolas, 'Fira Code', monospace",
       lineHeight: 1.25,
-      theme: {
-        background: "#181818",
-        foreground: "#d4d4d4",
-        cursor: "#ffffff",
-        selectionBackground: "#264f78",
-        black: "#1e1e1e",
-        brightBlack: "#808080",
-        red: "#f44747",
-        brightRed: "#f44747",
-        green: "#6a9955",
-        brightGreen: "#b5cea8",
-        yellow: "#dcdcaa",
-        brightYellow: "#d7ba7d",
-        blue: "#569cd6",
-        brightBlue: "#9cdcfe",
-        magenta: "#c586c0",
-        brightMagenta: "#d16969",
-        cyan: "#4ec9b0",
-        brightCyan: "#4fc1ff",
-        white: "#d4d4d4",
-        brightWhite: "#ffffff"
-      }
+      theme: getXtermTheme(currentTheme, isDark)
     });
 
     const fitAddon = new FitAddon();
@@ -284,6 +296,13 @@ export default function Repl() {
       xtermRef.current = null;
     };
   }, []);
+
+  // Update xterm theme dynamically when active theme changes
+  useEffect(() => {
+    if (xtermRef.current) {
+      xtermRef.current.options.theme = getXtermTheme(currentTheme, isDark);
+    }
+  }, [currentTheme, isDark]);
 
   const switchRuntime = (newRuntime) => {
     if (newRuntime === runtime) return;
