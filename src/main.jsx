@@ -8,6 +8,7 @@ import { FileProvider } from "./context/FileContext";
 import { EditorProvider } from "./context/EditorContext";
 import { TerminalProvider } from "./context/TerminalContext";
 
+import "./styles/variables.css";
 import "./index.css";
 import "./App.css";
 

@@ -146,7 +146,7 @@ export async function executeCode({
  * @param {Array} [options.virtualFiles] - Workspace files to provide to the sandbox
  * @param {number} [options.timeoutMs] - Timeout in ms
  */
-export async function executeCommand(command, { cwd, virtualFiles = [], timeoutMs = 30000 } = {}) {
+export async function executeCommand(command, { cwd, virtualFiles = [], timeoutMs = 30000, profile = "powershell" } = {}) {
   try {
     const res = await fetch(`${API_BASE}/command`, {
       method: 'POST',
@@ -155,7 +155,8 @@ export async function executeCommand(command, { cwd, virtualFiles = [], timeoutM
         command,
         cwd,
         virtualFiles: virtualFiles.map(f => ({ path: f.path || f.name, name: f.name, content: f.content || '' })),
-        timeoutMs
+        timeoutMs,
+        profile
       })
     });
 
@@ -190,6 +191,7 @@ export async function streamShellCommand({
   cwd,
   virtualFiles = [],
   timeoutMs = 0,
+  profile = "powershell",
   onChunk,
   onExit,
   signal
@@ -202,7 +204,8 @@ export async function streamShellCommand({
         command,
         cwd,
         virtualFiles: virtualFiles.map(f => ({ path: f.path || f.name, name: f.name, content: f.content || '' })),
-        timeoutMs
+        timeoutMs,
+        profile
       }),
       signal
     });

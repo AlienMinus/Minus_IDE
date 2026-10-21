@@ -3,8 +3,8 @@
     width: 100vw;
     display: flex;
     flex-direction: column;
-    background: #1e1e1e;
-    color: #f3f3f3;
+    background: var(--bg-primary, #1e1e1e);
+    color: var(--text-primary, #f3f3f3);
     overflow: hidden;
 }
 
@@ -50,20 +50,17 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    background: #252526;
+    background: var(--editor-bg, var(--bg-primary, #252526));
 }
 
-.editor-wrapper{
-
-    flex:1;
-
-    overflow:hidden;
-
+.editor-wrapper {
+    flex: 1;
+    overflow: hidden;
 }
 
 .resize-handle {
     width: 4px;
-    background: #2d2d2d;
+    background: var(--border-color, #2d2d2d);
     transition: background 0.2s ease;
     cursor: col-resize;
     position: relative;
@@ -72,12 +69,12 @@
 
 .resize-handle:hover,
 .resize-handle[data-resize-handle-active] {
-    background: #007acc;
+    background: var(--accent-color, #007acc);
 }
 
 .resize-handle-horizontal {
     height: 4px;
-    background: #2d2d2d;
+    background: var(--border-color, #2d2d2d);
     transition: background 0.2s ease;
     cursor: row-resize;
     position: relative;
@@ -86,5 +83,5 @@
 
 .resize-handle-horizontal:hover,
 .resize-handle-horizontal[data-resize-handle-active] {
-    background: #007acc;
+    background: var(--accent-color, #007acc);
 }

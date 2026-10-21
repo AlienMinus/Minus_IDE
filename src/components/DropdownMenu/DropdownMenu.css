@@ -1,16 +1,22 @@
 /* Dropdown container */ 
 .dropdown-menu {
   position: absolute;
-  background-color: #252526;
-  border: 1px solid #3e3e42;
+  background-color: var(--bg-secondary, #252526);
+  border: 1px solid var(--border-color, #3e3e42);
   border-radius: 5px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   padding: 4px;
   z-index: 1000;
-  color: #cccccc;
+  color: var(--text-primary, #cccccc);
   font-size: 13px;
   width: 250px;
   user-select: none;
+  animation: dropdownIn 0.1s ease-out;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Dropdown items */
@@ -22,11 +28,12 @@
   user-select: none;
   position: relative;
   border-radius: 3px;
-  transition: background 0.1s ease;
+  transition: background 0.1s ease, color 0.1s ease;
+  color: var(--text-primary, #cccccc);
 }
 
 .dropdown-item:hover {
-  background-color: #094771;
+  background-color: var(--accent-color, #094771);
   color: white;
 }
 
@@ -51,21 +58,21 @@
 
 .dropdown-item .shortcut {
   margin-left: auto;
-  color: #9e9e9e;
+  color: var(--text-secondary, #9e9e9e);
   font-size: 11px;
   font-family: monospace;
   padding-left: 14px;
 }
 
 .dropdown-item:hover .shortcut {
-  color: #e0e0e0;
+  color: #ffffff;
 }
 
 .submenu-arrow {
   margin-left: 8px !important;
   margin-right: 0 !important;
   font-size: 9px !important;
-  color: #858585;
+  color: var(--text-secondary, #858585);
 }
 
 .dropdown-item:hover .submenu-arrow {
@@ -74,7 +81,7 @@
 
 .dropdown-separator {
   height: 1px;
-  background-color: #3e3e42;
+  background-color: var(--border-color, #3e3e42);
   margin: 3px 0;
 }
 
@@ -84,13 +91,13 @@
   top: -4px;
   left: 100%;
   margin-left: 4px;
-  background-color: #252526;
-  border: 1px solid #3e3e42;
+  background-color: var(--bg-secondary, #252526);
+  border: 1px solid var(--border-color, #3e3e42);
   border-radius: 5px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   padding: 4px;
   z-index: 1001;
-  color: #cccccc;
+  color: var(--text-primary, #cccccc);
   font-size: 13px;
   width: 240px;
 }

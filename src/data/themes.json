@@ -1,8 +1,289 @@
 [
   {
-    "id": "dark-modern",
-    "name": "Hyperion Dark Modern",
+    "id": "light-2026",
+    "name": "Light 2026 (Default Light)",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#ffffff",
+      "bgSecondary": "#f8f9fa",
+      "bgTertiary": "#edf2f7",
+      "textPrimary": "#1a202c",
+      "textSecondary": "#4a5568",
+      "accentColor": "#0066cc",
+      "borderColor": "#e2e8f0",
+      "tabActiveBg": "#ffffff",
+      "editorBg": "#ffffff",
+      "sidebarBg": "#f8f9fa",
+      "activityBarBg": "#2d3748",
+      "statusBarBg": "#0066cc"
+    }
+  },
+  {
+    "id": "2017-light-cpp",
+    "name": "2017 Light (C/C++)",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#fdfdfd",
+      "bgSecondary": "#f0f0f0",
+      "bgTertiary": "#e5e5e5",
+      "textPrimary": "#000000",
+      "textSecondary": "#555555",
+      "accentColor": "#007acc",
+      "borderColor": "#dcdcdc",
+      "tabActiveBg": "#fdfdfd",
+      "editorBg": "#fdfdfd",
+      "sidebarBg": "#f0f0f0",
+      "activityBarBg": "#2e6b9e",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "light-cpp",
+    "name": "Light (C/C++)",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#ffffff",
+      "bgSecondary": "#f3f3f3",
+      "bgTertiary": "#eaeaea",
+      "textPrimary": "#24292e",
+      "textSecondary": "#586069",
+      "accentColor": "#0366d6",
+      "borderColor": "#e1e4e8",
+      "tabActiveBg": "#ffffff",
+      "editorBg": "#ffffff",
+      "sidebarBg": "#f3f3f3",
+      "activityBarBg": "#333333",
+      "statusBarBg": "#0366d6"
+    }
+  },
+  {
+    "id": "light-classic",
+    "name": "Light Classic",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#ffffff",
+      "bgSecondary": "#f5f5f5",
+      "bgTertiary": "#ebebeb",
+      "textPrimary": "#333333",
+      "textSecondary": "#666666",
+      "accentColor": "#007acc",
+      "borderColor": "#dddddd",
+      "tabActiveBg": "#ffffff",
+      "editorBg": "#ffffff",
+      "sidebarBg": "#f5f5f5",
+      "activityBarBg": "#2c2c2c",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "light-modern",
+    "name": "Light Modern",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#ffffff",
+      "bgSecondary": "#f8f8f8",
+      "bgTertiary": "#f0f0f0",
+      "textPrimary": "#1f1f1f",
+      "textSecondary": "#616161",
+      "accentColor": "#005fb8",
+      "borderColor": "#e5e5e5",
+      "tabActiveBg": "#ffffff",
+      "editorBg": "#ffffff",
+      "sidebarBg": "#f8f8f8",
+      "activityBarBg": "#2c2c2c",
+      "statusBarBg": "#005fb8"
+    }
+  },
+  {
+    "id": "light-plus",
+    "name": "Light+",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#ffffff",
+      "bgSecondary": "#f3f3f3",
+      "bgTertiary": "#e8e8e8",
+      "textPrimary": "#000000",
+      "textSecondary": "#6e6e6e",
+      "accentColor": "#007acc",
+      "borderColor": "#cecece",
+      "tabActiveBg": "#ffffff",
+      "editorBg": "#ffffff",
+      "sidebarBg": "#f3f3f3",
+      "activityBarBg": "#2c2c2c",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "quiet-light",
+    "name": "Quiet Light",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#f5f5f5",
+      "bgSecondary": "#edece8",
+      "bgTertiary": "#e0dedb",
+      "textPrimary": "#333333",
+      "textSecondary": "#7a7a7a",
+      "accentColor": "#4b83cd",
+      "borderColor": "#dcdcdc",
+      "tabActiveBg": "#f5f5f5",
+      "editorBg": "#f5f5f5",
+      "sidebarBg": "#edece8",
+      "activityBarBg": "#c4c2be",
+      "statusBarBg": "#7289a5"
+    }
+  },
+  {
+    "id": "solarized-light",
+    "name": "Solarized Light",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#fdf6e3",
+      "bgSecondary": "#eee8d5",
+      "bgTertiary": "#e4ddc8",
+      "textPrimary": "#657b83",
+      "textSecondary": "#93a1a1",
+      "accentColor": "#268bd2",
+      "borderColor": "#d33682",
+      "tabActiveBg": "#fdf6e3",
+      "editorBg": "#fdf6e3",
+      "sidebarBg": "#eee8d5",
+      "activityBarBg": "#073642",
+      "statusBarBg": "#2aa198"
+    }
+  },
+  {
+    "id": "spinel-light",
+    "name": "Spinel Light",
+    "type": "light",
+    "category": "light",
+    "ui": {
+      "bgPrimary": "#faf7f9",
+      "bgSecondary": "#f2ecf0",
+      "bgTertiary": "#e6dde4",
+      "textPrimary": "#3a2d35",
+      "textSecondary": "#786571",
+      "accentColor": "#d946ef",
+      "borderColor": "#e9d5e6",
+      "tabActiveBg": "#faf7f9",
+      "editorBg": "#faf7f9",
+      "sidebarBg": "#f2ecf0",
+      "activityBarBg": "#4a2840",
+      "statusBarBg": "#c026d3"
+    }
+  },
+  {
+    "id": "dark-2026",
+    "name": "Dark 2026 (Default Dark)",
     "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#18181b",
+      "bgSecondary": "#1f1f23",
+      "bgTertiary": "#121215",
+      "textPrimary": "#f4f4f5",
+      "textSecondary": "#a1a1aa",
+      "accentColor": "#00f2fe",
+      "borderColor": "#27272a",
+      "tabActiveBg": "#18181b",
+      "editorBg": "#18181b",
+      "sidebarBg": "#1f1f23",
+      "activityBarBg": "#121215",
+      "statusBarBg": "#0284c7"
+    }
+  },
+  {
+    "id": "2017-dark-cpp",
+    "name": "2017 Dark (C/C++)",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#1e1e1e",
+      "bgSecondary": "#252526",
+      "bgTertiary": "#2d2d30",
+      "textPrimary": "#d4d4d4",
+      "textSecondary": "#929292",
+      "accentColor": "#007acc",
+      "borderColor": "#3e3e42",
+      "tabActiveBg": "#1e1e1e",
+      "editorBg": "#1e1e1e",
+      "sidebarBg": "#252526",
+      "activityBarBg": "#2d2d30",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "abyss",
+    "name": "Abyss",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#000c18",
+      "bgSecondary": "#06152b",
+      "bgTertiary": "#030f20",
+      "textPrimary": "#6688cc",
+      "textSecondary": "#384882",
+      "accentColor": "#22bbff",
+      "borderColor": "#0b2247",
+      "tabActiveBg": "#000c18",
+      "editorBg": "#000c18",
+      "sidebarBg": "#06152b",
+      "activityBarBg": "#030f20",
+      "statusBarBg": "#003366"
+    }
+  },
+  {
+    "id": "dark-cpp",
+    "name": "Dark (C/C++)",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#1e1e1e",
+      "bgSecondary": "#252526",
+      "bgTertiary": "#333333",
+      "textPrimary": "#cccccc",
+      "textSecondary": "#888888",
+      "accentColor": "#007acc",
+      "borderColor": "#383838",
+      "tabActiveBg": "#1e1e1e",
+      "editorBg": "#1e1e1e",
+      "sidebarBg": "#252526",
+      "activityBarBg": "#333333",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "dark-classic",
+    "name": "Dark Classic",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#1e1e1e",
+      "bgSecondary": "#252526",
+      "bgTertiary": "#1b1b1c",
+      "textPrimary": "#d4d4d4",
+      "textSecondary": "#808080",
+      "accentColor": "#007acc",
+      "borderColor": "#303031",
+      "tabActiveBg": "#1e1e1e",
+      "editorBg": "#1e1e1e",
+      "sidebarBg": "#252526",
+      "activityBarBg": "#1b1b1c",
+      "statusBarBg": "#007acc"
+    }
+  },
+  {
+    "id": "dark-modern",
+    "name": "Dark Modern",
+    "type": "dark",
+    "category": "dark",
     "ui": {
       "bgPrimary": "#1e1e1e",
       "bgSecondary": "#252526",
@@ -20,8 +301,9 @@
   },
   {
     "id": "dark-plus",
-    "name": "Hyperion Dark+",
+    "name": "Dark+",
     "type": "dark",
+    "category": "dark",
     "ui": {
       "bgPrimary": "#1e1e1e",
       "bgSecondary": "#252526",
@@ -38,66 +320,50 @@
     }
   },
   {
-    "id": "github-dark",
-    "name": "GitHub Dark Default",
+    "id": "jellyfish-x-retro",
+    "name": "JellyFish-x-Retro",
     "type": "dark",
+    "category": "dark",
     "ui": {
-      "bgPrimary": "#0d1117",
-      "bgSecondary": "#161b22",
-      "bgTertiary": "#010409",
-      "textPrimary": "#c9d1d9",
-      "textSecondary": "#8b949e",
-      "accentColor": "#58a6ff",
-      "borderColor": "#30363d",
-      "tabActiveBg": "#0d1117",
-      "editorBg": "#0d1117",
-      "sidebarBg": "#161b22",
-      "activityBarBg": "#010409",
-      "statusBarBg": "#161b22"
+      "bgPrimary": "#131421",
+      "bgSecondary": "#1b1c2e",
+      "bgTertiary": "#0e0e17",
+      "textPrimary": "#e8edff",
+      "textSecondary": "#7a85b3",
+      "accentColor": "#ff4081",
+      "borderColor": "#2c2e4a",
+      "tabActiveBg": "#131421",
+      "editorBg": "#131421",
+      "sidebarBg": "#1b1c2e",
+      "activityBarBg": "#0e0e17",
+      "statusBarBg": "#7c4dff"
     }
   },
   {
-    "id": "one-dark-pro",
-    "name": "One Dark Pro (Atom)",
+    "id": "kimbie-dark",
+    "name": "Kimbie Dark",
     "type": "dark",
+    "category": "dark",
     "ui": {
-      "bgPrimary": "#282c34",
-      "bgSecondary": "#21252b",
-      "bgTertiary": "#1b1d23",
-      "textPrimary": "#abb2bf",
-      "textSecondary": "#5c6370",
-      "accentColor": "#61afef",
-      "borderColor": "#181a1f",
-      "tabActiveBg": "#282c34",
-      "editorBg": "#282c34",
-      "sidebarBg": "#21252b",
-      "activityBarBg": "#1b1d23",
-      "statusBarBg": "#21252b"
-    }
-  },
-  {
-    "id": "dracula",
-    "name": "Dracula Official",
-    "type": "dark",
-    "ui": {
-      "bgPrimary": "#282a36",
-      "bgSecondary": "#21222c",
-      "bgTertiary": "#191a21",
-      "textPrimary": "#f8f8f2",
-      "textSecondary": "#6272a4",
-      "accentColor": "#bd93f9",
-      "borderColor": "#44475a",
-      "tabActiveBg": "#282a36",
-      "editorBg": "#282a36",
-      "sidebarBg": "#21222c",
-      "activityBarBg": "#191a21",
-      "statusBarBg": "#6272a4"
+      "bgPrimary": "#221a0f",
+      "bgSecondary": "#2a2013",
+      "bgTertiary": "#18120a",
+      "textPrimary": "#d3af86",
+      "textSecondary": "#8a7055",
+      "accentColor": "#dc3958",
+      "borderColor": "#3d2f1d",
+      "tabActiveBg": "#221a0f",
+      "editorBg": "#221a0f",
+      "sidebarBg": "#2a2013",
+      "activityBarBg": "#18120a",
+      "statusBarBg": "#885e35"
     }
   },
   {
     "id": "monokai",
-    "name": "Monokai Classic",
+    "name": "Monokai",
     "type": "dark",
+    "category": "dark",
     "ui": {
       "bgPrimary": "#272822",
       "bgSecondary": "#1e1f1c",
@@ -114,98 +380,203 @@
     }
   },
   {
-    "id": "nord",
-    "name": "Nord Arctic Ice",
+    "id": "monokai-dimmed",
+    "name": "Monokai Dimmed",
     "type": "dark",
+    "category": "dark",
     "ui": {
-      "bgPrimary": "#2e3440",
-      "bgSecondary": "#242933",
-      "bgTertiary": "#1e222a",
-      "textPrimary": "#d8dee9",
-      "textSecondary": "#4c566a",
-      "accentColor": "#88c0d0",
-      "borderColor": "#3b4252",
-      "tabActiveBg": "#2e3440",
-      "editorBg": "#2e3440",
-      "sidebarBg": "#242933",
-      "activityBarBg": "#1e222a",
-      "statusBarBg": "#3b4252"
+      "bgPrimary": "#1e1e1e",
+      "bgSecondary": "#242424",
+      "bgTertiary": "#171717",
+      "textPrimary": "#c5c8c6",
+      "textSecondary": "#676b6d",
+      "accentColor": "#9872a2",
+      "borderColor": "#333333",
+      "tabActiveBg": "#1e1e1e",
+      "editorBg": "#1e1e1e",
+      "sidebarBg": "#242424",
+      "activityBarBg": "#171717",
+      "statusBarBg": "#303030"
     }
   },
   {
-    "id": "synthwave-84",
-    "name": "SynthWave '84 (Cyberpunk Neon)",
+    "id": "one-dark-modern",
+    "name": "One Dark Modern",
     "type": "dark",
+    "category": "dark",
     "ui": {
-      "bgPrimary": "#262335",
-      "bgSecondary": "#1a1826",
-      "bgTertiary": "#14121d",
-      "textPrimary": "#f92aad",
-      "textSecondary": "#848bbd",
-      "accentColor": "#00f2fe",
-      "borderColor": "#34294f",
-      "tabActiveBg": "#262335",
-      "editorBg": "#262335",
-      "sidebarBg": "#1a1826",
-      "activityBarBg": "#14121d",
-      "statusBarBg": "#ff7edb"
+      "bgPrimary": "#21252b",
+      "bgSecondary": "#1d2127",
+      "bgTertiary": "#16191d",
+      "textPrimary": "#abb2bf",
+      "textSecondary": "#636d83",
+      "accentColor": "#61afef",
+      "borderColor": "#181a1f",
+      "tabActiveBg": "#21252b",
+      "editorBg": "#21252b",
+      "sidebarBg": "#1d2127",
+      "activityBarBg": "#16191d",
+      "statusBarBg": "#282c34"
     }
   },
   {
-    "id": "light-modern",
-    "name": "Hyperion Light Modern",
-    "type": "light",
+    "id": "one-dark-modern-classic",
+    "name": "One Dark Modern Classic",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#282c34",
+      "bgSecondary": "#21252b",
+      "bgTertiary": "#1b1d23",
+      "textPrimary": "#abb2bf",
+      "textSecondary": "#5c6370",
+      "accentColor": "#61afef",
+      "borderColor": "#181a1f",
+      "tabActiveBg": "#282c34",
+      "editorBg": "#282c34",
+      "sidebarBg": "#21252b",
+      "activityBarBg": "#1b1d23",
+      "statusBarBg": "#21252b"
+    }
+  },
+  {
+    "id": "pro-hacker-theme",
+    "name": "Pro Hacker Theme",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#0a0e0a",
+      "bgSecondary": "#050805",
+      "bgTertiary": "#020402",
+      "textPrimary": "#00ff66",
+      "textSecondary": "#009933",
+      "accentColor": "#00ff00",
+      "borderColor": "#004411",
+      "tabActiveBg": "#0a0e0a",
+      "editorBg": "#0a0e0a",
+      "sidebarBg": "#050805",
+      "activityBarBg": "#020402",
+      "statusBarBg": "#00cc44"
+    }
+  },
+  {
+    "id": "red",
+    "name": "Red",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#260b0b",
+      "bgSecondary": "#1c0707",
+      "bgTertiary": "#120404",
+      "textPrimary": "#fca5a5",
+      "textSecondary": "#b91c1c",
+      "accentColor": "#ef4444",
+      "borderColor": "#450a0a",
+      "tabActiveBg": "#260b0b",
+      "editorBg": "#260b0b",
+      "sidebarBg": "#1c0707",
+      "activityBarBg": "#120404",
+      "statusBarBg": "#991b1b"
+    }
+  },
+  {
+    "id": "solarized-dark",
+    "name": "Solarized Dark",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#002b36",
+      "bgSecondary": "#073642",
+      "bgTertiary": "#00212b",
+      "textPrimary": "#839496",
+      "textSecondary": "#586e75",
+      "accentColor": "#2aa198",
+      "borderColor": "#094959",
+      "tabActiveBg": "#002b36",
+      "editorBg": "#002b36",
+      "sidebarBg": "#073642",
+      "activityBarBg": "#00212b",
+      "statusBarBg": "#268bd2"
+    }
+  },
+  {
+    "id": "spinel",
+    "name": "Spinel",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#1b141d",
+      "bgSecondary": "#140d16",
+      "bgTertiary": "#0d080f",
+      "textPrimary": "#e2d5e6",
+      "textSecondary": "#8e7a94",
+      "accentColor": "#d946ef",
+      "borderColor": "#2d1f30",
+      "tabActiveBg": "#1b141d",
+      "editorBg": "#1b141d",
+      "sidebarBg": "#140d16",
+      "activityBarBg": "#0d080f",
+      "statusBarBg": "#a21caf"
+    }
+  },
+  {
+    "id": "tomorrow-night-blue",
+    "name": "Tomorrow Night Blue",
+    "type": "dark",
+    "category": "dark",
+    "ui": {
+      "bgPrimary": "#002451",
+      "bgSecondary": "#001c40",
+      "bgTertiary": "#00132c",
+      "textPrimary": "#ffffff",
+      "textSecondary": "#7285b7",
+      "accentColor": "#99ffff",
+      "borderColor": "#003577",
+      "tabActiveBg": "#002451",
+      "editorBg": "#002451",
+      "sidebarBg": "#001c40",
+      "activityBarBg": "#00132c",
+      "statusBarBg": "#003b82"
+    }
+  },
+  {
+    "id": "dark-high-contrast",
+    "name": "Dark High Contrast (Default High Contrast)",
+    "type": "high-contrast",
+    "category": "high-contrast",
+    "ui": {
+      "bgPrimary": "#000000",
+      "bgSecondary": "#000000",
+      "bgTertiary": "#0a0a0a",
+      "textPrimary": "#ffffff",
+      "textSecondary": "#a6a6a6",
+      "accentColor": "#00ffff",
+      "borderColor": "#6fc3df",
+      "tabActiveBg": "#000000",
+      "editorBg": "#000000",
+      "sidebarBg": "#000000",
+      "activityBarBg": "#000000",
+      "statusBarBg": "#000000"
+    }
+  },
+  {
+    "id": "light-high-contrast",
+    "name": "Light High Contrast (Default High Contrast Light)",
+    "type": "high-contrast",
+    "category": "high-contrast",
     "ui": {
       "bgPrimary": "#ffffff",
-      "bgSecondary": "#f3f3f3",
-      "bgTertiary": "#2c2c2c",
-      "textPrimary": "#3b3b3b",
-      "textSecondary": "#6e6e6e",
-      "accentColor": "#007acc",
-      "borderColor": "#e5e5e5",
+      "bgSecondary": "#ffffff",
+      "bgTertiary": "#f0f0f0",
+      "textPrimary": "#000000",
+      "textSecondary": "#292929",
+      "accentColor": "#0000ee",
+      "borderColor": "#0f4a85",
       "tabActiveBg": "#ffffff",
       "editorBg": "#ffffff",
-      "sidebarBg": "#f3f3f3",
-      "activityBarBg": "#2c2c2c",
-      "statusBarBg": "#007acc"
-    }
-  },
-  {
-    "id": "github-light",
-    "name": "GitHub Light Default",
-    "type": "light",
-    "ui": {
-      "bgPrimary": "#ffffff",
-      "bgSecondary": "#f6f8fa",
-      "bgTertiary": "#24292f",
-      "textPrimary": "#24292f",
-      "textSecondary": "#57606a",
-      "accentColor": "#0969da",
-      "borderColor": "#d0d7de",
-      "tabActiveBg": "#ffffff",
-      "editorBg": "#ffffff",
-      "sidebarBg": "#f6f8fa",
-      "activityBarBg": "#24292f",
-      "statusBarBg": "#0969da"
-    }
-  },
-  {
-    "id": "solarized-light",
-    "name": "Solarized Light",
-    "type": "light",
-    "ui": {
-      "bgPrimary": "#fdf6e3",
-      "bgSecondary": "#eee8d5",
-      "bgTertiary": "#073642",
-      "textPrimary": "#657b83",
-      "textSecondary": "#93a1a1",
-      "accentColor": "#268bd2",
-      "borderColor": "#d33682",
-      "tabActiveBg": "#fdf6e3",
-      "editorBg": "#fdf6e3",
-      "sidebarBg": "#eee8d5",
-      "activityBarBg": "#073642",
-      "statusBarBg": "#2aa198"
+      "sidebarBg": "#ffffff",
+      "activityBarBg": "#ffffff",
+      "statusBarBg": "#0f4a85"
     }
   }
 ]

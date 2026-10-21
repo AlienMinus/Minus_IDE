@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import themesList from "../data/themes.json";
 
 export const ThemeContext = createContext(null);
@@ -6,6 +6,11 @@ export const ThemeContext = createContext(null);
 export function ThemeProvider({ children }) {
   const [currentThemeId, setCurrentThemeId] = useState(() => {
     try {
+      const storedSettings = localStorage.getItem("hyperion_settings");
+      if (storedSettings) {
+        const parsed = JSON.parse(storedSettings);
+        if (parsed["workbench.colorTheme"]) return parsed["workbench.colorTheme"];
+      }
       return localStorage.getItem("hyperion_theme") || "dark-modern";
     } catch {
       return "dark-modern";
@@ -32,7 +37,9 @@ export function ThemeProvider({ children }) {
     root.style.setProperty("--activity-bar-bg", ui.activityBarBg);
     root.style.setProperty("--status-bar-bg", ui.statusBarBg);
 
-    root.setAttribute("data-theme-type", activeTheme.type);
+    const themeType = (activeTheme.type === "light" || activeTheme.id.includes("light")) ? "light" : "dark";
+    root.setAttribute("data-theme-type", themeType);
+    root.setAttribute("data-theme-category", activeTheme.category || themeType);
     root.setAttribute("data-theme-id", activeTheme.id);
 
     try {
@@ -48,6 +55,13 @@ export function ThemeProvider({ children }) {
     const found = themesList.find((t) => t.id === themeId);
     if (found) {
       setCurrentThemeId(themeId);
+      try {
+        localStorage.setItem("hyperion_theme", themeId);
+        const stored = localStorage.getItem("hyperion_settings");
+        const current = stored ? JSON.parse(stored) : {};
+        current["workbench.colorTheme"] = themeId;
+        localStorage.setItem("hyperion_settings", JSON.stringify(current));
+      } catch {}
     }
   };
 
@@ -58,11 +72,11 @@ export function ThemeProvider({ children }) {
         currentThemeId,
         themes: themesList,
         setTheme,
-        isDark: activeTheme?.type !== "light"
+        isDark: activeTheme?.type !== "light" && activeTheme?.id !== "light-high-contrast"
       }}
     >
       {children}
     </ThemeContext.Provider>
   );
 }
-
+export default ThemeProvider;

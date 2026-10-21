@@ -408,7 +408,7 @@ router.post('/run', async (req, res) => {
 // POST /command - Direct shell command execution
 router.post('/command', async (req, res) => {
   try {
-    const { command, cwd, virtualFiles, timeoutMs } = req.body;
+    const { command, cwd, virtualFiles, timeoutMs, profile } = req.body;
 
     if (typeof command !== 'string') {
       return res.status(400).json({ error: 'Command string is required.' });
@@ -418,7 +418,8 @@ router.post('/command', async (req, res) => {
       command,
       cwd,
       virtualFiles,
-      timeoutMs: timeoutMs || 30000
+      timeoutMs: timeoutMs || 30000,
+      profile
     });
 
     res.json(result);
@@ -434,7 +435,7 @@ router.post('/command', async (req, res) => {
 
 // POST /stream - Real-time streaming command execution
 router.post('/stream', (req, res) => {
-  const { command, cwd, virtualFiles, timeoutMs } = req.body;
+  const { command, cwd, virtualFiles, timeoutMs, profile } = req.body;
   console.log('[API] /stream invoked with command:', command);
 
   if (typeof command !== 'string') {
@@ -454,6 +455,7 @@ router.post('/stream', (req, res) => {
     cwd,
     virtualFiles,
     timeoutMs: timeoutMs !== undefined ? timeoutMs : 0,
+    profile,
     onChunk: (chunk) => {
       if (finished) return;
       res.write(`data: ${JSON.stringify({ type: 'output', data: chunk })}\n\n`);

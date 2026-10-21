@@ -1,52 +1,32 @@
 .statusbar{
-
     height:26px;
-
-    background:#007acc;
-
-    color:white;
-
+    background: var(--status-bar-bg, #007acc);
+    color: var(--text-primary, white);
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
-
     font-size:12px;
-
     user-select:none;
-
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .statusbar-left,
 .statusbar-right{
-
     display:flex;
-
     align-items:center;
-
+    height: 100%;
 }
 
 .status-item{
-
     display:flex;
-
     align-items:center;
-
     gap:6px;
-
     padding:0 10px;
-
     height:100%;
-
     cursor:pointer;
-
     transition:.2s;
-
 }
 
 .status-item:hover{
-
-    background:rgba(255,255,255,.15);
-
+    background:rgba(255,255,255,.18);
 }

@@ -21,10 +21,12 @@ import { getFileExtension } from "../../utils/fileIcons";
 import { isBinaryFile } from "../../services/fileService";
 import { checkClientSyntax, getCodeDiagnostics } from "../../utils/codeDiagnostics";
 import useFile from "../../hooks/useFile";
+import useTheme from "../../hooks/useTheme";
 
 function Editor() {
   const { activeFile, updateContent, setEditorInstance, closeFile, setProblems, isWordWrapOn, saveActiveFile, files } = useEditor();
   const { persistedFolderInfo } = useFile();
+  const { currentTheme, isDark } = useTheme();
   const [previewUrl, setPreviewUrl] = useState(null);
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
@@ -271,18 +273,20 @@ function Editor() {
       setEditorInstance(editor);
     }
 
-    monaco.editor.defineTheme("webide-dark", {
-      base: "vs-dark",
+    const themeName = currentTheme ? `hyperion-${currentTheme.id}` : "hyperion-dark";
+    const ui = currentTheme?.ui || {};
+    monaco.editor.defineTheme(themeName, {
+      base: currentTheme?.type === "light" ? "vs" : "vs-dark",
       inherit: true,
       rules: [],
       colors: {
-        "editor.background": "#1e1e1e",
-        "editorLineNumber.foreground": "#858585",
-        "editorCursor.foreground": "#ffffff"
+        "editor.background": ui.editorBg || (currentTheme?.type === "light" ? "#ffffff" : "#1e1e1e"),
+        "editorLineNumber.foreground": ui.textSecondary || "#858585",
+        "editorCursor.foreground": ui.accentColor || (currentTheme?.type === "light" ? "#007acc" : "#ffffff")
       }
     });
 
-    monaco.editor.setTheme("webide-dark");
+    monaco.editor.setTheme(themeName);
 
     // Run initial diagnostics on editor mount
     if (activeFile && activeFile.content != null) {
@@ -327,6 +331,25 @@ function Editor() {
     return () => disposable.dispose();
   }, [setProblems, activeFile?.id, activeFile?.name]);
 
+  // Update Monaco theme dynamically when IDE theme changes
+  useEffect(() => {
+    if (!monacoRef.current || !currentTheme) return;
+    const monaco = monacoRef.current;
+    const themeName = `hyperion-${currentTheme.id}`;
+    const ui = currentTheme.ui || {};
+    monaco.editor.defineTheme(themeName, {
+      base: currentTheme.type === "light" ? "vs" : "vs-dark",
+      inherit: true,
+      rules: [],
+      colors: {
+        "editor.background": ui.editorBg || (currentTheme.type === "light" ? "#ffffff" : "#1e1e1e"),
+        "editorLineNumber.foreground": ui.textSecondary || "#858585",
+        "editorCursor.foreground": ui.accentColor || (currentTheme.type === "light" ? "#007acc" : "#ffffff")
+      }
+    });
+    monaco.editor.setTheme(themeName);
+  }, [currentTheme]);
+
   // Re-run diagnostics when switching active file
   useEffect(() => {
     if (activeFile && activeFile.content != null && monacoRef.current && editorRef.current) {
@@ -361,7 +384,7 @@ function Editor() {
       <div className="editor-container">
         <DiffEditor
           height="100%"
-          theme="vs-dark"
+          theme={currentTheme ? `hyperion-${currentTheme.id}` : (isDark ? "vs-dark" : "vs")}
           original={activeFile.originalFile?.content || ""}
           modified={activeFile.modifiedFile?.content || ""}
           language={activeFile.modifiedFile?.language || activeFile.originalFile?.language || "javascript"}
@@ -496,6 +519,7 @@ function Editor() {
     <div className="editor-container">
       <MonacoEditor
         height="100%"
+        theme={currentTheme ? `hyperion-${currentTheme.id}` : (isDark ? "vs-dark" : "vs")}
         language={activeFile.language || "javascript"}
         value={activeFile.content || ""}
         onChange={handleEditorChange}

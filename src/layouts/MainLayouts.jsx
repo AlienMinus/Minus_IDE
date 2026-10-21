@@ -139,7 +139,7 @@ function MainLayout() {
 
     // Preferences & Settings
     { id: "pref-settings", category: "Preferences", label: "Preferences: Open Settings (UI)", shortcut: "Ctrl+,", action: () => openView("settings") },
-    { id: "pref-theme", category: "Preferences", label: "Preferences: Color Theme", action: () => openView("settings") },
+    { id: "pref-theme", category: "Preferences", label: "Preferences: Color Theme", shortcut: "Ctrl+K Ctrl+T", action: () => window.dispatchEvent(new CustomEvent("hyperion:open-theme-picker")) },
 
     // Help
     { id: "help-welcome", category: "Help", label: "Help: Welcome", action: () => window.dispatchEvent(new CustomEvent("hyperion:show-help-modal", { detail: { topic: "welcome" } })) },

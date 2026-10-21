@@ -72,25 +72,22 @@ export function TerminalProvider({ children }) {
     const currentWorkspacePath = fileCtx?.persistedFolderInfo?.path || cachedState?.folderPath || null;
 
     const [terminals, setTerminals] = useState(() => {
-        const initialCwd = currentWorkspacePath || "~/HyperionIDE";
+        const cached = getStoredWorkspaceState();
+        const initialCwd = currentWorkspacePath || cached?.folderPath || "D:\\Rough\\WebIDE";
+        const prompt = `PS ${initialCwd}> `;
         return [
             {
                 id: 1,
-                title: "Terminal 1",
+                title: "pwsh 1",
                 cwd: initialCwd,
+                profile: "powershell",
+                prompt,
                 history: [],
                 output: [
-                    "\x1b[1;36m========================================================\x1b[0m",
-                    "\x1b[1;36m  Hyperion IDE Execution Sandbox Terminal v2.0         \x1b[0m",
-                    "\x1b[1;36m========================================================\x1b[0m",
-                    "\x1b[32m✔ Sandbox Engine: Online\x1b[0m",
-                    initialCwd && initialCwd !== "~/HyperionIDE"
-                        ? `\x1b[34m📁  Workspace Directory:\x1b[0m \x1b[1m${initialCwd}\x1b[0m`
-                        : "\x1b[90mTip: Open a folder to bind the terminal to that directory.\x1b[0m",
-                    "\x1b[90mSupported Runtimes: C (GCC), Python 3.12, Node.js, Bash, React 19\x1b[0m",
-                    "\x1b[90mType '\x1b[33mhelp\x1b[90m' for command list, '\x1b[33mruntimes\x1b[90m' to check compilers, or '\x1b[33mpwd\x1b[90m' for directory.\x1b[0m",
+                    "Windows PowerShell",
+                    "Copyright (C) Microsoft Corporation. All rights reserved.",
                     "",
-                    "$ "
+                    prompt
                 ]
             }
         ];
@@ -101,10 +98,12 @@ export function TerminalProvider({ children }) {
         if (currentWorkspacePath && (currentWorkspacePath.includes(':') || currentWorkspacePath.includes('/'))) {
             setTerminals(prev => prev.map(t => {
                 if (!t.cwd || t.cwd === "~/HyperionIDE" || t.cwd === "portfolio_v1" || !t.cwd.includes(':')) {
+                    const nextPrompt = t.profile === 'cmd' ? `${currentWorkspacePath}> ` : `PS ${currentWorkspacePath}> `;
                     if (activeTerminalRef.current && activeTerminalRef.current.id === t.id) {
                         activeTerminalRef.current.cwd = currentWorkspacePath;
+                        activeTerminalRef.current.prompt = nextPrompt;
                     }
-                    return { ...t, cwd: currentWorkspacePath };
+                    return { ...t, cwd: currentWorkspacePath, prompt: nextPrompt };
                 }
                 return t;
             }));
@@ -936,7 +935,7 @@ export function TerminalProvider({ children }) {
         const cmd = parts[0].toLowerCase();
         const argsStr = parts.slice(1).join(" ");
 
-        if (cmd === "clear") {
+        if (cmd === "clear" || cmd === "cls") {
             setTerminalOutput([activePrompt], targetId);
             return;
         }
@@ -946,242 +945,24 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        if (cmd === "echo") {
-            let text = argsStr;
-            if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
-                text = text.slice(1, -1);
-            }
-            appendToTerminal([text, activePrompt], targetId);
-            return;
-        }
-
-        // Cypher Security CLI commands
-        if (targetTerm?.profile === 'cypher') {
-            if (cmd === 'scan' || cmd === 'scanner') {
-                appendToTerminal([
-                    "\x1b[35m[Cypher Security Engine]\x1b[0m Inspecting active codebase...",
-                    `\x1b[90mWorkspace: ${targetTerm.cwd}\x1b[0m`,
-                    "✔ Analyzing files against OWASP Top 10, CWE-798, CWE-89...",
-                    "\x1b[32m✔ Codebase scan engine active. See Chat panel for full multi-file audit.\x1b[0m",
-                    activePrompt
-                ], targetId);
-                return;
-            }
-            if (cmd === 'audit' || cmd === 'secrets') {
-                appendToTerminal([
-                    "\x1b[35m[Cypher Sentinel]\x1b[0m Auditing workspace credentials and secrets...",
-                    "✔ Checked .env, credentials, API key patterns.",
-                    "\x1b[32m✔ Token leak sentinel active: zero exposed keys found.\x1b[0m",
-                    activePrompt
-                ], targetId);
-                return;
-            }
-            if (cmd === 'help') {
-                appendToTerminal([
-                    "\x1b[35m=== Cypher AI Security CLI ===\x1b[0m",
-                    "  \x1b[32mscan\x1b[0m     - Scan active workspace for security vulnerabilities",
-                    "  \x1b[32maudit\x1b[0m    - Scan files for leaked API keys, tokens & credentials",
-                    "  \x1b[32msecrets\x1b[0m  - Run credential leak sentinel audit",
-                    "  \x1b[32mruntimes\x1b[0m - Check sandbox compilers and environment",
-                    "  \x1b[32mclear\x1b[0m    - Clear terminal screen",
-                    "  \x1b[32mkill\x1b[0m     - Terminate session",
-                    "",
-                    "\x1b[90mStandard shell and build commands can also be run.\x1b[0m",
-                    activePrompt
-                ], targetId);
-                return;
-            }
-        }
-
-        // 2. Initiate REPL if typing python or node with no file/code arguments
-        const isPythonRepl = (cmd === "python" || cmd === "python3" || cmd === "py") && (!argsStr || argsStr === "-i");
-        const isNodeRepl = (cmd === "node" || cmd === "nodejs") && (!argsStr || argsStr === "-i");
-
-        if (isPythonRepl || isNodeRepl) {
-            const runtime = isPythonRepl ? 'python' : 'node';
-            const sessionId = `term-${targetId}`;
-            setIsRunning(true);
-            try {
-                const session = await startReplSession({
-                    sessionId,
-                    runtime,
-                    cwd: targetTerm?.cwd || currentWorkspacePath
-                });
-
-                const bannerLines = (session.banner || '').split(/\r?\n/).filter(Boolean);
-                const defaultPrompt = session.prompt || (runtime === 'node' ? '> ' : '>>> ');
-
-                setTerminals(prev => prev.map(t => {
-                    if (t.id !== targetId) return t;
-                    return {
-                        ...t,
-                        replState: {
-                            active: true,
-                            runtime,
-                            sessionId,
-                            prompt: defaultPrompt,
-                            isMultiLine: false
-                        },
-                        output: [...t.output, ...bannerLines, defaultPrompt]
-                    };
-                }));
-            } catch (err) {
-                appendToTerminal([`\x1b[31mFailed to start ${runtime} REPL: ${err.message}\x1b[0m`, "$ "], targetId);
-            } finally {
-                setIsRunning(false);
-            }
-            return;
-        }
-
-        if (cmd === "help") {
-            const helpLines = [
-                "\x1b[1;36m=== Hyperion IDE Sandbox Commands & Runtimes ===\x1b[0m",
-                "",
-                "\x1b[1;33mExecution Commands:\x1b[0m",
-                "  \x1b[32mrun\x1b[0m              - Run active file in appropriate sandbox (C, Python, Node, Bash, React)",
-                "  \x1b[32mrun <file>\x1b[0m       - Run specific file from workspace (e.g. run main.c, run script.py)",
-                "  \x1b[32mruntimes\x1b[0m         - Inspect sandbox status, versions, compilers, and paths",
-                "  \x1b[32mc <file|code>\x1b[0m    - Compile and run C code via MinGW GCC",
-                "  \x1b[32mpython <file>\x1b[0m    - Execute Python code via Python 3.12 (or: python -c \"code\")",
-                "  \x1b[32mnode <file>\x1b[0m      - Execute JavaScript via Node.js (or: node -e \"code\")",
-                "  \x1b[32mbash <file>\x1b[0m      - Execute Bash shell script or commands via GNU Bash",
-                "  \x1b[32mreact <file>\x1b[0m     - Transpile & preview React 19 JSX component",
-                "",
-                "\x1b[1;33mShell Commands:\x1b[0m",
-                "  \x1b[32mls, dir\x1b[0m          - List files in current sandbox workspace",
-                "  \x1b[32mcat <file>\x1b[0m       - Display file content",
-                "  \x1b[32mpwd\x1b[0m              - Print working directory",
-                "  \x1b[32mecho <text>\x1b[0m      - Output text",
-                "  \x1b[32mkill, exit\x1b[0m       - Kill current terminal session",
-                "  \x1b[32mclear\x1b[0m            - Clear terminal (shortcut: Ctrl+L)",
-                "  \x1b[32mhistory\x1b[0m          - Show command history",
-                "  \x1b[32mdate, time\x1b[0m       - Show date and time",
-                "",
-                "\x1b[90mTip: You can also click the ▶ Run button in the top navbar to execute the active file.\x1b[0m",
-                "$ "
-            ];
-            appendToTerminal(helpLines, targetId);
-            return;
-        }
-
-        if (cmd === "runtimes" || cmd === "sandboxes" || cmd === "status") {
-            appendToTerminal(["\x1b[34m[Hyperion]\x1b[0m Checking sandbox compilers and runtimes..."], targetId);
-            try {
-                const info = await getSandboxStatus();
-                const runtimes = info.data?.runtimes || {};
-                const lines = [
-                    "\x1b[1;32mHyperion Sandbox Environment:\x1b[0m",
-                    `  OS: ${info.data?.os || 'Windows (x64)'}`,
-                    `  Status: \x1b[32m${info.status.toUpperCase()}\x1b[0m`,
-                    "--------------------------------------------------",
-                    `  \x1b[1mC Language:\x1b[0m    ${runtimes.c?.available ? '\x1b[32m✔ Available\x1b[0m (' + runtimes.c.version + ')' : '\x1b[31m✘ Not Found\x1b[0m'}`,
-                    `  \x1b[1mPython:\x1b[0m        ${runtimes.python?.available ? '\x1b[32m✔ Available\x1b[0m (' + runtimes.python.version + ')' : '\x1b[31m✘ Not Found\x1b[0m'}`,
-                    `  \x1b[1mNode.js:\x1b[0m       ${runtimes.node?.available ? '\x1b[32m✔ Available\x1b[0m (' + runtimes.node.version + ')' : '\x1b[31m✘ Not Found\x1b[0m'}`,
-                    `  \x1b[1mJavaScript:\x1b[0m    ${runtimes.javascript?.available ? '\x1b[32m✔ Available\x1b[0m (' + runtimes.javascript.version + ')' : '\x1b[31m✘ Not Found\x1b[0m'}`,
-                    `  \x1b[1mGNU Bash:\x1b[0m      ${runtimes.bash?.available ? '\x1b[32m✔ Available\x1b[0m (' + runtimes.bash.version + ')' : '\x1b[31m✘ Not Found\x1b[0m'}`,
-                    `  \x1b[1mReact Engine:\x1b[0m  ${runtimes.react?.available ? '\x1b[32m✔ Available\x1b[0m (' + runtimes.react.version + ')' : '\x1b[31m✘ Not Found\x1b[0m'}`,
-                    "--------------------------------------------------",
-                    "$ "
-                ];
-                appendToTerminal(lines, targetId);
-            } catch (err) {
-                appendToTerminal([`\x1b[31mFailed to retrieve status: ${err.message}\x1b[0m`, "$ "], targetId);
-            }
-            return;
-        }
-
-        if (cmd === "run") {
-            if (!argsStr) {
-                await runActiveFile();
-                return;
-            }
-
-            const targetFilename = argsStr.trim();
-            const foundFile = files.find(f => f.name.toLowerCase() === targetFilename.toLowerCase() || (f.path && f.path.toLowerCase().endsWith(targetFilename.toLowerCase())));
-
-            if (!foundFile) {
-                const targetLang = detectLanguage(targetFilename);
-                appendToTerminal([
-                    `\x1b[34m[Sandbox]\x1b[0m Executing '${targetFilename}' (${targetLang.toUpperCase()}) via shell...`
-                ], targetId);
-                const shellRes = await executeShellCommand(`run ${targetFilename}`, { virtualFiles: files });
-                appendToTerminal([
-                    shellRes.stdout || '',
-                    shellRes.stderr ? `\x1b[31m${shellRes.stderr}\x1b[0m` : '',
-                    "$ "
-                ].filter(Boolean), targetId);
-                return;
-            }
-
-            const lang = detectLanguage(foundFile.name);
-            await runCodeSnippet({
-                language: lang,
-                code: foundFile.content || '',
-                filename: foundFile.name,
-                targetFile: foundFile
-            });
-            return;
-        }
-
-        if (cmd === "c" && argsStr) {
-            const foundFile = files.find(f => f.name === argsStr);
-            const codeToRun = foundFile ? foundFile.content : argsStr;
-            const fname = foundFile ? foundFile.name : 'main.c';
-            await runCodeSnippet({ language: 'c', code: codeToRun, filename: fname, targetFile: foundFile });
-            return;
-        }
-
-        if (cmd === "react" && argsStr) {
-            const foundFile = files.find(f => f.name === argsStr);
-            if (foundFile) {
-                await runCodeSnippet({ language: 'react', code: foundFile.content || '', filename: foundFile.name, targetFile: foundFile });
-            } else {
-                appendToTerminal([`\x1b[31mFile '${argsStr}' not found in workspace.\x1b[0m`, "$ "], targetId);
-            }
-            return;
-        }
-
-        if (cmd === "date") {
-            appendToTerminal([new Date().toLocaleDateString(), "$ "], targetId);
-            return;
-        }
-
-        if (cmd === "time") {
-            appendToTerminal([new Date().toLocaleTimeString(), "$ "], targetId);
-            return;
-        }
-
-        if (cmd === "history") {
-            appendToTerminal([...newHistory, "$ "], targetId);
-            return;
-        }
-
-        if (cmd === "color") {
-            document.documentElement.style.setProperty('--text-color', argsStr);
-            appendToTerminal([`Text color changed to ${argsStr}`, "$ "], targetId);
-            return;
-        }
-
-        if (cmd === "resetcolor") {
-            document.documentElement.style.setProperty('--text-color', '#0f0');
-            appendToTerminal(["Text color reset to default", "$ "], targetId);
-            return;
-        }
-
         if (cmd === "cd") {
-            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "~/HyperionIDE";
+            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
             const target = argsStr.trim();
             if (!target || target === "~") {
                 const cached = getStoredWorkspaceState();
                 const workspacePath = fileCtx?.persistedFolderInfo?.path || cached?.folderPath;
                 const homeOrRoot = (workspacePath && workspacePath !== "~/HyperionIDE" && workspacePath !== "portfolio_v1")
                     ? workspacePath
-                    : (currentWorkspacePath || "~/HyperionIDE");
-                if (targetTerm) targetTerm.cwd = homeOrRoot;
+                    : (currentWorkspacePath || "D:\\Rough\\WebIDE");
+                const nextPrompt = (targetTerm?.profile === 'cmd') ? `${homeOrRoot}> ` : `PS ${homeOrRoot}> `;
+                if (targetTerm) {
+                    targetTerm.cwd = homeOrRoot;
+                    targetTerm.prompt = nextPrompt;
+                }
                 setTerminals((prev) =>
-                    prev.map((t) => (t.id === targetId ? { ...t, cwd: homeOrRoot } : t))
+                    prev.map((t) => (t.id === targetId ? { ...t, cwd: homeOrRoot, prompt: nextPrompt } : t))
                 );
-                appendToTerminal([`\x1b[32m✔ Directory: ${homeOrRoot}\x1b[0m`, "$ "], targetId);
+                appendToTerminal([nextPrompt], targetId);
                 return;
             }
 
@@ -1204,174 +985,94 @@ export function TerminalProvider({ children }) {
                 const check = await validateWorkspacePath(candidate);
                 if (check.exists && check.isDirectory) {
                     const finalPath = check.path;
-                    if (targetTerm) targetTerm.cwd = finalPath;
+                    const nextPrompt = (targetTerm?.profile === 'cmd') ? `${finalPath}> ` : `PS ${finalPath}> `;
+                    if (targetTerm) {
+                        targetTerm.cwd = finalPath;
+                        targetTerm.prompt = nextPrompt;
+                    }
                     setTerminals((prev) =>
-                        prev.map((t) => (t.id === targetId ? { ...t, cwd: finalPath } : t))
+                        prev.map((t) => (t.id === targetId ? { ...t, cwd: finalPath, prompt: nextPrompt } : t))
                     );
                     if (fileCtx?.setWorkspacePath) {
                         fileCtx.setWorkspacePath(finalPath);
                     }
                     saveWorkspaceState({ folderPath: finalPath });
-                    appendToTerminal([`\x1b[32m✔ Directory changed to: ${finalPath}\x1b[0m`, "$ "], targetId);
+                    appendToTerminal([nextPrompt], targetId);
                 } else {
-                    appendToTerminal([`\x1b[31mcd: no such file or directory: ${target}\x1b[0m`, "$ "], targetId);
+                    appendToTerminal([`cd: no such file or directory: ${target}`, activePrompt], targetId);
                 }
             } catch (err) {
-                appendToTerminal([`\x1b[31mcd error: ${err.message}\x1b[0m`, "$ "], targetId);
+                appendToTerminal([`cd error: ${err.message}`, activePrompt], targetId);
             }
             return;
         }
 
         if (cmd === "pwd" || cmd === "cwd") {
-            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "~/HyperionIDE";
-            if (currentCwd === "~/HyperionIDE") {
-                appendToTerminal([currentCwd, "$ "], targetId);
-                return;
-            }
-            const isPhysical = currentCwd && (currentCwd.includes(':') || currentCwd.startsWith('/'));
-            try {
-                const res = await executeShellCommand("pwd", {
-                    cwd: currentCwd,
-                    virtualFiles: isPhysical ? undefined : files
-                });
-                const outLines = [];
-                if (res.cwd) {
-                    outLines.push(res.cwd);
-                } else if (res.stdout) {
-                    outLines.push(...res.stdout.trim().split("\n"));
-                } else {
-                    outLines.push(currentCwd);
-                }
-                outLines.push("$ ");
-                appendToTerminal(outLines, targetId);
-            } catch {
-                appendToTerminal([currentCwd, "$ "], targetId);
-            }
+            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
+            appendToTerminal([currentCwd, activePrompt], targetId);
             return;
         }
 
-        const targetCwd = targetTerm?.cwd || currentWorkspacePath;
+        // Direct System Shell execution (PowerShell / Command Prompt / Bash)
+        // Stream command execution directly in native host OS shell
+        const targetCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
         const isPhysical = targetCwd && (targetCwd.includes(':') || targetCwd.startsWith('/'));
-
-        // Check if command is a dev server or long-running command (vite, npm run dev, npm start, etc.)
-        const isDevServer = trimmed.startsWith('npm run dev') ||
-                            trimmed.startsWith('npm start') ||
-                            trimmed.startsWith('npm run serve') ||
-                            trimmed === 'vite' ||
-                            trimmed.startsWith('vite ') ||
-                            trimmed.startsWith('next dev');
 
         setIsRunning(true);
         lastActionRef.current = { type: 'command', command: trimmed };
 
-        if (isDevServer) {
-            const abortCtrl = new AbortController();
-            activeProcessAbortCtrl.current = abortCtrl;
-            detectedUrlsRef.current.clear();
-
-            let collectedOutput = "";
-
-            try {
-                await streamShellCommand({
-                    command: trimmed,
-                    cwd: targetCwd,
-                    virtualFiles: isPhysical ? undefined : files,
-                    timeoutMs: 0,
-                    signal: abortCtrl.signal,
-                    onChunk: (chunk) => {
-                        collectedOutput += chunk;
-                        const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
-                        appendToTerminal(chunkLines, targetId);
-
-                        // Strip ANSI color/style escape codes before extracting URLs
-                        const cleanCollected = String(collectedOutput)
-                            .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-                            .replace(/[\x1b\x00-\x1f\x7f]/g, '');
-
-                        // Scan for local dev server URLs WITH explicit port (e.g. http://localhost:5174, http://127.0.0.1:3000)
-                        const portUrlRegex = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/gi;
-                        let match;
-                        while ((match = portUrlRegex.exec(cleanCollected)) !== null) {
-                            let detectedUrl = match[0].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
-                            if (!detectedUrlsRef.current.has(detectedUrl)) {
-                                detectedUrlsRef.current.add(detectedUrl);
-                                appendToTerminal([
-                                    `\r\n\x1b[1;32m✔ Local Dev Server detected:\x1b[0m \x1b[1;36m${detectedUrl}\x1b[0m`,
-                                    `\x1b[90m➜ Opening Live Preview in Editor...\x1b[0m\r\n`
-                                ], targetId);
-                                if (editorCtx?.openLiveBrowserTab) {
-                                    editorCtx.openLiveBrowserTab(detectedUrl, `Preview: ${detectedUrl}`);
-                                }
-                            }
-                        }
-                    },
-                    onExit: (code) => {
-                        activeProcessAbortCtrl.current = null;
-                        setIsRunning(false);
-                        appendToTerminal([activePrompt], targetId);
-                    }
-                });
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    appendToTerminal([`\x1b[31mStream error: ${err.message}\x1b[0m`, activePrompt], targetId);
-                }
-            } finally {
-                activeProcessAbortCtrl.current = null;
-                setIsRunning(false);
-            }
-            return;
-        }
+        const abortCtrl = new AbortController();
+        activeProcessAbortCtrl.current = abortCtrl;
+        let collectedOutput = "";
 
         try {
-            const res = await executeShellCommand(trimmed, {
+            await streamShellCommand({
+                command: trimmed,
                 cwd: targetCwd,
-                virtualFiles: isPhysical ? undefined : files
-            });
+                profile: targetTerm?.profile || defaultProfile || 'powershell',
+                virtualFiles: isPhysical ? undefined : files,
+                timeoutMs: 0,
+                signal: abortCtrl.signal,
+                onChunk: (chunk) => {
+                    collectedOutput += chunk;
+                    const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
+                    appendToTerminal(chunkLines, targetId);
 
-            const outLines = [];
-            if (res.stdout) {
-                const stdoutFormatted = res.stdout.replace(/\r\n/g, '\n').split('\n');
-                outLines.push(...stdoutFormatted);
+                    // Scan for local dev server URLs WITH explicit port
+                    const cleanCollected = String(collectedOutput)
+                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+                        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
 
-                // Detect URLs if any with explicit port
-                const cleanStdout = String(res.stdout)
-                    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-                    .replace(/[\x1b\x00-\x1f\x7f]/g, '');
-
-                const portUrlRegex = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/gi;
-                let match;
-                while ((match = portUrlRegex.exec(cleanStdout)) !== null) {
-                    let detectedUrl = match[0].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
-                    if (!detectedUrlsRef.current.has(detectedUrl)) {
-                        detectedUrlsRef.current.add(detectedUrl);
-                        outLines.push(
-                            `\x1b[1;32m✔ Local Server detected:\x1b[0m \x1b[1;36m${detectedUrl}\x1b[0m`,
-                            `\x1b[90m➜ Opening Live Preview in Editor...\x1b[0m`
-                        );
-                        if (editorCtx?.openLiveBrowserTab) {
-                            editorCtx.openLiveBrowserTab(detectedUrl, `Preview: ${detectedUrl}`);
+                    const portUrlRegex = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/gi;
+                    let match;
+                    while ((match = portUrlRegex.exec(cleanCollected)) !== null) {
+                        let detectedUrl = match[0].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
+                        if (!detectedUrlsRef.current.has(detectedUrl)) {
+                            detectedUrlsRef.current.add(detectedUrl);
+                            appendToTerminal([
+                                `\r\n\x1b[1;32m✔ Local Dev Server detected:\x1b[0m \x1b[1;36m${detectedUrl}\x1b[0m`,
+                                `\x1b[90m➜ Opening Live Preview in Editor...\x1b[0m\r\n`
+                            ], targetId);
+                            if (editorCtx?.openLiveBrowserTab) {
+                                editorCtx.openLiveBrowserTab(detectedUrl, `Preview: ${detectedUrl}`);
+                            }
                         }
                     }
+                },
+                onExit: (code) => {
+                    activeProcessAbortCtrl.current = null;
+                    setIsRunning(false);
+                    appendToTerminal([activePrompt], targetId);
                 }
-            }
-            if (res.stderr) {
-                const stderrFormatted = res.stderr.replace(/\r\n/g, '\n').split('\n')
-                    .map(l => `\x1b[31m${l}\x1b[0m`);
-                outLines.push(...stderrFormatted);
-            }
-
-            outLines.push(activePrompt);
-            appendToTerminal(outLines, targetId);
-
+            });
         } catch (err) {
-            appendToTerminal([
-                `\x1b[31mCommand execution error: ${err.message}\x1b[0m`,
-                activePrompt
-            ], targetId);
+            if (err.name !== 'AbortError') {
+                appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, activePrompt], targetId);
+            }
         } finally {
+            activeProcessAbortCtrl.current = null;
             setIsRunning(false);
         }
-
     }, [activeTerminal, activeTerminalId, files, currentWorkspacePath, fileCtx, runActiveFile, runCodeSnippet, appendToTerminal, setTerminalOutput, editorCtx]);
 
     const value = {
