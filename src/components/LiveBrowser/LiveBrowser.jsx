@@ -33,6 +33,18 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
     window.__hyperion_previewer_url__ = url;
   }, [url]);
 
+  // Synchronize address bar when client-side routing occurs inside previewer iframe
+  useEffect(() => {
+    const handleMsg = (e) => {
+      if (e.data && e.data.source === "hyperion-preview" && e.data.type === "LOCATION_CHANGE" && e.data.url) {
+        setInputUrl(e.data.url);
+        window.__hyperion_previewer_url__ = e.data.url;
+      }
+    };
+    window.addEventListener("message", handleMsg);
+    return () => window.removeEventListener("message", handleMsg);
+  }, []);
+
   // If loading a local development server on another port, transparently route through
   // the in-memory preview proxy to enable same-origin DOM access, accurate element bounding rects,
   // and real synthetic interaction without modifying ANY user files on disk.
@@ -67,6 +79,7 @@ export default function LiveBrowser({ initialUrl = "http://localhost:5173", titl
 
   const handleReload = () => {
     setIsLoading(true);
+    setUrl(inputUrl);
     setIframeKey(Date.now());
   };
 

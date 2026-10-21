@@ -78,16 +78,28 @@ function hyperionSandboxPlugin() {
 
             let html = await fetchRes.text();
 
-            // 1. Inject <base href="..."> in memory so all relative script/asset imports fetch from the dev server
-            if (!html.includes('<base ') && !html.includes('<base>')) {
-              const baseTag = `<base href="${targetOrigin}/">`;
-              if (html.includes('<head>')) {
-                html = html.replace('<head>', `<head>\n  ${baseTag}`);
-              } else if (html.includes('<html>')) {
-                html = html.replace('<html>', `<html>\n<head>${baseTag}</head>`);
-              } else {
-                html = `${baseTag}\n${html}`;
-              }
+            // 1. Inject <base href="..."> and synchronous route normalizer in memory
+            const targetRoute = (parsedTarget.pathname || '/') + (parsedTarget.search || '') + (parsedTarget.hash || '');
+            const headInjections = `
+  <base href="${targetOrigin}/">
+  <!-- Hyperion IDE Client-Side Route Normalizer (Prevents 404 in BrowserRouter on load/refresh) -->
+  <script>
+    (function() {
+      try {
+        var expectedPath = ${JSON.stringify(targetRoute || '/')};
+        if (window.location.pathname.startsWith('/api/sandbox/preview-proxy')) {
+          window.history.replaceState(null, '', expectedPath);
+        }
+      } catch (err) {}
+    })();
+  </script>`;
+
+            if (html.includes('<head>')) {
+              html = html.replace('<head>', `<head>\n${headInjections}`);
+            } else if (html.includes('<html>')) {
+              html = html.replace('<html>', `<html>\n<head>${headInjections}</head>`);
+            } else {
+              html = `${headInjections}\n${html}`;
             }
 
             // 2. Inject Hyperion Selenium In-Memory Automation Bridge right before </body>
@@ -97,6 +109,34 @@ function hyperionSandboxPlugin() {
       (function() {
         if (window.__hyperion_bridge_active__) return;
         window.__hyperion_bridge_active__ = true;
+
+        function notifyLocation() {
+          try {
+            var currentPath = window.location.pathname + window.location.search + window.location.hash;
+            var fullDevUrl = ${JSON.stringify(targetOrigin)} + (currentPath.startsWith('/') ? currentPath : '/' + currentPath);
+            window.parent.postMessage({
+              source: 'hyperion-preview',
+              type: 'LOCATION_CHANGE',
+              url: fullDevUrl,
+              pathname: currentPath,
+              title: document.title
+            }, '*');
+          } catch(e) {}
+        }
+
+        var origPush = history.pushState;
+        history.pushState = function() {
+          var res = origPush.apply(this, arguments);
+          notifyLocation();
+          return res;
+        };
+        var origReplace = history.replaceState;
+        history.replaceState = function() {
+          var res = origReplace.apply(this, arguments);
+          notifyLocation();
+          return res;
+        };
+        window.addEventListener('popstate', notifyLocation);
 
         function resolveEl(sel) {
           if (!sel || typeof sel !== 'string') return null;
@@ -168,7 +208,7 @@ function hyperionSandboxPlugin() {
                 window.parent.postMessage({ source: 'hyperion-preview', reqId, success: false, error: 'Element not found' }, '*');
                 return;
               }
-              try { el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); } catch {}
+              try { el.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' }); } catch {}
               const r = el.getBoundingClientRect();
               el.focus?.();
               el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
@@ -193,7 +233,7 @@ function hyperionSandboxPlugin() {
                 window.parent.postMessage({ source: 'hyperion-preview', reqId, success: false, error: 'Element not found' }, '*');
                 return;
               }
-              try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
+              try { el.scrollIntoView({ behavior: 'auto', block: 'nearest' }); } catch {}
               const r = el.getBoundingClientRect();
               el.focus?.();
               el.value = value;

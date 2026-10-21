@@ -1,7 +1,9 @@
+import { queries, waitFor, fireEvent } from "@testing-library/dom";
+
 /**
  * Hyperion Selenium Engine
  * In-browser WebDriver simulator and E2E automation runner targeting Hyperion's builtin previewers
- * (LiveBrowser iframe & Preview iframe).
+ * (LiveBrowser iframe & Preview iframe) powered by W3C Standard DOM Testing Library.
  */
 
 export const By = {
@@ -11,15 +13,20 @@ export const By = {
   name: (name) => ({ type: "name", value: name }),
   className: (cls) => ({ type: "className", value: cls }),
   tagName: (tag) => ({ type: "tagName", value: tag }),
-  text: (text, exact = false) => ({ type: "text", value: text, exact })
+  text: (text, exact = false) => ({ type: "text", value: text, exact }),
+  role: (role, options = {}) => ({ type: "role", value: role, options }),
+  labelText: (text, options = {}) => ({ type: "labelText", value: text, options }),
+  placeholderText: (text, options = {}) => ({ type: "placeholderText", value: text, options }),
+  testId: (id) => ({ type: "testId", value: id })
 };
 
 /**
  * Locate the active previewer iframe in the DOM.
- * Checks for .live-browser-iframe, .preview-iframe, or any editor iframe.
+ * Checks for .selenium-runner-preview-pane, .live-browser-iframe, .preview-iframe, or any editor iframe.
  */
 export function getActivePreviewerIframe() {
   const candidates = [
+    document.querySelector(".selenium-runner-preview-pane iframe"),
     document.querySelector("iframe.live-browser-iframe"),
     document.querySelector(".live-browser-preview-pane iframe"),
     document.querySelector(".live-browser-body iframe"),
@@ -169,7 +176,6 @@ export class AgenticMouseCursor {
     this.svgWrapEl = null;
     this.badgeEl = null;
     this.rippleEl = null;
-    this.targetBoxEl = null;
     this.currentX = 0;
     this.currentY = 0;
     this.initialized = false;
@@ -193,17 +199,6 @@ export class AgenticMouseCursor {
     container.style.pointerEvents = "none";
     container.style.zIndex = "9999999";
     container.style.overflow = "hidden";
-
-    // Target Bounding Box
-    const box = document.createElement("div");
-    box.id = "__hyperion_agent_target_box__";
-    box.style.position = "absolute";
-    box.style.border = "2px solid #00f2fe";
-    box.style.boxShadow = "0 0 18px rgba(0, 242, 254, 0.85), inset 0 0 12px rgba(0, 242, 254, 0.3)";
-    box.style.borderRadius = "6px";
-    box.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
-    box.style.opacity = "0";
-    box.style.pointerEvents = "none";
 
     // Virtual Cursor Arrow
     const cursor = document.createElement("div");
@@ -282,7 +277,6 @@ export class AgenticMouseCursor {
 
     cursor.appendChild(svgWrap);
     cursor.appendChild(badge);
-    container.appendChild(box);
     container.appendChild(ripple);
     container.appendChild(cursor);
     document.body.appendChild(container);
@@ -292,7 +286,6 @@ export class AgenticMouseCursor {
     this.svgWrapEl = svgWrap;
     this.badgeEl = badge;
     this.rippleEl = ripple;
-    this.targetBoxEl = box;
     this.initialized = true;
   }
 
@@ -308,7 +301,8 @@ export class AgenticMouseCursor {
       }
     }
     if (!containerRect) {
-      const fallback = document.querySelector(".live-browser-container") ||
+      const fallback = document.querySelector(".selenium-runner-preview-pane iframe") ||
+                       document.querySelector(".live-browser-container") ||
                        document.querySelector(".live-browser-body") ||
                        document.querySelector(".editor-container") ||
                        document.body;
@@ -317,99 +311,88 @@ export class AgenticMouseCursor {
 
     let targetX = containerRect.left + (containerRect.width * 0.5);
     let targetY = containerRect.top + (containerRect.height * 0.35);
-    let boxWidth = 140;
-    let boxHeight = 40;
     let foundRealRect = false;
 
-    // 1. Direct rendered DOM element (if same-origin / accessible)
+    // Resolve target to actual DOM element
+    let el = null;
     if (typeof target === "object" && target !== null && typeof target.getBoundingClientRect === "function") {
-      try {
-        target.scrollIntoView?.({ behavior: "smooth", block: "center", inline: "center" });
-      } catch {}
-      const elRect = target.getBoundingClientRect();
-      if (elRect.width > 0 && elRect.height > 0) {
-        targetX = containerRect.left + elRect.left + (elRect.width / 2);
-        targetY = containerRect.top + elRect.top + (elRect.height / 2);
-        boxWidth = Math.max(elRect.width, 24);
-        boxHeight = Math.max(elRect.height, 24);
-        foundRealRect = true;
-      }
-    }
-
-    // 2. Query element in active previewer iframe document (same-origin live preview)
-    if (!foundRealRect) {
-      const selStr = typeof target === "string" ? target : (target?.value || target?.selector || "");
-      if (selStr && iframe) {
-        try {
-          const doc = getSafeIframeDocument(iframe);
-          if (doc) {
-            let el = null;
-            if (selStr.startsWith("text:") || selStr.startsWith("text=")) {
-              const textVal = selStr.replace(/^text[:=]\s*/, "").toLowerCase();
-              const all = Array.from(doc.querySelectorAll("a, button, span, h1, h2, h3, p, label, li, [role='button']"));
-              el = all.find(e => (e.innerText || e.textContent || "").trim().toLowerCase() === textVal) ||
-                   all.find(e => (e.innerText || e.textContent || "").toLowerCase().includes(textVal));
+      el = target;
+    } else if (iframe) {
+      const doc = getSafeIframeDocument(iframe);
+      if (doc && doc.body) {
+        const selStr = typeof target === "string" ? target : (target?.value || target?.selector || "");
+        if (selStr) {
+          try {
+            if (selStr.startsWith("role:") || selStr.startsWith("role=")) {
+              const roleName = selStr.replace(/^role[:=]\s*/, "").trim();
+              el = queries.queryByRole(doc.body, roleName) || doc.querySelector(`[role="${roleName}"]`);
+            } else if (selStr.startsWith("text:") || selStr.startsWith("text=")) {
+              const textVal = selStr.replace(/^text[:=]\s*/, "").trim();
+              el = queries.queryByText(doc.body, textVal, { exact: false }) ||
+                   Array.from(doc.querySelectorAll("a, button, span, h1, h2, h3, p, label, li, [role='button']"))
+                     .find(e => (e.innerText || e.textContent || "").toLowerCase().includes(textVal.toLowerCase()));
             } else if (selStr.startsWith("//") || selStr.startsWith("(//")) {
               el = doc.evaluate(selStr, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             } else {
               el = doc.querySelector(selStr);
             }
-
-            if (el) {
-              try { el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" }); } catch {}
-              const elRect = el.getBoundingClientRect();
-              if (elRect.width > 0 && elRect.height > 0) {
-                targetX = containerRect.left + elRect.left + (elRect.width / 2);
-                targetY = containerRect.top + elRect.top + (elRect.height / 2);
-                boxWidth = Math.max(elRect.width, 24);
-                boxHeight = Math.max(elRect.height, 24);
-                foundRealRect = true;
-              }
-            }
-          }
-        } catch {}
+          } catch {}
+        }
       }
+    }
 
-      // 3. Query actual live element via Automation Bridge (postMessage)
-      if (!foundRealRect && selStr) {
+    // 1. Direct rendered DOM element with synchronous viewport positioning
+    if (el && typeof el.getBoundingClientRect === "function") {
+      try {
+        const win = el.ownerDocument?.defaultView || window;
+        const initRect = el.getBoundingClientRect();
+        const isInView = initRect.top >= 0 && initRect.left >= 0 &&
+                         initRect.bottom <= (win.innerHeight || 800) &&
+                         initRect.right <= (win.innerWidth || 1200);
+        // Instant scroll if outside view to prevent asynchronous coordinate lag
+        if (!isInView) {
+          el.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+        }
+      } catch {}
+
+      const elRect = el.getBoundingClientRect();
+      if (elRect.width > 0 && elRect.height > 0) {
+        targetX = containerRect.left + elRect.left + (elRect.width / 2);
+        targetY = containerRect.top + elRect.top + (elRect.height / 2);
+        foundRealRect = true;
+      }
+    }
+
+    // 2. Query actual live element via Automation Bridge (postMessage)
+    if (!foundRealRect) {
+      const selStr = typeof target === "string" ? target : (target?.value || target?.selector || "");
+      if (selStr) {
         try {
           const rect = await globalBridgeClient.getElementRect(selStr);
           if (rect && rect.width > 0) {
             targetX = containerRect.left + rect.left + (rect.width / 2);
             targetY = containerRect.top + rect.top + (rect.height / 2);
-            boxWidth = Math.max(rect.width, 24);
-            boxHeight = Math.max(rect.height, 24);
             foundRealRect = true;
           }
         } catch {}
       }
     }
 
-    // 4. Explicit coordinate object
+    // 3. Explicit coordinate object
     if (!foundRealRect && typeof target === "object" && target !== null && target.x !== undefined) {
       targetX = containerRect.left + (target.x <= 1 ? containerRect.width * target.x : target.x);
       targetY = containerRect.top + (target.y <= 1 ? containerRect.height * target.y : target.y);
-      boxWidth = target.width || 120;
-      boxHeight = target.height || 36;
       foundRealRect = true;
     }
 
-    // 5. Universal fallback: centered gracefully inside previewer
+    // 4. Universal fallback: centered gracefully inside previewer
     if (!foundRealRect) {
       targetX = containerRect.left + (containerRect.width * 0.5);
       targetY = containerRect.top + (containerRect.height * 0.35);
-      boxWidth = 180;
-      boxHeight = 44;
     }
 
     targetX = Math.max(containerRect.left + 15, Math.min(containerRect.right - 15, targetX));
     targetY = Math.max(containerRect.top + 15, Math.min(containerRect.bottom - 15, targetY));
-
-    this.targetBoxEl.style.top = `${targetY - (boxHeight / 2)}px`;
-    this.targetBoxEl.style.left = `${targetX - (boxWidth / 2)}px`;
-    this.targetBoxEl.style.width = `${boxWidth}px`;
-    this.targetBoxEl.style.height = `${boxHeight}px`;
-    this.targetBoxEl.style.opacity = "1";
 
     this.badgeEl.textContent = `🤖 ${actionLabel}`;
 
@@ -418,13 +401,27 @@ export class AgenticMouseCursor {
     this.currentX = targetX;
     this.currentY = targetY;
 
-    const glideDuration = options.duration || 500;
+    const glideDuration = options.duration || 450;
     await new Promise((resolve) => setTimeout(resolve, glideDuration));
   }
 
-  async click(actionLabel = "Clicking...") {
+  async click(actionLabel = "Clicking...", targetEl = null) {
     this.ensureMounted();
     if (this.badgeEl) this.badgeEl.textContent = `⚡ ${actionLabel}`;
+
+    // Refresh exact pixel coordinates right before pulse if target element is provided
+    if (targetEl && typeof targetEl.getBoundingClientRect === "function") {
+      const iframe = getActivePreviewerIframe();
+      if (iframe) {
+        const cRect = iframe.getBoundingClientRect();
+        const elRect = targetEl.getBoundingClientRect();
+        if (elRect.width > 0 && elRect.height > 0) {
+          this.currentX = Math.max(cRect.left + 15, Math.min(cRect.right - 15, cRect.left + elRect.left + (elRect.width / 2)));
+          this.currentY = Math.max(cRect.top + 15, Math.min(cRect.bottom - 15, cRect.top + elRect.top + (elRect.height / 2)));
+          this.cursorEl.style.transform = `translate(${this.currentX - 3}px, ${this.currentY - 3}px)`;
+        }
+      }
+    }
 
     if (this.svgWrapEl) {
       this.svgWrapEl.style.animation = "agentClickPulse 0.35s ease";
@@ -455,7 +452,6 @@ export class AgenticMouseCursor {
 
   hide() {
     if (this.cursorEl) this.cursorEl.style.opacity = "0";
-    if (this.targetBoxEl) this.targetBoxEl.style.opacity = "0";
     if (this.rippleEl) this.rippleEl.style.opacity = "0";
   }
 }
@@ -558,7 +554,22 @@ export class HyperionWebDriver {
     return this.fallbackDoc || null;
   }
 
-  async getOrFetchDocument() {
+  async getOrFetchDocument(maxWaitMs = 3500) {
+    const startTime = Date.now();
+    while (Date.now() - startTime < maxWaitMs) {
+      const iframe = this.getIframe();
+      if (iframe) {
+        const doc = getSafeIframeDocument(iframe);
+        if (doc && doc.body) {
+          const count = doc.querySelectorAll("a, button, input, h1, h2, h3, nav, [role='button'], [role='link']").length;
+          if (count > 0) {
+            return doc;
+          }
+        }
+      }
+      await this.sleep(100);
+    }
+
     const iframe = this.getIframe();
     let doc = getSafeIframeDocument(iframe);
     if (doc) return doc;
@@ -598,7 +609,7 @@ export class HyperionWebDriver {
   }
 
   /**
-   * Find an element inside the iframe based on By locator.
+   * Find an element inside the iframe based on By locator or Testing Library queries.
    */
   findElement(locator) {
     const doc = this.getDocument();
@@ -606,28 +617,39 @@ export class HyperionWebDriver {
       throw new Error("Previewer document not found or cross-origin restricted. Please ensure the previewer is open.");
     }
 
-    let el = null;
     if (typeof locator === "string") {
-      el = doc.querySelector(locator);
-      return el;
+      if (locator.startsWith("role:") || locator.startsWith("role=")) {
+        const role = locator.replace(/^role[:=]\s*/, "").trim();
+        return queries.queryByRole(doc.body, role) || doc.querySelector(`[role="${role}"]`);
+      }
+      if (locator.startsWith("text:") || locator.startsWith("text=")) {
+        const textVal = locator.replace(/^text[:=]\s*/, "").trim();
+        return queries.queryByText(doc.body, textVal, { exact: false }) ||
+               Array.from(doc.querySelectorAll("a, button, span, h1, h2, h3, p, label, li, [role='button']"))
+                 .find(e => (e.innerText || e.textContent || "").toLowerCase().includes(textVal.toLowerCase()));
+      }
+      return doc.querySelector(locator);
     }
 
     switch (locator.type) {
+      case "role":
+        return queries.queryByRole(doc.body, locator.value, locator.options) || doc.querySelector(`[role="${locator.value}"]`);
+      case "labelText":
+        return queries.queryByLabelText(doc.body, locator.value, locator.options);
+      case "placeholderText":
+        return queries.queryByPlaceholderText(doc.body, locator.value, locator.options);
+      case "testId":
+        return queries.queryByTestId(doc.body, locator.value);
       case "css":
-        el = doc.querySelector(locator.value);
-        break;
+        return doc.querySelector(locator.value);
       case "id":
-        el = doc.getElementById(locator.value);
-        break;
+        return doc.getElementById(locator.value);
       case "name":
-        el = doc.querySelector(`[name="${locator.value}"]`);
-        break;
+        return doc.querySelector(`[name="${locator.value}"]`);
       case "className":
-        el = doc.querySelector(`.${locator.value}`);
-        break;
+        return doc.querySelector(`.${locator.value}`);
       case "tagName":
-        el = doc.querySelector(locator.value);
-        break;
+        return doc.querySelector(locator.value);
       case "xpath": {
         const result = doc.evaluate(
           locator.value,
@@ -636,25 +658,16 @@ export class HyperionWebDriver {
           XPathResult.FIRST_ORDERED_NODE_TYPE,
           null
         );
-        el = result.singleNodeValue;
-        break;
+        return result.singleNodeValue;
       }
       case "text": {
-        const allElements = doc.querySelectorAll("button, a, p, span, h1, h2, h3, h4, h5, h6, label, div");
-        for (const element of allElements) {
-          const txt = (element.innerText || element.textContent || "").trim();
-          if (locator.exact ? txt === locator.value : txt.toLowerCase().includes(locator.value.toLowerCase())) {
-            el = element;
-            break;
-          }
-        }
-        break;
+        return queries.queryByText(doc.body, locator.value, { exact: locator.exact }) ||
+               Array.from(doc.querySelectorAll("button, a, p, span, h1, h2, h3, h4, h5, h6, label, div"))
+                 .find(e => locator.exact ? (e.innerText || e.textContent || "").trim() === locator.value : (e.innerText || e.textContent || "").toLowerCase().includes(locator.value.toLowerCase()));
       }
       default:
-        el = doc.querySelector(locator.value || locator);
+        return doc.querySelector(locator.value || locator);
     }
-
-    return el;
   }
 
   findElements(locator) {
@@ -662,22 +675,34 @@ export class HyperionWebDriver {
     if (!doc) return [];
 
     if (typeof locator === "string") {
+      if (locator.startsWith("role:") || locator.startsWith("role=")) {
+        const role = locator.replace(/^role[:=]\s*/, "").trim();
+        return queries.queryAllByRole(doc.body, role);
+      }
       return Array.from(doc.querySelectorAll(locator));
     }
 
-    if (locator.type === "css") {
-      return Array.from(doc.querySelectorAll(locator.value));
+    switch (locator.type) {
+      case "role":
+        return queries.queryAllByRole(doc.body, locator.value, locator.options);
+      case "labelText":
+        return queries.queryAllByLabelText(doc.body, locator.value, locator.options);
+      case "placeholderText":
+        return queries.queryAllByPlaceholderText(doc.body, locator.value, locator.options);
+      case "testId":
+        return queries.queryAllByTestId(doc.body, locator.value);
+      case "css":
+      case "tagName":
+        return Array.from(doc.querySelectorAll(locator.value));
+      case "name":
+        return Array.from(doc.querySelectorAll(`[name="${locator.value}"]`));
+      case "className":
+        return Array.from(doc.querySelectorAll(`.${locator.value}`));
+      case "text":
+        return queries.queryAllByText(doc.body, locator.value, { exact: locator.exact });
+      default:
+        return Array.from(doc.querySelectorAll(locator.value || locator));
     }
-    if (locator.type === "tagName") {
-      return Array.from(doc.querySelectorAll(locator.value));
-    }
-    if (locator.type === "name") {
-      return Array.from(doc.querySelectorAll(`[name="${locator.value}"]`));
-    }
-    if (locator.type === "className") {
-      return Array.from(doc.querySelectorAll(`.${locator.value}`));
-    }
-    return [this.findElement(locator)].filter(Boolean);
   }
 
   async highlight(element, label) {
@@ -707,17 +732,24 @@ export class HyperionWebDriver {
 
     if (el) {
       const tag = (el.tagName || "element").toLowerCase();
-      await globalAgentCursor.moveTo(el, `Target: <${tag}>`);
-      await globalAgentCursor.click(`Clicked <${tag}>`);
+      const label = (el.innerText || el.getAttribute("aria-label") || el.title || tag).trim().slice(0, 24);
+      await globalAgentCursor.moveTo(el, `Target: "${label}"`);
+      await globalAgentCursor.click(`Clicked "${label}"`, el);
 
-      try { el.scrollIntoView?.({ behavior: "smooth", block: "center", inline: "center" }); } catch {}
-      const win = this.getWindow() || window;
-      el.dispatchEvent?.(new MouseEvent("mouseenter", { bubbles: true, cancelable: true, view: win }));
-      el.dispatchEvent?.(new MouseEvent("mouseover", { bubbles: true, cancelable: true, view: win }));
-      el.dispatchEvent?.(new MouseEvent("mousedown", { bubbles: true, cancelable: true, view: win, buttons: 1 }));
-      el.focus?.();
-      el.dispatchEvent?.(new MouseEvent("mouseup", { bubbles: true, cancelable: true, view: win, buttons: 1 }));
-      el.dispatchEvent?.(new MouseEvent("click", { bubbles: true, cancelable: true, view: win }));
+      // Dispatch standard DOM events using Testing Library fireEvent + native click
+      try {
+        fireEvent.mouseEnter(el);
+        fireEvent.mouseOver(el);
+        fireEvent.focus(el);
+        fireEvent.pointerDown(el);
+        fireEvent.mouseDown(el);
+        fireEvent.pointerUp(el);
+        fireEvent.mouseUp(el);
+        fireEvent.click(el);
+      } catch {
+        const win = this.getWindow() || window;
+        el.dispatchEvent?.(new MouseEvent("click", { bubbles: true, cancelable: true, view: win }));
+      }
       el.click?.();
       handled = true;
     }
@@ -764,7 +796,15 @@ export class HyperionWebDriver {
 
       el.focus?.();
       if (options.clearFirst) {
+        try { fireEvent.change(el, { target: { value: "" } }); } catch {}
         if ("value" in el) el.value = "";
+      }
+
+      try {
+        fireEvent.change(el, { target: { value: text } });
+        fireEvent.input(el, { target: { value: text } });
+      } catch {
+        if ("value" in el) el.value = text;
         el.dispatchEvent?.(new Event("input", { bubbles: true }));
         el.dispatchEvent?.(new Event("change", { bubbles: true }));
       }
@@ -773,15 +813,8 @@ export class HyperionWebDriver {
       for (const char of String(text)) {
         el.dispatchEvent?.(new KeyboardEvent("keydown", { key: char, bubbles: true, cancelable: true, view: win }));
         el.dispatchEvent?.(new KeyboardEvent("keypress", { key: char, bubbles: true, cancelable: true, view: win }));
-        if ("value" in el) {
-          el.value = (el.value || "") + char;
-        } else {
-          el.textContent = (el.textContent || "") + char;
-        }
-        el.dispatchEvent?.(new Event("input", { bubbles: true }));
         el.dispatchEvent?.(new KeyboardEvent("keyup", { key: char, bubbles: true, cancelable: true, view: win }));
       }
-      el.dispatchEvent?.(new Event("change", { bubbles: true }));
       handled = true;
     }
 

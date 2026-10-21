@@ -41,17 +41,28 @@ router.get('/preview-proxy', async (req, res) => {
       return res.send(`<h3>Preview Proxy Error: Target returned status ${fetchRes.status}</h3>`);
     }
 
-    let html = await fetchRes.text();
+    // 1. Inject <base href="..."> and synchronous route normalizer in memory
+    const targetRoute = (parsedTarget.pathname || '/') + (parsedTarget.search || '') + (parsedTarget.hash || '');
+    const headInjections = `
+  <base href="${targetOrigin}/">
+  <!-- Hyperion IDE Client-Side Route Normalizer (Prevents 404 in BrowserRouter on load/refresh) -->
+  <script>
+    (function() {
+      try {
+        var expectedPath = ${JSON.stringify(targetRoute || '/')};
+        if (window.location.pathname.startsWith('/api/sandbox/preview-proxy')) {
+          window.history.replaceState(null, '', expectedPath);
+        }
+      } catch (err) {}
+    })();
+  </script>`;
 
-    if (!html.includes('<base ') && !html.includes('<base>')) {
-      const baseTag = `<base href="${targetOrigin}/">`;
-      if (html.includes('<head>')) {
-        html = html.replace('<head>', `<head>\n  ${baseTag}`);
-      } else if (html.includes('<html>')) {
-        html = html.replace('<html>', `<html>\n<head>${baseTag}</head>`);
-      } else {
-        html = `${baseTag}\n${html}`;
-      }
+    if (html.includes('<head>')) {
+      html = html.replace('<head>', `<head>\n${headInjections}`);
+    } else if (html.includes('<html>')) {
+      html = html.replace('<html>', `<html>\n<head>${headInjections}</head>`);
+    } else {
+      html = `${headInjections}\n${html}`;
     }
 
     const bridgeScript = `
