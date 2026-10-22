@@ -14,6 +14,8 @@ import {
 } from './server/sandboxEngine.js';
 import { replManager } from './server/replEngine.js';
 
+const activeStreams = new Map();
+
 function hyperionSandboxPlugin() {
   return {
     name: 'hyperion-sandbox-middleware',
@@ -372,21 +374,40 @@ function hyperionSandboxPlugin() {
           res.setHeader('Cache-Control', 'no-cache');
           res.setHeader('Connection', 'keep-alive');
 
+          const streamId = body.streamId || `stream_${Date.now()}`;
           const runner = streamCommand({
             ...body,
             onChunk: (chunk) => {
               res.write(`data: ${JSON.stringify({ type: 'output', data: chunk })}\n\n`);
             },
             onExit: (code) => {
+              activeStreams.delete(streamId);
               res.write(`data: ${JSON.stringify({ type: 'exit', code })}\n\n`);
               res.end();
             }
           });
 
+          activeStreams.set(streamId, runner);
+
           req.on('close', () => {
+            activeStreams.delete(streamId);
             runner.kill();
           });
           return;
+        }
+
+        if (subPath === '/stdin' && req.method === 'POST') {
+          const body = await parseBody();
+          const { streamId, data } = body;
+          const runner = activeStreams.get(streamId);
+          if (runner && typeof runner.writeStdin === 'function') {
+            const ok = runner.writeStdin(data);
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ success: ok }));
+          }
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ success: false, error: 'Process stream not found or exited' }));
         }
 
         next();

@@ -577,6 +577,10 @@ export function streamCommand({
     if (virtualFiles && virtualFiles.length > 0) {
       writeVirtualFiles(workDir, virtualFiles);
     }
+  } else if (virtualFiles && virtualFiles.length > 0) {
+    try {
+      writeVirtualFiles(workDir, virtualFiles);
+    } catch {}
   }
 
   const isWindows = process.platform === 'win32';
@@ -594,8 +598,13 @@ export function streamCommand({
     runner = bash;
     runnerArgs = ['-c', trimmed];
   } else {
-    runner = process.env.COMSPEC || 'cmd.exe';
-    runnerArgs = ['/d', '/s', '/c', trimmed];
+    if (isWindows && (profile === 'powershell' || !profile || profile === 'default')) {
+      runner = 'powershell.exe';
+      runnerArgs = ['-NoLogo', '-ExecutionPolicy', 'Bypass', '-Command', trimmed];
+    } else {
+      runner = process.env.COMSPEC || 'cmd.exe';
+      runnerArgs = ['/d', '/s', '/c', trimmed];
+    }
   }
 
   const child = spawn(runner, runnerArgs, {
@@ -604,13 +613,13 @@ export function streamCommand({
     windowsVerbatimArguments: isWindows,
     env: {
       ...process.env,
+      PYTHONUNBUFFERED: '1',
       TERM: 'xterm-256color',
       FORCE_COLOR: '1'
     }
   });
 
-  // Close stdin stream so batch scripts/cmd don't block waiting for input
-  child.stdin?.end();
+  // Keep child.stdin open to allow real-time interactive user inputs (Python input(), C scanf, etc.)
 
   let timer = null;
   if (timeoutMs > 0) {
@@ -645,6 +654,17 @@ export function streamCommand({
 
   return {
     pid: child.pid,
+    writeStdin: (data) => {
+      if (child.stdin && !child.stdin.destroyed && child.stdin.writable) {
+        try {
+          child.stdin.write(data);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    },
     kill: () => {
       if (timer) clearTimeout(timer);
       killProcessTree(child.pid);

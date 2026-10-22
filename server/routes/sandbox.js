@@ -16,6 +16,7 @@ import {
 } from '../sandboxEngine.js';
 
 const router = express.Router();
+const activeStreams = new Map();
 
 // GET /preview-proxy - In-memory transparent HTML proxy with automation bridge
 router.get('/preview-proxy', async (req, res) => {
@@ -435,12 +436,14 @@ router.post('/command', async (req, res) => {
 
 // POST /stream - Real-time streaming command execution
 router.post('/stream', (req, res) => {
-  const { command, cwd, virtualFiles, timeoutMs, profile } = req.body;
+  const { streamId: incomingStreamId, command, cwd, virtualFiles, timeoutMs, profile } = req.body;
   console.log('[API] /stream invoked with command:', command);
 
   if (typeof command !== 'string') {
     return res.status(400).json({ error: 'Command string is required.' });
   }
+
+  const streamId = incomingStreamId || `stream_${Date.now()}`;
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -464,17 +467,39 @@ router.post('/stream', (req, res) => {
     onExit: (exitCode) => {
       if (finished) return;
       finished = true;
+      activeStreams.delete(streamId);
       res.write(`data: ${JSON.stringify({ type: 'exit', code: exitCode })}\n\n`);
       res.end();
     }
   });
 
+  activeStreams.set(streamId, runner);
+
   req.on('close', () => {
     if (!finished) {
       finished = true;
+      activeStreams.delete(streamId);
       runner.kill();
     }
   });
+});
+
+// POST /stdin - Route real-time stdin input to running command
+router.post('/stdin', (req, res) => {
+  try {
+    const { streamId, data } = req.body;
+    if (!streamId) {
+      return res.status(400).json({ success: false, error: 'streamId is required' });
+    }
+    const runner = activeStreams.get(streamId);
+    if (!runner || typeof runner.writeStdin !== 'function') {
+      return res.status(404).json({ success: false, error: 'Active process not found or exited' });
+    }
+    const ok = runner.writeStdin(data);
+    res.json({ success: ok });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // POST /kill - Terminate process by PID

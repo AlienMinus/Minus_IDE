@@ -184,9 +184,30 @@ export async function executeCommand(command, { cwd, virtualFiles = [], timeoutM
 }
 
 /**
+ * Send real-time input data to the stdin of a running streaming process
+ */
+export async function sendStreamStdin(streamId, data) {
+  try {
+    const res = await fetch(`${API_BASE}/stdin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ streamId, data })
+    });
+    if (!res.ok) {
+      return { success: false, error: `HTTP ${res.status}` };
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn('sendStreamStdin failed:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Stream Direct Shell Command with chunk-by-chunk callbacks and abort support
  */
 export async function streamShellCommand({
+  streamId,
   command,
   cwd,
   virtualFiles = [],
@@ -201,6 +222,7 @@ export async function streamShellCommand({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        streamId,
         command,
         cwd,
         virtualFiles: virtualFiles.map(f => ({ path: f.path || f.name, name: f.name, content: f.content || '' })),

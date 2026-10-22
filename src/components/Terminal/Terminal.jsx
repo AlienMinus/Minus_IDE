@@ -69,8 +69,19 @@ function TerminalComponent({ hideToolbar = false }) {
     isRunning,
     setActiveTerminal,
     toggleMaximizeTerminal,
-    isMaximized
+    isMaximized,
+    sendTerminalInput
   } = useTerminal();
+
+  const sendTerminalInputRef = useRef(sendTerminalInput);
+  sendTerminalInputRef.current = sendTerminalInput;
+
+  const resolvePrompt = (session) => {
+    if (session?.replState?.prompt) return session.replState.prompt;
+    if (session?.prompt) return session.prompt;
+    const cwd = session?.cwd || "D:\\Rough\\WebIDE";
+    return session?.profile === "cmd" ? `${cwd}> ` : `PS ${cwd}> `;
+  };
 
   const {
     openLiveBrowserTab,
@@ -328,7 +339,14 @@ function TerminalComponent({ hideToolbar = false }) {
         const term = xtermRef.current;
         if (!term) return;
 
-        const currentPrompt = mainSessionRef.current?.replState?.prompt || mainSessionRef.current?.prompt || '$ ';
+        const currentPrompt = resolvePrompt(mainSessionRef.current);
+        const isMainRunning = !!(mainSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === mainSessionRef.current?.id));
+
+        // When a command is actively running, ignore arrow-key history recalling
+        if (isMainRunning && (domEvent.key === 'ArrowUp' || domEvent.key === 'ArrowDown')) {
+          domEvent.preventDefault();
+          return;
+        }
 
         // Ctrl+C (Interrupt / Cancel)
         if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c') {
@@ -454,7 +472,39 @@ function TerminalComponent({ hideToolbar = false }) {
           setActiveTerminal(mainSessionRef.current);
         }
 
-        const currentPrompt = mainSessionRef.current?.replState?.prompt || mainSessionRef.current?.prompt || '$ ';
+        const currentPrompt = resolvePrompt(mainSessionRef.current);
+        const isMainRunning = !!(mainSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === mainSessionRef.current?.id));
+
+        // When process is actively running in this terminal, route input directly to stdin
+        if (isMainRunning) {
+          if (data === "\r") {
+            const toSend = currentCommand.current + "\r\n";
+            currentCommand.current = "";
+            cursorPos.current = 0;
+            term.write('\r\n');
+            outputLines.current += 1;
+            sendTerminalInputRef.current(toSend, mainSessionRef.current?.id);
+            return;
+          }
+          if (data === "\x7f" || data === "\b") {
+            if (cursorPos.current > 0) {
+              currentCommand.current = currentCommand.current.slice(0, -1);
+              cursorPos.current--;
+              term.write('\b \b');
+            }
+            return;
+          }
+          if (data === "\x03") { // Ctrl+C
+            terminateTaskRef.current();
+            return;
+          }
+          if (data.length > 0 && !data.includes('\x1b')) {
+            currentCommand.current += data;
+            cursorPos.current += data.length;
+            term.write(data);
+          }
+          return;
+        }
 
         if (data === "\r") {
           const toExecute = currentCommand.current;
@@ -512,7 +562,10 @@ function TerminalComponent({ hideToolbar = false }) {
     const term = xtermRef.current;
     if (!term || !mainSession) return;
 
-    const isPromptLine = (str) => /(?:\$ |>>> |\.\.\. |> |cypher> |agent> )$/.test(str);
+    const isPromptLine = (str) => {
+      if (!str) return false;
+      return /(?:PS [^>\r\n]+> |[a-zA-Z]:\\[^>\r\n]*> |[#\$] |>>> |\.\.\. |> |cypher> |agent> |:\s*$|\?\s*$)$/.test(String(str));
+    };
 
     const writeOutput = (lines) => {
       lines.forEach((line, index) => {
@@ -603,7 +656,13 @@ function TerminalComponent({ hideToolbar = false }) {
         const term = splitXtermRef.current;
         if (!term) return;
 
-        const currentPrompt = splitSessionRef.current?.replState?.prompt || '$ ';
+        const currentPrompt = resolvePrompt(splitSessionRef.current);
+        const isSplitRunning = !!(splitSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === splitSessionRef.current?.id));
+
+        if (isSplitRunning && (domEvent.key === 'ArrowUp' || domEvent.key === 'ArrowDown')) {
+          domEvent.preventDefault();
+          return;
+        }
 
         // Ctrl+C (Interrupt / Cancel)
         if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c') {
@@ -729,7 +788,38 @@ function TerminalComponent({ hideToolbar = false }) {
           setActiveTerminal(splitSessionRef.current);
         }
 
-        const currentPrompt = splitSessionRef.current?.replState?.prompt || '$ ';
+        const currentPrompt = resolvePrompt(splitSessionRef.current);
+        const isSplitRunning = !!(splitSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === splitSessionRef.current?.id));
+
+        if (isSplitRunning) {
+          if (data === "\r") {
+            const toSend = splitCurrentCommand.current + "\r\n";
+            splitCurrentCommand.current = "";
+            splitCursorPos.current = 0;
+            term.write('\r\n');
+            splitOutputLines.current += 1;
+            sendTerminalInputRef.current(toSend, splitSessionRef.current?.id);
+            return;
+          }
+          if (data === "\x7f" || data === "\b") {
+            if (splitCursorPos.current > 0) {
+              splitCurrentCommand.current = splitCurrentCommand.current.slice(0, -1);
+              splitCursorPos.current--;
+              term.write('\b \b');
+            }
+            return;
+          }
+          if (data === "\x03") { // Ctrl+C
+            terminateTaskRef.current();
+            return;
+          }
+          if (data.length > 0 && !data.includes('\x1b')) {
+            splitCurrentCommand.current += data;
+            splitCursorPos.current += data.length;
+            term.write(data);
+          }
+          return;
+        }
 
         if (data === "\r") {
           const toExecute = splitCurrentCommand.current;

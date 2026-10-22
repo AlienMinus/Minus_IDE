@@ -147,7 +147,7 @@ export default function Repl() {
 
     // Keyboard navigation
     term.onKey(({ domEvent }) => {
-      const activePrompt = promptRef.current || "$ ";
+      const activePrompt = promptRef.current || (runtime === "node" ? "> " : ">>> ");
 
       // Ctrl+C (Cancel line or interrupt)
       if (domEvent.ctrlKey && domEvent.key.toLowerCase() === "c") {
@@ -216,7 +216,7 @@ export default function Repl() {
         currentCommand.current = "";
         historyIndex.current = -1;
 
-        const activePrompt = promptRef.current || "$ ";
+        const activePrompt = promptRef.current || (runtime === "node" ? "> " : ">>> ");
 
         // Empty line when NOT in multi-line block
         if (!toEval.trim() && !isMultiLineRef.current) {
@@ -319,7 +319,7 @@ export default function Repl() {
     const term = xtermRef.current;
     if (term) {
       term.clear();
-      term.write(promptRef.current || "$ ");
+      term.write(promptRef.current || (runtime === "node" ? "> " : ">>> "));
       currentCommand.current = "";
     }
   };
@@ -330,7 +330,7 @@ export default function Repl() {
       const term = xtermRef.current;
       if (term) {
         term.writeln("\r\n\x1b[33m[No text selected in editor. Highlight code first.]\x1b[0m");
-        term.write(promptRef.current || "$ ");
+        term.write(promptRef.current || (runtime === "node" ? "> " : ">>> "));
       }
       return;
     }
@@ -362,7 +362,7 @@ export default function Repl() {
       term.write(nextPrompt);
     } catch (err) {
       term.writeln(`\x1b[31mError: ${err.message}\x1b[0m`);
-      term.write(promptRef.current || "$ ");
+      term.write(promptRef.current || (runtime === "node" ? "> " : ">>> "));
     } finally {
       setIsRunning(false);
       setStatus("ready");

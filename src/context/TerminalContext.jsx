@@ -9,7 +9,8 @@ import {
   validateWorkspacePath,
   startReplSession,
   evalReplCode,
-  exitReplSession
+  exitReplSession,
+  sendStreamStdin
 } from "../services/sandboxService";
 import { EditorContext } from "./EditorContext";
 import { FileContext } from "./FileContext";
@@ -58,6 +59,18 @@ const DEFAULT_TASKS_JSON = JSON.stringify({
     }
   ]
 }, null, 2);
+
+// Helper to calculate prompt for a profile and working directory
+export const getPromptForProfile = (prof, cwd) => {
+    const cleanCwd = cwd || "D:\\Rough\\WebIDE";
+    if (prof === 'cmd') return `${cleanCwd}> `;
+    if (prof === 'bash') return "$ ";
+    if (prof === 'node') return "> ";
+    if (prof === 'python') return ">>> ";
+    if (prof === 'cypher') return "cypher> ";
+    if (prof === 'agent') return "agent> ";
+    return `PS ${cleanCwd}> `;
+};
 
 export function TerminalProvider({ children }) {
     const editorCtx = useContext(EditorContext);
@@ -129,9 +142,6 @@ export function TerminalProvider({ children }) {
     activeTerminalRef.current = activeTerminal;
     const terminalsRef = useRef(terminals);
     terminalsRef.current = terminals;
-    const activeProcessAbortCtrl = useRef(null);
-    const detectedUrlsRef = useRef(new Set());
-
     const [defaultProfile, setDefaultProfileState] = useState(() => {
         return localStorage.getItem('hyperion_default_terminal_profile') || 'powershell';
     });
@@ -142,6 +152,20 @@ export function TerminalProvider({ children }) {
             localStorage.setItem('hyperion_default_terminal_profile', prof);
         } catch {}
     };
+
+    const activeProcessAbortCtrl = useRef(null);
+    const activeStreamsRef = useRef({});
+    const detectedUrlsRef = useRef(new Set());
+
+    const getTerminalPrompt = useCallback((term) => {
+        if (term?.replState?.active) {
+            return term.replState.prompt || (term.replState.runtime === 'node' ? '> ' : '>>> ');
+        }
+        if (term?.prompt) return term.prompt;
+        const cwd = term?.cwd || currentWorkspacePath || 'D:\\Rough\\WebIDE';
+        const prof = term?.profile || defaultProfile || 'powershell';
+        return getPromptForProfile(prof, cwd);
+    }, [currentWorkspacePath, defaultProfile]);
 
     function createTerminal(profileName = null) {
         const newId = Date.now();
@@ -158,12 +182,12 @@ export function TerminalProvider({ children }) {
 
         const prof = profileName || defaultProfile || 'powershell';
         let title = `Terminal ${terminals.length + 1}`;
-        let prompt = "$ ";
+        let prompt = getPromptForProfile(prof, termCwd);
         let output = [
             `Hyperion Terminal ${terminals.length + 1}`,
             `Directory: ${termCwd}`,
             "--------------------------------",
-            "$ "
+            prompt
         ];
 
         if (prof === 'powershell') {
@@ -319,15 +343,17 @@ export function TerminalProvider({ children }) {
             const updated = prev.filter(t => t.id !== targetId);
             if (updated.length === 0) {
                 const freshId = Date.now();
+                const freshPrompt = getPromptForProfile(defaultProfile, preservedCwd);
                 const freshTerm = {
                     id: freshId,
                     title: "Terminal 1",
                     cwd: preservedCwd,
                     history: [],
+                    prompt: freshPrompt,
                     output: [
                         "\x1b[33m[Hyperion] Terminal session reset.\x1b[0m",
                         `\x1b[90mDirectory: ${preservedCwd}\x1b[0m`,
-                        "$ "
+                        freshPrompt
                     ]
                 };
                 activeTerminalRef.current = freshTerm;
@@ -365,23 +391,34 @@ export function TerminalProvider({ children }) {
             activeProcessAbortCtrl.current = null;
         }
 
+        const targetId = activeTerminalIdRef.current;
+        const active = activeStreamsRef.current[targetId];
+        if (active?.abortCtrl) {
+            try { active.abortCtrl.abort(); } catch {}
+        }
+        delete activeStreamsRef.current[targetId];
+
+        setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
+
         if (activeTerminalRef.current?.replState?.active) {
             exitReplSession(activeTerminalRef.current.replState.sessionId).catch(() => {});
+            const currentPrompt = getTerminalPrompt(activeTerminalRef.current);
             setTerminals(prev => prev.map(t => {
                 if (t.id !== activeTerminalId) return t;
                 return {
                     ...t,
                     replState: null,
-                    output: [...t.output, "\x1b[90m[KeyboardInterrupt: Exited REPL]\x1b[0m", "$ "]
+                    output: [...t.output, "\x1b[90m[KeyboardInterrupt: Exited REPL]\x1b[0m", currentPrompt]
                 };
             }));
             setIsRunning(false);
             return;
         }
         setIsRunning(false);
+        const termPrompt = getTerminalPrompt(activeTerminalRef.current);
         appendToTerminal([
             "\x1b[31m[Terminated] Running task was terminated by user.\x1b[0m",
-            "$ "
+            termPrompt
         ]);
     }
 
@@ -414,7 +451,7 @@ export function TerminalProvider({ children }) {
 
         const prof = profileName || defaultProfile || 'powershell';
         let title = `Terminal ${terminals.length + 1} (Split)`;
-        let prompt = "$ ";
+        let prompt = getPromptForProfile(prof, termCwd);
         let output = [prompt];
 
         if (prof === 'powershell') {
@@ -527,11 +564,23 @@ export function TerminalProvider({ children }) {
     }, []);
 
     /**
+     * Send real-time input to running terminal process stdin
+     */
+    const sendTerminalInput = useCallback(async (data, targetTermId = null) => {
+        const destId = targetTermId ?? activeTerminalIdRef.current;
+        const active = activeStreamsRef.current[destId];
+        if (active?.streamId) {
+            await sendStreamStdin(active.streamId, data);
+        }
+    }, []);
+
+    /**
      * Run Code in the Sandbox
      */
     const runCodeSnippet = useCallback(async ({ language, code, filename, targetFile }) => {
+        const termPrompt = getTerminalPrompt(activeTerminalRef.current);
         if (!code && code !== '') {
-            appendToTerminal(["\x1b[31m[Error] No code content to execute.\x1b[0m", "$ "]);
+            appendToTerminal(["\x1b[31m[Error] No code content to execute.\x1b[0m", termPrompt]);
             return;
         }
 
@@ -589,13 +638,13 @@ export function TerminalProvider({ children }) {
                 outputLines.push(`\x1b[36mℹ Opened live interactive React preview in Preview tab.\x1b[0m`);
             }
 
-            outputLines.push("$ ");
+            outputLines.push(termPrompt);
             appendToTerminal(outputLines);
 
         } catch (err) {
             appendToTerminal([
                 `\x1b[31m[Sandbox Error] ${err.message}\x1b[0m`,
-                "$ "
+                termPrompt
             ]);
         } finally {
             setIsRunning(false);
@@ -603,38 +652,68 @@ export function TerminalProvider({ children }) {
     }, [files, openPreviewTab, appendToTerminal]);
 
     /**
-     * Run the currently active editor file
+     * Run the currently active editor file directly in the active terminal shell
+     * Supports full real-time interactive stdin, streaming stdout/stderr, and proper prompt display.
      */
     const runActiveFile = useCallback(async (fileOverride) => {
         const fileToRun = fileOverride || activeFile;
+        const targetId = activeTerminalIdRef.current;
+        const targetTerm = terminalsRef.current.find(t => t.id === targetId) || activeTerminalRef.current || terminals[0];
+        const prompt = getTerminalPrompt(targetTerm);
+
         if (!fileToRun) {
             appendToTerminal([
                 "\x1b[33m[Hyperion] No active file selected in the editor.\x1b[0m",
                 "\x1b[90mSelect a file in the explorer, or run: run <filename>\x1b[0m",
-                "$ "
-            ]);
+                prompt
+            ], targetId);
             return;
         }
 
         const lang = detectLanguage(fileToRun.name);
-        await runCodeSnippet({
-            language: lang,
-            code: fileToRun.content || '',
-            filename: fileToRun.name,
-            targetFile: fileToRun
-        });
-    }, [activeFile, appendToTerminal, runCodeSnippet]);
+
+        if ((lang === 'react' || lang === 'jsx') && openPreviewTab) {
+            openPreviewTab(fileToRun);
+            appendToTerminal([
+                `\x1b[36mℹ Opened live interactive React preview for ${fileToRun.name} in Preview tab.\x1b[0m`,
+                prompt
+            ], targetId);
+            return;
+        }
+
+        let runCmd = '';
+        const fileName = fileToRun.name;
+        if (lang === 'python') {
+            runCmd = `python "${fileName}"`;
+        } else if (lang === 'javascript' || lang === 'node') {
+            runCmd = `node "${fileName}"`;
+        } else if (lang === 'c') {
+            const out = fileName.replace(/\.c$/i, '.exe');
+            runCmd = `gcc "${fileName}" -o "${out}" && .\\"${out}"`;
+        } else if (lang === 'cpp') {
+            const out = fileName.replace(/\.cpp$/i, '.exe');
+            runCmd = `g++ "${fileName}" -o "${out}" && .\\"${out}"`;
+        } else if (lang === 'bash') {
+            runCmd = `bash "${fileName}"`;
+        } else {
+            runCmd = `node "${fileName}"`;
+        }
+
+        // Execute directly inside terminal session with live streaming & interactive stdin!
+        await executeCommand(runCmd, targetId);
+    }, [activeFile, openPreviewTab, executeCommand, appendToTerminal, terminals, getTerminalPrompt]);
 
     /**
      * Run Selected Text in Monaco Editor
      */
     const runSelectedText = useCallback(async () => {
         const selected = getSelectedText ? getSelectedText() : "";
+        const termPrompt = getTerminalPrompt(activeTerminalRef.current);
         if (!selected || !selected.trim()) {
             appendToTerminal([
                 "\x1b[33m[Hyperion] No text selected in editor.\x1b[0m",
                 "\x1b[90mHighlight code in the editor and click 'Run Selected Text' to execute it.\x1b[0m",
-                "$ "
+                termPrompt
             ]);
             return;
         }
@@ -673,11 +752,13 @@ export function TerminalProvider({ children }) {
             if (res.stderr) {
                 outLines.push(...res.stderr.replace(/\r\n/g, '\n').split('\n').map(l => `\x1b[31m${l}\x1b[0m`));
             }
+            const termPrompt = getTerminalPrompt(activeTerminalRef.current);
             outLines.push(res.success ? "\x1b[32m✔ Build completed successfully.\x1b[0m" : "\x1b[31m✘ Build failed.\x1b[0m");
-            outLines.push("$ ");
+            outLines.push(termPrompt);
             appendToTerminal(outLines);
         } catch (err) {
-            appendToTerminal([`\x1b[31mBuild error: ${err.message}\x1b[0m`, "$ "]);
+            const termPrompt = getTerminalPrompt(activeTerminalRef.current);
+            appendToTerminal([`\x1b[31mBuild error: ${err.message}\x1b[0m`, termPrompt]);
         } finally {
             setIsRunning(false);
         }
@@ -705,11 +786,11 @@ export function TerminalProvider({ children }) {
                 `  Bash:         ${runtimes.bash?.available ? '✔ ' + runtimes.bash.version : '✘ Not detected'}`,
                 `  React:        ${runtimes.react?.available ? '✔ ' + runtimes.react.version : '✘ Not detected'}`,
                 "--------------------------------------------------",
-                "$ "
+                getTerminalPrompt(activeTerminalRef.current)
             ];
             appendToTerminal(lines);
         } catch (err) {
-            appendToTerminal([`\x1b[31mFailed to fetch tasks: ${err.message}\x1b[0m`, "$ "]);
+            appendToTerminal([`\x1b[31mFailed to fetch tasks: ${err.message}\x1b[0m`, getTerminalPrompt(activeTerminalRef.current)]);
         }
     }, [activeTerminal, isRunning, terminals.length, appendToTerminal]);
 
@@ -718,12 +799,13 @@ export function TerminalProvider({ children }) {
      */
     const restartRunningTask = useCallback(async () => {
         if (!lastActionRef.current) {
+            const termPrompt = getTerminalPrompt(activeTerminalRef.current);
             if (activeFile) {
                 await runActiveFile();
             } else {
                 appendToTerminal([
                     "\x1b[33m[Hyperion] No previous task to restart. Run a file or task first.\x1b[0m",
-                    "$ "
+                    termPrompt
                 ]);
             }
             return;
@@ -735,12 +817,13 @@ export function TerminalProvider({ children }) {
         } else if (last.type === 'command') {
             appendToTerminal([`\x1b[34m[Restarting Task]\x1b[0m ${last.command}`]);
             setIsRunning(true);
+            const termPrompt = getTerminalPrompt(activeTerminalRef.current);
             try {
                 const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
                 const res = await executeShellCommand(last.command, { cwd: targetCwd, virtualFiles: files });
-                appendToTerminal([res.stdout || '', res.stderr ? `\x1b[31m${res.stderr}\x1b[0m` : '', "$ "].filter(Boolean));
+                appendToTerminal([res.stdout || '', res.stderr ? `\x1b[31m${res.stderr}\x1b[0m` : '', termPrompt].filter(Boolean));
             } catch (err) {
-                appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, "$ "]);
+                appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, termPrompt]);
             } finally {
                 setIsRunning(false);
             }
@@ -755,10 +838,10 @@ export function TerminalProvider({ children }) {
             createOrOpenFile(".hyperion/tasks.json", DEFAULT_TASKS_JSON);
             appendToTerminal([
                 "\x1b[36m[Hyperion] Opened .hyperion/tasks.json in the editor.\x1b[0m",
-                "$ "
+                getTerminalPrompt(activeTerminalRef.current)
             ]);
         }
-    }, [createOrOpenFile, appendToTerminal]);
+    }, [createOrOpenFile, appendToTerminal, getTerminalPrompt]);
 
     /**
      * Configure Default Build Task...
@@ -768,10 +851,10 @@ export function TerminalProvider({ children }) {
             createOrOpenFile(".hyperion/tasks.json", DEFAULT_TASKS_JSON);
             appendToTerminal([
                 "\x1b[36m[Hyperion] Configured default build task in .hyperion/tasks.json\x1b[0m",
-                "$ "
+                getTerminalPrompt(activeTerminalRef.current)
             ]);
         }
-    }, [createOrOpenFile, appendToTerminal]);
+    }, [createOrOpenFile, appendToTerminal, getTerminalPrompt]);
 
     /**
      * Execute a named or predefined task
@@ -792,11 +875,13 @@ export function TerminalProvider({ children }) {
             if (res.stderr) {
                 outLines.push(...res.stderr.replace(/\r\n/g, '\n').split('\n').map(l => `\x1b[31m${l}\x1b[0m`));
             }
+            const termPrompt = getTerminalPrompt(activeTerminalRef.current);
             outLines.push(res.success ? "\x1b[32m✔ Task completed.\x1b[0m" : "\x1b[31m✘ Task failed.\x1b[0m");
-            outLines.push("$ ");
+            outLines.push(termPrompt);
             appendToTerminal(outLines);
         } catch (err) {
-            appendToTerminal([`\x1b[31mTask error: ${err.message}\x1b[0m`, "$ "]);
+            const termPrompt = getTerminalPrompt(activeTerminalRef.current);
+            appendToTerminal([`\x1b[31mTask error: ${err.message}\x1b[0m`, termPrompt]);
         } finally {
             setIsRunning(false);
         }
@@ -846,12 +931,13 @@ export function TerminalProvider({ children }) {
 
             if (isExit) {
                 exitReplSession(repl.sessionId).catch(() => {});
+                const shellPrompt = getTerminalPrompt(targetTerm);
                 setTerminals(prev => prev.map(t => {
                     if (t.id !== targetId) return t;
                     return {
                         ...t,
                         replState: null,
-                        output: [...t.output, `\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, "$ "]
+                        output: [...t.output, `\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, shellPrompt]
                     };
                 }));
                 return;
@@ -865,13 +951,14 @@ export function TerminalProvider({ children }) {
                 });
 
                 if (res.exited) {
+                    const shellPrompt = getTerminalPrompt(targetTerm);
                     setTerminals(prev => prev.map(t => {
                         if (t.id !== targetId) return t;
                         const outLines = [];
                         if (res.output) {
                             outLines.push(...res.output.replace(/\r\n/g, '\n').split('\n'));
                         }
-                        outLines.push(`\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, "$ ");
+                        outLines.push(`\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, shellPrompt);
                         return {
                             ...t,
                             replState: null,
@@ -907,7 +994,7 @@ export function TerminalProvider({ children }) {
             return;
         }
 
-        const activePrompt = targetTerm?.replState?.prompt || targetTerm?.prompt || '$ ';
+        const activePrompt = getTerminalPrompt(targetTerm);
         const commandWithPrompt = `${activePrompt}${command}`;
         const newHistory = [...targetTerm.history, command];
 
@@ -1014,23 +1101,28 @@ export function TerminalProvider({ children }) {
         }
 
         // Direct System Shell execution (PowerShell / Command Prompt / Bash)
-        // Stream command execution directly in native host OS shell
+        // Stream command execution directly in native host OS shell with live interactive stdin
         const targetCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
         const isPhysical = targetCwd && (targetCwd.includes(':') || targetCwd.startsWith('/'));
 
-        setIsRunning(true);
-        lastActionRef.current = { type: 'command', command: trimmed };
-
+        const streamId = `term_${targetId}_${Date.now()}`;
         const abortCtrl = new AbortController();
         activeProcessAbortCtrl.current = abortCtrl;
+        activeStreamsRef.current[targetId] = { streamId, abortCtrl };
+
+        setIsRunning(true);
+        setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: true, activeStreamId: streamId } : t));
+        lastActionRef.current = { type: 'command', command: trimmed };
+
         let collectedOutput = "";
 
         try {
             await streamShellCommand({
+                streamId,
                 command: trimmed,
                 cwd: targetCwd,
                 profile: targetTerm?.profile || defaultProfile || 'powershell',
-                virtualFiles: isPhysical ? undefined : files,
+                virtualFiles: files,
                 timeoutMs: 0,
                 signal: abortCtrl.signal,
                 onChunk: (chunk) => {
@@ -1060,18 +1152,26 @@ export function TerminalProvider({ children }) {
                     }
                 },
                 onExit: (code) => {
+                    delete activeStreamsRef.current[targetId];
                     activeProcessAbortCtrl.current = null;
                     setIsRunning(false);
-                    appendToTerminal([activePrompt], targetId);
+                    setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
+                    const termPrompt = getTerminalPrompt(targetTerm);
+                    appendToTerminal([termPrompt], targetId);
                 }
             });
         } catch (err) {
+            delete activeStreamsRef.current[targetId];
+            setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
             if (err.name !== 'AbortError') {
-                appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, activePrompt], targetId);
+                const termPrompt = getTerminalPrompt(targetTerm);
+                appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, termPrompt], targetId);
             }
         } finally {
+            delete activeStreamsRef.current[targetId];
             activeProcessAbortCtrl.current = null;
             setIsRunning(false);
+            setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
         }
     }, [activeTerminal, activeTerminalId, files, currentWorkspacePath, fileCtx, runActiveFile, runCodeSnippet, appendToTerminal, setTerminalOutput, editorCtx]);
 
@@ -1108,7 +1208,9 @@ export function TerminalProvider({ children }) {
         },
         appendOutput: appendToTerminal,
         executeCommand,
-        runActiveFile
+        runActiveFile,
+        sendTerminalInput,
+        getTerminalPrompt
     };
 
     return (
