@@ -21,7 +21,7 @@ function hyperionSandboxPlugin() {
     name: 'hyperion-sandbox-middleware',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (!req.url.startsWith('/api/sandbox')) {
+        if (!req.url.startsWith('/api/sandbox') && !req.url.startsWith('/api/selenium')) {
           return next();
         }
 
@@ -44,6 +44,30 @@ function hyperionSandboxPlugin() {
         }
 
         const urlObj = new URL(req.url, 'http://localhost');
+
+        // Python Selenium Backend Proxy
+        if (urlObj.pathname.startsWith('/api/selenium') || urlObj.pathname.startsWith('/api/sandbox/selenium')) {
+          const targetSubPath = urlObj.pathname.replace(/^\/api(\/sandbox)?\/selenium/, '') || '/status';
+          const targetUrl = 'http://127.0.0.1:5006' + targetSubPath + (urlObj.search || '');
+          try {
+            const body = (req.method === 'POST' || req.method === 'PUT') ? await parseBody() : undefined;
+            const fetchOpts = {
+              method: req.method,
+              headers: { 'Content-Type': 'application/json' },
+              signal: AbortSignal.timeout(90000)
+            };
+            if (body) fetchOpts.body = JSON.stringify(body);
+            const pyRes = await fetch(targetUrl, fetchOpts);
+            const pyData = await pyRes.text();
+            res.statusCode = pyRes.status;
+            res.setHeader('Content-Type', pyRes.headers.get('content-type') || 'application/json');
+            return res.end(pyData);
+          } catch (err) {
+            res.statusCode = 502;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ success: false, error: 'Python Selenium Service (port 5006) unreachable: ' + err.message }));
+          }
+        }
         const subPath = urlObj.pathname.replace(/^\/api\/sandbox/, '');
 
         if (subPath === '/status' && req.method === 'GET') {
@@ -452,6 +476,29 @@ function hyperionSandboxPlugin() {
               error: err.message,
               data: null
             }));
+          }
+        }
+
+        if (req.url && req.url.startsWith('/api/selenium')) {
+          const targetSubPath = req.url.replace('/api/selenium', '');
+          const targetUrl = 'http://127.0.0.1:5006' + (targetSubPath || '/status');
+          try {
+            const body = (req.method === 'POST' || req.method === 'PUT') ? await parseBody() : undefined;
+            const fetchOpts = {
+              method: req.method,
+              headers: { 'Content-Type': 'application/json' },
+              signal: AbortSignal.timeout(60000)
+            };
+            if (body) fetchOpts.body = JSON.stringify(body);
+            const pyRes = await fetch(targetUrl, fetchOpts);
+            const pyData = await pyRes.text();
+            res.statusCode = pyRes.status;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(pyData);
+          } catch (err) {
+            res.statusCode = 502;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ success: false, error: 'Python Selenium Service (port 5006) error: ' + err.message }));
           }
         }
 

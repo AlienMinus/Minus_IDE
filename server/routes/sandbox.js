@@ -1,4 +1,5 @@
 import express from 'express';
+import seleniumRouter from './selenium.js';
 import fs from 'fs';
 import {
   getRuntimesInfo,
@@ -17,6 +18,9 @@ import {
 
 const router = express.Router();
 const activeStreams = new Map();
+
+// Mount Python Selenium Testing Engine router under /selenium
+router.use('/selenium', seleniumRouter);
 
 // GET /preview-proxy - In-memory transparent HTML proxy with automation bridge
 router.get('/preview-proxy', async (req, res) => {

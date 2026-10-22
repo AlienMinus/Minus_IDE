@@ -1564,3 +1564,105 @@ export function generateJsonReport(runSummary, suites) {
   );
 }
 
+
+
+// =====================================================================
+// Python Selenium 4 Backend API Integration
+// =====================================================================
+
+let activeSeleniumBase = null;
+
+async function getSeleniumBaseUrl() {
+  if (activeSeleniumBase) return activeSeleniumBase;
+  // Try proxy first
+  try {
+    const res = await fetch("/api/selenium/status", { signal: AbortSignal.timeout(1200) });
+    const cType = res.headers.get("content-type") || "";
+    if (res.ok && cType.includes("application/json")) {
+      activeSeleniumBase = "/api/selenium";
+      return activeSeleniumBase;
+    }
+  } catch {}
+
+  // Fallback to direct Python backend on port 5006
+  try {
+    const res = await fetch("http://127.0.0.1:5006/status", { signal: AbortSignal.timeout(1200) });
+    if (res.ok) {
+      activeSeleniumBase = "http://127.0.0.1:5006";
+      return activeSeleniumBase;
+    }
+  } catch {}
+
+  return "http://127.0.0.1:5006";
+}
+
+export async function getPythonSeleniumStatus() {
+  try {
+    const base = await getSeleniumBaseUrl();
+    const endpoint = `${base}/status`;
+    const res = await fetch(endpoint, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) return await res.json();
+  } catch {}
+  return null;
+}
+
+export async function configurePythonSelenium(config = {}) {
+  try {
+    const base = await getSeleniumBaseUrl();
+    const endpoint = `${base}/session/configure`;
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(config)
+    });
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function runPythonSeleniumSuite(targetUrl, tests = [], suiteName = "Automated QA Suite") {
+  const base = await getSeleniumBaseUrl();
+  const endpoint = `${base}/run-suite`;
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: targetUrl, tests, suiteName })
+  });
+  return await res.json();
+}
+
+export async function runPythonSeleniumAgent(targetUrl, maxSteps = 10) {
+  const base = await getSeleniumBaseUrl();
+  const endpoint = `${base}/agent/explore`;
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: targetUrl, maxSteps })
+  });
+  return await res.json();
+}
+
+export async function executePythonSeleniumStep(stepData) {
+  const base = await getSeleniumBaseUrl();
+  const endpoint = `${base}/execute-step`;
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(stepData)
+  });
+  return await res.json();
+}
+
+export async function capturePythonSeleniumScreenshot() {
+  try {
+    const base = await getSeleniumBaseUrl();
+    const endpoint = `${base}/screenshot`;
+    const res = await fetch(endpoint);
+    if (res.ok) {
+      const data = await res.json();
+      return data.screenshot;
+    }
+  } catch {}
+  return null;
+}

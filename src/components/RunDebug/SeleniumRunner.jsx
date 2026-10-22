@@ -26,8 +26,14 @@ import {
   FaMousePointer,
   FaKeyboard,
   FaBullseye,
-  FaTimes
+  FaTimes,
+  FaEye,
+  FaEyeSlash,
+  FaCamera,
+  FaChrome,
+  FaEdge
 } from "react-icons/fa";
+import { SiPython } from "react-icons/si";
 import { VscDebugRestart, VscReport, VscBeaker, VscInspect } from "react-icons/vsc";
 import {
   HyperionWebDriver,
@@ -38,7 +44,13 @@ import {
   generateMarkdownReport,
   generateHtmlReport,
   generateJsonReport,
-  globalAgentCursor
+  globalAgentCursor,
+  getPythonSeleniumStatus,
+  configurePythonSelenium,
+  runPythonSeleniumSuite,
+  runPythonSeleniumAgent,
+  executePythonSeleniumStep,
+  capturePythonSeleniumScreenshot
 } from "../../services/seleniumEngine";
 import { HyperionQAAgent } from "../../services/seleniumAgent";
 import { globalElementInspector } from "../../services/elementInspector";
@@ -56,6 +68,15 @@ export default function SeleniumRunner({ isStudioMode = false }) {
 
   // Active Sub-tab inside Selenium Runner: "tests" | "agent" | "reports"
   const [activeTab, setActiveTab] = useState("tests");
+
+  // Testing Engine state: "python" (Python Selenium 4 backend) or "dom" (In-browser DOM simulator)
+  const [engineMode, setEngineMode] = useState("python");
+  const [pythonStatus, setPythonStatus] = useState(null);
+  const [isPythonLoading, setIsPythonLoading] = useState(false);
+  const [isHeadless, setIsHeadless] = useState(true);
+  const [browserType, setBrowserType] = useState("chrome");
+  const [liveScreenshot, setLiveScreenshot] = useState(null);
+  const [viewScreenshotModal, setViewScreenshotModal] = useState(null);
 
   // Previewer Connection state
   const [isPreviewerConnected, setIsPreviewerConnected] = useState(false);
@@ -141,6 +162,84 @@ export default function SeleniumRunner({ isStudioMode = false }) {
       window.removeEventListener("keydown", handleInspectShortcut, true);
     };
   }, []);
+
+  // Poll Python Selenium backend status
+  const fetchSeleniumStatus = async () => {
+    try {
+      const status = await getPythonSeleniumStatus();
+      if (status && status.success) {
+        setPythonStatus(status);
+        if (status.config) {
+          setIsHeadless(status.config.headless !== false);
+          setBrowserType(status.config.browser || "chrome");
+        }
+      } else {
+        setPythonStatus(null);
+      }
+    } catch {
+      setPythonStatus(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchSeleniumStatus();
+    const interval = setInterval(fetchSeleniumStatus, 3500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleToggleHeadless = async () => {
+    setIsPythonLoading(true);
+    const newHeadless = !isHeadless;
+    setIsHeadless(newHeadless);
+    try {
+      await configurePythonSelenium({ headless: newHeadless, browser: browserType });
+      await fetchSeleniumStatus();
+    } catch (e) {
+      console.error("Failed to toggle headless:", e);
+    } finally {
+      setIsPythonLoading(false);
+    }
+  };
+
+  const handleChangeBrowser = async (newBrowser) => {
+    setIsPythonLoading(true);
+    setBrowserType(newBrowser);
+    try {
+      await configurePythonSelenium({ browser: newBrowser, headless: isHeadless });
+      await fetchSeleniumStatus();
+    } catch (e) {
+      console.error("Failed to switch browser:", e);
+    } finally {
+      setIsPythonLoading(false);
+    }
+  };
+
+  const handleRestartSelenium = async () => {
+    setIsPythonLoading(true);
+    try {
+      await configurePythonSelenium({ headless: isHeadless, browser: browserType });
+      await fetchSeleniumStatus();
+    } catch (e) {
+      console.error("Failed to restart Selenium:", e);
+    } finally {
+      setIsPythonLoading(false);
+    }
+  };
+
+  const handleCaptureSnapshot = async () => {
+    setIsPythonLoading(true);
+    try {
+      const shot = await capturePythonSeleniumScreenshot();
+      if (shot) {
+        setLiveScreenshot(shot);
+        setViewScreenshotModal(shot);
+      }
+    } catch (e) {
+      console.error("Failed to capture snapshot:", e);
+    } finally {
+      setIsPythonLoading(false);
+    }
+  };
 
   // Poll for Builtin Previewer detection
   useEffect(() => {
@@ -291,24 +390,6 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   const handleRunAll = async (onlySelected = false) => {
     if (isRunning) return;
 
-    // Ensure previewer iframe exists or auto-launch previewer tab
-    const existingIframe = getActivePreviewerIframe();
-    if (!existingIframe && !showSplitPreview) {
-      const target = previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174";
-      if (openLiveBrowserTab) {
-        openLiveBrowserTab(target, "Live Browser Preview");
-        await new Promise((r) => setTimeout(r, 600));
-      }
-    }
-
-    setIsRunning(true);
-    setIsPaused(false);
-    abortFlagRef.current = false;
-
-    const driver = driverRef.current;
-    driver.speed = speed;
-    await driver.getOrFetchDocument();
-
     const testsToRun = [];
     testSuites.forEach((suite) => {
       suite.tests.forEach((test) => {
@@ -322,6 +403,94 @@ export default function SeleniumRunner({ isStudioMode = false }) {
       setIsRunning(false);
       return;
     }
+
+    const targetUrl = previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174";
+
+    // 1. Python Selenium 4 Backend Engine Mode
+    if (engineMode === "python") {
+      setIsRunning(true);
+      setIsPaused(false);
+      abortFlagRef.current = false;
+      const startOverall = Date.now();
+
+      try {
+        const suitePayload = testsToRun.map((t) => ({
+          id: t.id,
+          name: t.name,
+          steps: (t.steps || []).map((s) => ({
+            action: s.type || s.action || "click",
+            by: s.by || "css",
+            selector: s.selector || "",
+            value: s.value || s.script || s.expected || "",
+            desc: s.desc || ""
+          }))
+        }));
+
+        const response = await runPythonSeleniumSuite(targetUrl, suitePayload, "Python Selenium Suite");
+
+        if (response && response.success) {
+          const pyResults = (response.results || []).map((r) => ({
+            testId: r.id,
+            testName: r.name,
+            status: r.status,
+            durationMs: r.durationMs,
+            error: r.error,
+            steps: (r.steps || []).map((s) => ({
+              status: s.status,
+              type: s.action,
+              desc: s.selector ? `${s.action}: ${s.selector}` : s.action,
+              durationMs: s.durationMs,
+              error: s.error
+            })),
+            screenshot: r.screenshot,
+            consoleLogs: r.consoleLogs || []
+          }));
+
+          setTestResults(pyResults);
+
+          const lastScreenshot = [...pyResults].reverse().find((r) => r.screenshot)?.screenshot;
+          if (lastScreenshot) {
+            setLiveScreenshot(lastScreenshot);
+          }
+
+          setRunSummary({
+            total: response.summary?.total || testsToRun.length,
+            passed: response.summary?.passed || 0,
+            failed: response.summary?.failed || 0,
+            durationMs: response.summary?.durationMs || (Date.now() - startOverall),
+            results: pyResults,
+            markdownReport: response.markdownReport
+          });
+        } else {
+          throw new Error(response?.error || "Python Selenium execution failed");
+        }
+      } catch (err) {
+        console.error("[SeleniumRunner] Python suite error:", err);
+        alert("Selenium Python execution error: " + (err.message || "Failed to execute"));
+      } finally {
+        setIsRunning(false);
+        setActiveRunningTestId(null);
+      }
+      return;
+    }
+
+    // 2. In-Browser DOM Simulator Engine Mode
+    // Ensure previewer iframe exists or auto-launch previewer tab
+    const existingIframe = getActivePreviewerIframe();
+    if (!existingIframe && !showSplitPreview) {
+      if (openLiveBrowserTab) {
+        openLiveBrowserTab(targetUrl, "Live Browser Preview");
+        await new Promise((r) => setTimeout(r, 600));
+      }
+    }
+
+    setIsRunning(true);
+    setIsPaused(false);
+    abortFlagRef.current = false;
+
+    const driver = driverRef.current;
+    driver.speed = speed;
+    await driver.getOrFetchDocument();
 
     const currentResults = [];
     let passedCount = 0;
@@ -371,21 +540,74 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   const handleStartAgent = async (overrideTarget = null) => {
     if (isAgentRunning) return;
 
-    // Ensure previewer iframe exists or auto-launch previewer tab
-    const existingIframe = getActivePreviewerIframe();
-    if (!existingIframe && !showSplitPreview) {
-      const target = previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174";
-      if (openLiveBrowserTab) {
-        openLiveBrowserTab(target, "Live Browser Preview");
-        await new Promise((r) => setTimeout(r, 600));
-      }
-    }
-
     setIsAgentRunning(true);
     setAgentThoughts([]);
     setAgentFindings([]);
     setAgentHealthScore(null);
     setActiveTab("agent");
+
+    const targetUrl = previewerUrl || window.__hyperion_previewer_url__ || "http://localhost:5174";
+
+    // 1. Python Selenium Autonomous Agent Mode
+    if (engineMode === "python") {
+      try {
+        setAgentGoal(`Python Selenium autonomous exploration on ${targetUrl}...`);
+        setAgentProgress(25);
+
+        const res = await runPythonSeleniumAgent(targetUrl, 15);
+        if (res && res.success) {
+          setAgentGoal("Completed Python Selenium exploration");
+          setAgentProgress(100);
+          setAgentHealthScore(res.healthScore !== undefined ? res.healthScore : 90);
+
+          if (res.thoughts) {
+            const formattedThoughts = res.thoughts.map((th, i) => ({
+              id: `py_th_${i}`,
+              timestamp: new Date().toLocaleTimeString(),
+              text: th,
+              type: "action"
+            }));
+            setAgentThoughts(formattedThoughts);
+          }
+
+          if (res.findings) {
+            const formattedFindings = res.findings.map((f, i) => ({
+              id: `py_find_${i}`,
+              title: f.title || "Observation",
+              description: f.description || "",
+              severity: f.type === "error" ? "high" : "low",
+              recommendation: f.details ? JSON.stringify(f.details) : null
+            }));
+            setAgentFindings(formattedFindings);
+          }
+
+          if (res.screenshot) {
+            setLiveScreenshot(res.screenshot);
+          }
+        } else {
+          throw new Error(res?.error || "Agent exploration failed");
+        }
+      } catch (err) {
+        console.error("[SeleniumRunner] Python Agent error:", err);
+        setAgentGoal("Agent exploration encountered an error");
+        setAgentThoughts((prev) => [
+          ...prev,
+          { id: `err_${Date.now()}`, timestamp: new Date().toLocaleTimeString(), text: err.message, type: "error" }
+        ]);
+      } finally {
+        setIsAgentRunning(false);
+      }
+      return;
+    }
+
+    // 2. DOM Simulator Agent Mode
+    const existingIframe = getActivePreviewerIframe();
+    if (!existingIframe && !showSplitPreview) {
+      if (openLiveBrowserTab) {
+        openLiveBrowserTab(targetUrl, "Live Browser Preview");
+        await new Promise((r) => setTimeout(r, 600));
+      }
+    }
 
     const agent = new HyperionQAAgent(driverRef.current);
     agentRef.current = agent;
@@ -493,7 +715,31 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   };
 
   const handleSimulateClick = async () => {
-    if (!selectedElement || !driverRef.current) return;
+    if (!selectedElement) return;
+
+    if (engineMode === "python") {
+      try {
+        const res = await executePythonSeleniumStep({
+          action: "click",
+          by: "css",
+          selector: selectedElement.bestSelector
+        });
+        setAgentThoughts((prev) => [
+          ...prev,
+          {
+            id: `th_${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            text: `[Python Selenium] Clicked "${selectedElement.bestSelector}": ${res?.details || "Success"}`,
+            type: res?.success ? "success" : "error"
+          }
+        ]);
+      } catch (err) {
+        console.error("Python click error:", err);
+      }
+      return;
+    }
+
+    if (!driverRef.current) return;
     const iframe = getActivePreviewerIframe();
     const doc = getSafeIframeDocument(iframe);
     let el = selectedElement.elementRef;
@@ -519,7 +765,33 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   };
 
   const handleSimulateSendKeys = async () => {
-    if (!selectedElement || !driverRef.current || !inspectTypeInput) return;
+    if (!selectedElement || !inspectTypeInput) return;
+
+    if (engineMode === "python") {
+      try {
+        const res = await executePythonSeleniumStep({
+          action: "type",
+          by: "css",
+          selector: selectedElement.bestSelector,
+          value: inspectTypeInput
+        });
+        setAgentThoughts((prev) => [
+          ...prev,
+          {
+            id: `th_${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString(),
+            text: `[Python Selenium] Typed "${inspectTypeInput}" into "${selectedElement.bestSelector}": ${res?.details || "Success"}`,
+            type: res?.success ? "success" : "error"
+          }
+        ]);
+        setInspectTypeInput("");
+      } catch (err) {
+        console.error("Python sendKeys error:", err);
+      }
+      return;
+    }
+
+    if (!driverRef.current) return;
     const iframe = getActivePreviewerIframe();
     const doc = getSafeIframeDocument(iframe);
     let el = selectedElement.elementRef;
@@ -637,7 +909,7 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   };
 
   const handleDownloadMarkdown = () => {
-    const md = generateMarkdownReport(
+    const md = runSummary.markdownReport || generateMarkdownReport(
       { ...runSummary, results: testResults },
       testSuites
     );
@@ -651,7 +923,7 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   };
 
   const handleSaveToWorkspace = async () => {
-    const md = generateMarkdownReport(
+    const md = runSummary.markdownReport || generateMarkdownReport(
       { ...runSummary, results: testResults },
       testSuites
     );
@@ -677,6 +949,97 @@ export default function SeleniumRunner({ isStudioMode = false }) {
   return (
     <div className={`selenium-runner-root ${showSplitPreview ? "has-split" : ""}`}>
       <div className="selenium-runner-container">
+      {/* Python Selenium 4 Engine Bar */}
+      <div className="selenium-engine-bar">
+        <div className="engine-identity">
+          <div className="engine-icon-wrap">
+            <SiPython className="python-brand-icon" />
+          </div>
+          <div className="engine-info">
+            <div className="engine-title-row">
+              <span className="engine-title">Selenium 4 WebDriver</span>
+              <span className={`engine-badge ${pythonStatus?.success ? "online" : "offline"}`}>
+                <span className="status-dot" />
+                {pythonStatus?.success ? "ONLINE" : "OFFLINE"}
+              </span>
+            </div>
+            <span className="engine-subtext">
+              {pythonStatus?.success
+                ? `Python ${pythonStatus.python_version || "3.12"} • ${browserType.toUpperCase()} • Port 5006`
+                : "Python Selenium backend on port 5006"}
+            </span>
+          </div>
+        </div>
+
+        <div className="engine-controls">
+          {/* Mode Selector */}
+          <select
+            className="engine-mode-select"
+            value={engineMode}
+            onChange={(e) => setEngineMode(e.target.value)}
+            title="Switch active test execution engine"
+          >
+            <option value="python">🐍 Python Selenium 4 (Native)</option>
+            <option value="dom">🌐 In-Browser Simulator (DOM)</option>
+          </select>
+
+          {engineMode === "python" && (
+            <>
+              {/* Browser Selector */}
+              <div className="engine-browser-toggle">
+                <button
+                  className={`engine-mini-btn ${browserType === "chrome" ? "active" : ""}`}
+                  onClick={() => handleChangeBrowser("chrome")}
+                  disabled={isPythonLoading}
+                  title="Use Google Chrome WebDriver"
+                >
+                  <FaChrome /> Chrome
+                </button>
+                <button
+                  className={`engine-mini-btn ${browserType === "edge" ? "active" : ""}`}
+                  onClick={() => handleChangeBrowser("edge")}
+                  disabled={isPythonLoading}
+                  title="Use Microsoft Edge WebDriver"
+                >
+                  <FaEdge /> Edge
+                </button>
+              </div>
+
+              {/* Headless Toggle */}
+              <button
+                className={`engine-toggle-btn ${isHeadless ? "headless" : "visible"}`}
+                onClick={handleToggleHeadless}
+                disabled={isPythonLoading}
+                title={isHeadless ? "Switch to Visible Browser Window" : "Switch to Headless Background Execution"}
+              >
+                {isHeadless ? <FaEyeSlash /> : <FaEye />}
+                <span>{isHeadless ? "Headless" : "Visible"}</span>
+              </button>
+
+              {/* Instant Snapshot */}
+              <button
+                className="engine-icon-btn"
+                onClick={handleCaptureSnapshot}
+                title="Capture instant screenshot from Selenium WebDriver"
+                disabled={isPythonLoading}
+              >
+                <FaCamera />
+              </button>
+
+              {/* Restart Driver */}
+              <button
+                className="engine-icon-btn restart"
+                onClick={handleRestartSelenium}
+                title="Restart Selenium session"
+                disabled={isPythonLoading}
+              >
+                <VscDebugRestart className={isPythonLoading ? "spin-icon" : ""} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Target Previewer Connection Header */}
       <div className="selenium-target-bar">
         <div className="target-indicator-group">
@@ -1322,6 +1685,28 @@ export default function SeleniumRunner({ isStudioMode = false }) {
                         <strong>Error:</strong> {res.error}
                       </div>
                     )}
+                    {res.screenshot && (
+                      <div className="result-screenshot-row">
+                        <div
+                          className="result-thumb-wrapper"
+                          onClick={() => setViewScreenshotModal(res.screenshot)}
+                          title="Click to expand Selenium browser screenshot"
+                        >
+                          <img src={res.screenshot} alt="Screenshot" className="result-screenshot-thumb" />
+                          <span className="thumb-hover-overlay"><FaCamera /> Expand</span>
+                        </div>
+                      </div>
+                    )}
+                    {res.consoleLogs && res.consoleLogs.length > 0 && (
+                      <div className="result-logs-box">
+                        <span className="logs-header"><FaTerminal /> Console Logs ({res.consoleLogs.length}):</span>
+                        {res.consoleLogs.slice(0, 3).map((log, li) => (
+                          <div className={`log-entry ${log.level?.toLowerCase() || ""}`} key={li}>
+                            [{log.level}] {log.message}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1392,6 +1777,28 @@ export default function SeleniumRunner({ isStudioMode = false }) {
               >
                 Add Test
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Selenium Screenshot Modal */}
+      {viewScreenshotModal && (
+        <div className="screenshot-modal-backdrop" onClick={() => setViewScreenshotModal(null)}>
+          <div className="screenshot-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="screenshot-modal-header">
+              <span className="screenshot-modal-title">
+                <FaCamera /> Selenium WebDriver Capture
+              </span>
+              <button
+                className="screenshot-modal-close"
+                onClick={() => setViewScreenshotModal(null)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="screenshot-modal-body">
+              <img src={viewScreenshotModal} alt="Selenium Viewport" className="screenshot-full-img" />
             </div>
           </div>
         </div>

@@ -27,3 +27,7 @@ dist-ssr
 server/.env
 server/.env.local
 server/node_modules
+
+# Python
+__pycache__/
+*.py[cod]
