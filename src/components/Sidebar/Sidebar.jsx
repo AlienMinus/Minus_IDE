@@ -19,7 +19,8 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
         openSettingsTab,
         setIsCommandPaletteOpen,
         openTaskPicker,
-        openView
+        openView,
+        openApiClientTab
     } = useEditor();
 
     const { themes, currentThemeId, setTheme } = useTheme();
@@ -232,7 +233,13 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
                         key={item.id}
                         className={`sidebar-btn ${active === item.id ? "active" : ""}`}
                         title={item.title}
-                        onClick={() => onSetActive(item.id)}
+                        onClick={() => {
+                            if (item.id === "api-client") {
+                                openApiClientTab?.();
+                            } else {
+                                onSetActive(item.id);
+                            }
+                        }}
                     >
                         <span className="sidebar-btn-inner">
                             {item.icon}

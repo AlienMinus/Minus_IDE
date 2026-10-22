@@ -2,22 +2,32 @@
 import express from 'express';
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PYTHON_SELENIUM_URL = process.env.SELENIUM_BACKEND_URL || 'http://127.0.0.1:5006';
+const FASTAPI_URL = process.env.FASTAPI_BACKEND_URL || 'http://127.0.0.1:8000';
 let pythonProcess = null;
 
-// Ensure Python Selenium backend daemon is running
-async function ensurePythonSeleniumRunning() {
+// Determine best python executable (prefer backend/venv)
+function getPythonExecutable() {
+  const venvPythonWin = path.join(__dirname, '..', '..', 'backend', 'venv', 'Scripts', 'python.exe');
+  const venvPythonNix = path.join(__dirname, '..', '..', 'backend', 'venv', 'bin', 'python');
+  if (fs.existsSync(venvPythonWin)) return venvPythonWin;
+  if (fs.existsSync(venvPythonNix)) return venvPythonNix;
+  return 'python';
+}
+
+// Ensure FastAPI production server is running
+async function ensureFastAPIRunning() {
   try {
-    const res = await fetch(`${PYTHON_SELENIUM_URL}/status`, { signal: AbortSignal.timeout(1200) });
+    const res = await fetch(`${FASTAPI_URL}/health`, { signal: AbortSignal.timeout(1200) });
     if (res.ok) return true;
   } catch {
-    // Service not responding yet, attempt spawn
+    // Service not responding yet
   }
 
   if (pythonProcess && !pythonProcess.killed) {
@@ -25,25 +35,29 @@ async function ensurePythonSeleniumRunning() {
   }
 
   try {
-    const scriptPath = path.join(__dirname, '..', 'selenium_service.py');
-    pythonProcess = spawn('python', [scriptPath], {
+    const pyExe = getPythonExecutable();
+    const mainScript = path.join(__dirname, '..', '..', 'backend', 'main.py');
+    const projectRoot = path.join(__dirname, '..', '..');
+
+    pythonProcess = spawn(pyExe, [mainScript], {
+      cwd: projectRoot,
       detached: true,
       stdio: 'ignore'
     });
     pythonProcess.unref();
-    // Wait briefly for server startup
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 2000));
     return true;
   } catch (err) {
-    console.warn('[SeleniumProxy] Failed to auto-spawn python selenium_service:', err.message);
+    console.warn('[SeleniumProxy] Failed to auto-spawn FastAPI backend:', err.message);
     return false;
   }
 }
 
-// Proxy all requests under /selenium/* to Python backend
-router.all('*', async (req, res) => {
+// Proxy all requests under /selenium/* to FastAPI backend
+router.use(async (req, res) => {
   const subPath = req.path || '/status';
-  const targetUrl = `${PYTHON_SELENIUM_URL}${subPath}`;
+  // FastAPI router exposes both /status and /api/selenium/status
+  const targetUrl = `${FASTAPI_URL}/api/selenium${subPath.startsWith('/') ? subPath : '/' + subPath}`;
 
   try {
     const fetchOptions = {
@@ -59,9 +73,9 @@ router.all('*', async (req, res) => {
     let response;
     try {
       response = await fetch(targetUrl, fetchOptions);
-    } catch (err) {
+    } catch {
       // If failed, try to ensure running and retry once
-      await ensurePythonSeleniumRunning();
+      await ensureFastAPIRunning();
       response = await fetch(targetUrl, fetchOptions);
     }
 
@@ -74,11 +88,10 @@ router.all('*', async (req, res) => {
   } catch (err) {
     return res.status(502).json({
       success: false,
-      error: `Python Selenium Backend (port 5006) unavailable: ${err.message}`,
-      hint: 'Ensure Python Selenium backend is running: python server/selenium_service.py'
+      error: `FastAPI Python Selenium Backend (${FASTAPI_URL}) unavailable: ${err.message}`,
+      hint: 'Ensure Python FastAPI backend is running: backend/venv/Scripts/python backend/main.py'
     });
   }
 });
 
 export default router;
-

@@ -80,6 +80,10 @@ function MainLayout() {
   }, [sidebarActive, isSidebarVisible]);
 
   const handleSidebarClick = (id) => {
+    if (id === "api-client") {
+      openApiClientTab?.();
+      return;
+    }
     if (sidebarActive === id && isSidebarVisible) {
       toggleSidebar();
     } else {

@@ -1574,7 +1574,7 @@ let activeSeleniumBase = null;
 
 async function getSeleniumBaseUrl() {
   if (activeSeleniumBase) return activeSeleniumBase;
-  // Try proxy first
+  // 1. Try server proxy first (/api/selenium)
   try {
     const res = await fetch("/api/selenium/status", { signal: AbortSignal.timeout(1200) });
     const cType = res.headers.get("content-type") || "";
@@ -1584,7 +1584,16 @@ async function getSeleniumBaseUrl() {
     }
   } catch {}
 
-  // Fallback to direct Python backend on port 5006
+  // 2. Try direct FastAPI backend on port 8000
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/selenium/status", { signal: AbortSignal.timeout(1200) });
+    if (res.ok) {
+      activeSeleniumBase = "http://127.0.0.1:8000/api/selenium";
+      return activeSeleniumBase;
+    }
+  } catch {}
+
+  // 3. Fallback to port 5006
   try {
     const res = await fetch("http://127.0.0.1:5006/status", { signal: AbortSignal.timeout(1200) });
     if (res.ok) {
@@ -1593,7 +1602,7 @@ async function getSeleniumBaseUrl() {
     }
   } catch {}
 
-  return "http://127.0.0.1:5006";
+  return "http://127.0.0.1:8000/api/selenium";
 }
 
 export async function getPythonSeleniumStatus() {

@@ -1,10 +1,49 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const PYTHON_BACKEND_URL = process.env.FASTAPI_BACKEND_URL || 'http://127.0.0.1:8000';
+let pythonProcess = null;
+
+function getPythonExecutable() {
+  const venvPythonWin = path.join(__dirname, '..', '..', 'backend', 'venv', 'Scripts', 'python.exe');
+  const venvPythonNix = path.join(__dirname, '..', '..', 'backend', 'venv', 'bin', 'python');
+  if (fs.existsSync(venvPythonWin)) return venvPythonWin;
+  if (fs.existsSync(venvPythonNix)) return venvPythonNix;
+  return 'python';
+}
+
+async function ensureFastAPIRunning() {
+  try {
+    const res = await fetch(`${PYTHON_BACKEND_URL}/health`, { signal: AbortSignal.timeout(1200) });
+    if (res.ok) return true;
+  } catch {}
+
+  if (pythonProcess && !pythonProcess.killed) return false;
+
+  try {
+    const pyExe = getPythonExecutable();
+    const mainScript = path.join(__dirname, '..', '..', 'backend', 'main.py');
+    const projectRoot = path.join(__dirname, '..', '..');
+
+    pythonProcess = spawn(pyExe, [mainScript], {
+      cwd: projectRoot,
+      detached: true,
+      stdio: 'ignore'
+    });
+    pythonProcess.unref();
+    await new Promise((r) => setTimeout(r, 2000));
+    return true;
+  } catch (err) {
+    console.warn('[AILocalProxy] Failed to auto-spawn FastAPI backend:', err.message);
+    return false;
+  }
+}
 
 /**
  * Directories that must NEVER be traversed during security scans
@@ -655,11 +694,17 @@ router.get('/status', async (req, res) => {
   let localAiReady = false;
   let localAiStatus = 'offline';
   try {
-    const check = await fetch('http://127.0.0.1:5005/status', { signal: AbortSignal.timeout(800) });
-    if (check.ok) {
+    let check;
+    try {
+      check = await fetch(`${PYTHON_BACKEND_URL}/api/ai/status`, { signal: AbortSignal.timeout(1200) });
+    } catch {
+      await ensureFastAPIRunning();
+      check = await fetch(`${PYTHON_BACKEND_URL}/api/ai/status`, { signal: AbortSignal.timeout(1200) });
+    }
+    if (check && check.ok) {
       const d = await check.json();
       localAiReady = Boolean(d.is_loaded);
-      localAiStatus = d.status;
+      localAiStatus = d.cache?.status || (d.is_loaded ? 'ready' : 'available');
     }
   } catch {}
 
@@ -802,7 +847,7 @@ router.post('/chat', async (req, res) => {
     if (isQwenRequested && (!hasToken || model === 'qwen-local')) {
       try {
         const localMode = req.body.mode || (userPrompt.toLowerCase().includes('explain') ? 'explain' : (userPrompt.toLowerCase().includes('fix') ? 'fix' : 'generate'));
-        const localRes = await fetch('http://127.0.0.1:5005/chat', {
+        const fetchOpts = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -811,23 +856,43 @@ router.post('/chat', async (req, res) => {
             code: rawCodeSnippet,
             filename: targetFileName,
             mode: localMode,
-            max_tokens: req.body.max_tokens || 180,
+            max_tokens: req.body.max_tokens || 512,
             temperature: 0.2
           }),
           signal: AbortSignal.timeout(90000)
-        });
+        };
+        let localRes;
+        try {
+          localRes = await fetch(`${PYTHON_BACKEND_URL}/api/ai/chat`, fetchOpts);
+        } catch {
+          await ensureFastAPIRunning();
+          localRes = await fetch(`${PYTHON_BACKEND_URL}/api/ai/chat`, fetchOpts);
+        }
 
-        if (localRes.ok) {
+        if (localRes && localRes.ok) {
           const localData = await localRes.json();
           if (localData.success && localData.message) {
             return res.json({
               success: true,
               message: localData.message,
-              provider: 'qwen-local-cpu',
+              provider: 'qwen-local-fastapi',
               model: 'Qwen/Qwen2.5-Coder-0.5B-Instruct',
               metrics: localData.metrics
             });
           }
+        } else if (model === 'qwen-local') {
+          let reason = 'Offline model busy or initializing';
+          try {
+            const errD = await localRes.json();
+            if (errD.detail) reason = errD.detail;
+          } catch {}
+          const cypherFallback = generateCypherIntelligenceResponse(userPrompt, rawCodeSnippet, 'Qwen/Qwen2.5-Coder-0.5B-Instruct', false, targetFileName);
+          return res.json({
+            success: true,
+            message: `> ℹ️ *[Local Qwen CPU]: ${reason}. Falling back to Cypher Intelligence Engine.*\n\n${cypherFallback}`,
+            provider: 'cypher-security-engine',
+            model: 'qwen-local'
+          });
         }
       } catch (localErr) {
         console.warn('[LocalAI] Local Qwen query failed, falling back to Cypher Engine:', localErr.message);
@@ -849,7 +914,6 @@ router.post('/chat', async (req, res) => {
       const hfModel = (model === 'qwen-local' || model.toLowerCase().includes('qwen'))
         ? 'Qwen/Qwen2.5-Coder-32B-Instruct'
         : model;
-    if (hasToken) {
       try {
         const systemPrompt = `You are Cypher, an expert AI Code Security Analyst and programming assistant in Hyperion IDE.
 You specialize in Application Security (AppSec), OWASP Top 10, CWE, CVE, and secure coding practices.
@@ -929,13 +993,20 @@ router.post('/explain', async (req, res) => {
   try {
     const { code, filename, prompt } = req.body;
     try {
-      const localRes = await fetch('http://127.0.0.1:5005/explain', {
+      const fetchOpts = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, filename, prompt }),
+        body: JSON.stringify({ code, filename, prompt, mode: 'explain' }),
         signal: AbortSignal.timeout(120000)
-      });
-      if (localRes.ok) {
+      };
+      let localRes;
+      try {
+        localRes = await fetch(`${PYTHON_BACKEND_URL}/api/ai/explain`, fetchOpts);
+      } catch {
+        await ensureFastAPIRunning();
+        localRes = await fetch(`${PYTHON_BACKEND_URL}/api/ai/explain`, fetchOpts);
+      }
+      if (localRes && localRes.ok) {
         const data = await localRes.json();
         return res.json(data);
       }
@@ -962,13 +1033,20 @@ router.post('/fix', async (req, res) => {
   try {
     const { code, filename, prompt } = req.body;
     try {
-      const localRes = await fetch('http://127.0.0.1:5005/fix', {
+      const fetchOpts = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, filename, prompt }),
+        body: JSON.stringify({ code, filename, prompt, mode: 'fix' }),
         signal: AbortSignal.timeout(120000)
-      });
-      if (localRes.ok) {
+      };
+      let localRes;
+      try {
+        localRes = await fetch(`${PYTHON_BACKEND_URL}/api/ai/fix`, fetchOpts);
+      } catch {
+        await ensureFastAPIRunning();
+        localRes = await fetch(`${PYTHON_BACKEND_URL}/api/ai/fix`, fetchOpts);
+      }
+      if (localRes && localRes.ok) {
         const data = await localRes.json();
         return res.json(data);
       }
@@ -994,13 +1072,20 @@ router.post('/generate', async (req, res) => {
   try {
     const { prompt, language = 'javascript' } = req.body;
     try {
-      const localRes = await fetch('http://127.0.0.1:5005/generate', {
+      const fetchOpts = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, mode: 'generate' }),
         signal: AbortSignal.timeout(120000)
-      });
-      if (localRes.ok) {
+      };
+      let localRes;
+      try {
+        localRes = await fetch(`${PYTHON_BACKEND_URL}/api/ai/generate`, fetchOpts);
+      } catch {
+        await ensureFastAPIRunning();
+        localRes = await fetch(`${PYTHON_BACKEND_URL}/api/ai/generate`, fetchOpts);
+      }
+      if (localRes && localRes.ok) {
         const data = await localRes.json();
         return res.json(data);
       }

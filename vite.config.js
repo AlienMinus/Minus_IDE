@@ -48,7 +48,7 @@ function hyperionSandboxPlugin() {
         // Python Selenium Backend Proxy
         if (urlObj.pathname.startsWith('/api/selenium') || urlObj.pathname.startsWith('/api/sandbox/selenium')) {
           const targetSubPath = urlObj.pathname.replace(/^\/api(\/sandbox)?\/selenium/, '') || '/status';
-          const targetUrl = 'http://127.0.0.1:5006' + targetSubPath + (urlObj.search || '');
+          const targetUrl = 'http://127.0.0.1:8000/api/selenium' + targetSubPath + (urlObj.search || '');
           try {
             const body = (req.method === 'POST' || req.method === 'PUT') ? await parseBody() : undefined;
             const fetchOpts = {
