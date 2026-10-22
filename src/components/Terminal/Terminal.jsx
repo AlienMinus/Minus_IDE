@@ -486,7 +486,6 @@ function TerminalComponent({ hideToolbar = false }) {
             currentCommand.current = "";
             cursorPos.current = 0;
             term.write('\r\n');
-            outputLines.current += 1;
             sendTerminalInputRef.current(toSend, mainSessionRef.current?.id);
             return;
           }
@@ -589,12 +588,13 @@ function TerminalComponent({ hideToolbar = false }) {
       return;
     }
 
-    // In-place replacement check (e.g. idle prompt replaced by commandWithPrompt)
+    // In-place replacement check (idle prompt replaced by commandWithPrompt upon launch)
     if (mainSession.output.length === outputLines.current && mainSession.output.length > 0) {
       const prevLast = prevOutputRef.current?.[prevOutputRef.current.length - 1];
       const currLast = mainSession.output[mainSession.output.length - 1];
       if (prevLast !== currLast && typeof currLast === 'string') {
-        if (!justTypedEnterRef.current) {
+        const isMainRunning = !!(mainSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === mainSessionRef.current?.id));
+        if (!justTypedEnterRef.current && isPromptLine(prevLast) && !isMainRunning) {
           term.write('\r\x1b[2K' + String(currLast).replace(/\r?\n/g, '\r\n') + '\r\n');
         }
       }
@@ -816,7 +816,6 @@ function TerminalComponent({ hideToolbar = false }) {
             splitCurrentCommand.current = "";
             splitCursorPos.current = 0;
             term.write('\r\n');
-            splitOutputLines.current += 1;
             sendTerminalInputRef.current(toSend, splitSessionRef.current?.id);
             return;
           }
@@ -899,7 +898,7 @@ function TerminalComponent({ hideToolbar = false }) {
         const initialLines = splitSessionRef.current.output || [];
         initialLines.forEach((line, index) => {
           const formatted = String(line).replace(/\r?\n/g, '\r\n');
-          const isPrompt = /(?:\$ |>>> |\.\.\. |> |cypher> |agent> )$/.test(formatted);
+          const isPrompt = /(?:PS [^>\r\n]+> |[a-zA-Z]:\\[^>\r\n]*> |[#\$] |>>> |\.\.\. |> |cypher> |agent> |:\s*$|\?\s*$)$/.test(formatted);
           if (index === initialLines.length - 1 && isPrompt) {
             splitTerm.write(formatted);
           } else {
@@ -920,7 +919,7 @@ function TerminalComponent({ hideToolbar = false }) {
     const term = splitXtermRef.current;
     if (!term || !splitSession || !isSplit) return;
 
-    const isPromptLine = (str) => /(?:\$ |>>> |\.\.\. |> |cypher> |agent> )$/.test(str);
+    const isPromptLine = (str) => /(?:PS [^>\r\n]+> |[a-zA-Z]:\\[^>\r\n]*> |[#\$] |>>> |\.\.\. |> |cypher> |agent> |:\s*$|\?\s*$)$/.test(str);
 
     const writeSplitOutput = (lines) => {
       lines.forEach((line, index) => {
@@ -946,7 +945,8 @@ function TerminalComponent({ hideToolbar = false }) {
       const prevLast = splitPrevOutputRef.current?.[splitPrevOutputRef.current.length - 1];
       const currLast = splitSession.output[splitSession.output.length - 1];
       if (prevLast !== currLast && typeof currLast === 'string') {
-        if (!splitJustTypedEnterRef.current) {
+        const isSplitRunning = !!(splitSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === splitSessionRef.current?.id));
+        if (!splitJustTypedEnterRef.current && isPromptLine(prevLast) && !isSplitRunning) {
           term.write('\r\x1b[2K' + String(currLast).replace(/\r?\n/g, '\r\n') + '\r\n');
         }
       }

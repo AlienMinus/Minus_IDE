@@ -715,10 +715,13 @@ export function TerminalProvider({ children }) {
 
         setTerminals(prev => prev.map(t => {
             if (t.id !== targetId) return t;
+            const lastLine = t.output[t.output.length - 1];
+            const isLastPrompt = isPromptOnlyLine(lastLine) || (typeof lastLine === 'string' && lastLine.trim() === activePrompt.trim());
+            const baseOutput = isLastPrompt ? t.output.slice(0, -1) : t.output;
             return {
                 ...t,
                 history: newHistory,
-                output: [...t.output, commandWithPrompt]
+                output: [...baseOutput, commandWithPrompt]
             };
         }));
 
@@ -878,6 +881,26 @@ export function TerminalProvider({ children }) {
             }
         }
 
+        const startTime = Date.now();
+        let targetFileName = activeFile?.name || null;
+        const fileMatch = trimmed.match(/(?:python|node|bash|gcc|g\+\+)\s+["']?([^"'\s]+)["']?/i);
+        if (fileMatch && fileMatch[1]) {
+            targetFileName = fileMatch[1].replace(/^.*[\\\/]/, "");
+        }
+        const targetLang = targetFileName ? detectLanguage(targetFileName) : (activeFile ? detectLanguage(activeFile.name) : "shell");
+
+        setLatestExecution({
+            filename: targetFileName || trimmed,
+            language: targetLang,
+            timestamp: new Date().toLocaleTimeString(),
+            duration: 0,
+            exitCode: null,
+            success: true,
+            stdout: "",
+            stderr: "",
+            stage: "execution"
+        });
+
         let collectedOutput = "";
 
         try {
@@ -893,6 +916,23 @@ export function TerminalProvider({ children }) {
                     collectedOutput += chunk;
                     const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
                     appendToTerminal(chunkLines, targetId);
+
+                    const cleanChunkCollected = String(collectedOutput)
+                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+                        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+
+                    setLatestExecution(prev => ({
+                        ...(prev || {}),
+                        filename: targetFileName || activeFile?.name || trimmed,
+                        language: targetLang,
+                        timestamp: prev?.timestamp || new Date().toLocaleTimeString(),
+                        duration: Date.now() - startTime,
+                        exitCode: null,
+                        success: true,
+                        stdout: cleanChunkCollected,
+                        stderr: null,
+                        stage: 'execution'
+                    }));
 
                     // Scan for local dev server URLs WITH explicit port
                     const cleanCollected = String(collectedOutput)
@@ -916,12 +956,29 @@ export function TerminalProvider({ children }) {
                     }
                 },
                 onExit: (code) => {
+                    const duration = Date.now() - startTime;
                     delete activeStreamsRef.current[targetId];
                     activeProcessAbortCtrl.current = null;
                     setIsRunning(false);
                     setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
                     const termPrompt = getTerminalPrompt(targetTerm);
                     appendToTerminal([termPrompt], targetId);
+
+                    const cleanCollected = String(collectedOutput)
+                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+                        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+
+                    setLatestExecution({
+                        filename: targetFileName || activeFile?.name || trimmed,
+                        language: targetLang,
+                        timestamp: new Date().toLocaleTimeString(),
+                        duration,
+                        exitCode: code ?? 0,
+                        success: (code === 0 || code === null),
+                        stdout: cleanCollected,
+                        stderr: (code !== 0 && code !== null) ? (cleanCollected || `Process exited with code ${code}`) : null,
+                        stage: 'execution'
+                    });
                 }
             });
         } catch (err) {
@@ -930,6 +987,17 @@ export function TerminalProvider({ children }) {
             if (err.name !== 'AbortError') {
                 const termPrompt = getTerminalPrompt(targetTerm);
                 appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, termPrompt], targetId);
+                setLatestExecution({
+                    filename: targetFileName || activeFile?.name || trimmed,
+                    language: targetLang,
+                    timestamp: new Date().toLocaleTimeString(),
+                    duration: Date.now() - startTime,
+                    exitCode: 1,
+                    success: false,
+                    stdout: collectedOutput,
+                    stderr: err.message,
+                    stage: 'execution'
+                });
             }
         } finally {
             delete activeStreamsRef.current[targetId];
@@ -1054,10 +1122,24 @@ export function TerminalProvider({ children }) {
             runCmd = `node "${fileName}"`;
         } else if (lang === 'c') {
             const out = fileName.replace(/\.c$/i, '.exe');
-            runCmd = `gcc "${fileName}" -o "${out}" && .\\"${out}"`;
+            const prof = targetTerm?.profile || defaultProfile || 'powershell';
+            if (prof === 'cmd') {
+                runCmd = `gcc "${fileName}" -o "${out}" && "${out}"`;
+            } else if (prof === 'bash') {
+                runCmd = `gcc "${fileName}" -o "${out}" && ./"${out}"`;
+            } else {
+                runCmd = `gcc "${fileName}" -o "${out}"; if ($?) { ./"${out}" }`;
+            }
         } else if (lang === 'cpp') {
             const out = fileName.replace(/\.cpp$/i, '.exe');
-            runCmd = `g++ "${fileName}" -o "${out}" && .\\"${out}"`;
+            const prof = targetTerm?.profile || defaultProfile || 'powershell';
+            if (prof === 'cmd') {
+                runCmd = `g++ "${fileName}" -o "${out}" && "${out}"`;
+            } else if (prof === 'bash') {
+                runCmd = `g++ "${fileName}" -o "${out}" && ./"${out}"`;
+            } else {
+                runCmd = `g++ "${fileName}" -o "${out}"; if ($?) { ./"${out}" }`;
+            }
         } else if (lang === 'bash') {
             runCmd = `bash "${fileName}"`;
         } else {
