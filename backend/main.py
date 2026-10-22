@@ -62,13 +62,20 @@ app.include_router(ai.router)
 
 def start_server():
     print(f"[Hyperion Production Backend] Starting Uvicorn on {HOST}:{PORT}...", flush=True)
-    uvicorn.run(
-        app,
-        host=HOST,
-        port=PORT,
-        log_level="info",
-        access_log=True
-    )
+    try:
+        uvicorn.run(
+            app,
+            host=HOST,
+            port=PORT,
+            log_level="info",
+            access_log=True
+        )
+    except OSError as e:
+        if getattr(e, "errno", None) == 10048 or "10048" in str(e):
+            print(f"\n[FastAPI] Port {PORT} is already in use by another instance or process.", flush=True)
+            print(f"[FastAPI] Hint: Run 'netstat -ano | findstr :{PORT}' to inspect active listeners.\n", flush=True)
+        else:
+            raise
 
 if __name__ == "__main__":
     start_server()
