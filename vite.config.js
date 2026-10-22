@@ -396,6 +396,65 @@ function hyperionSandboxPlugin() {
           return;
         }
 
+        if (subPath === '/curl-proxy' && req.method === 'POST') {
+          const body = await parseBody();
+          const startTime = Date.now();
+          try {
+            const { method = 'GET', url, headers = {}, body: reqBody, timeoutMs = 30000 } = body;
+            if (!url) {
+              res.statusCode = 400;
+              res.setHeader('Content-Type', 'application/json');
+              return res.end(JSON.stringify({ success: false, error: 'URL is required' }));
+            }
+            const cleanHeaders = { ...headers };
+            delete cleanHeaders['host'];
+            delete cleanHeaders['connection'];
+            delete cleanHeaders['content-length'];
+
+            if (!cleanHeaders['user-agent'] && !cleanHeaders['User-Agent']) {
+              cleanHeaders['User-Agent'] = 'Hyperion-API-Client/1.0 (Windows NT 10.0; Win64; x64)';
+            }
+
+            const fetchOptions = {
+              method: method.toUpperCase(),
+              headers: cleanHeaders,
+              redirect: 'follow',
+              signal: AbortSignal.timeout(Math.min(Math.max(Number(timeoutMs) || 30000, 1000), 120000))
+            };
+            if (reqBody && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+              fetchOptions.body = typeof reqBody === 'object' ? JSON.stringify(reqBody) : String(reqBody);
+            }
+            const fetchRes = await fetch(url, fetchOptions);
+            const durationMs = Date.now() - startTime;
+            const resHeaders = {};
+            fetchRes.headers.forEach((val, key) => { resHeaders[key] = val; });
+            const rawText = await fetchRes.text();
+            let responseData;
+            try { responseData = JSON.parse(rawText); } catch { responseData = rawText; }
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({
+              success: true,
+              status: fetchRes.status,
+              statusText: fetchRes.statusText,
+              durationMs,
+              sizeBytes: Buffer.byteLength(rawText || '', 'utf8'),
+              headers: resHeaders,
+              data: responseData,
+              rawText
+            }));
+          } catch (err) {
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({
+              success: false,
+              status: 0,
+              statusText: 'Connection Failed',
+              durationMs: Date.now() - startTime,
+              error: err.message,
+              data: null
+            }));
+          }
+        }
+
         if (subPath === '/stdin' && req.method === 'POST') {
           const body = await parseBody();
           const { streamId, data } = body;

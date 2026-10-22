@@ -204,6 +204,15 @@ export function EditorProvider({ children }) {
       case "architecture-canvas":
         openArchitectureTab();
         break;
+      case "api-client":
+      case "curl":
+      case "postman":
+        setSidebarActive("api-client");
+        setIsSidebarVisible(true);
+        break;
+      case "api-client-tab":
+        openApiClientTab();
+        break;
       case "mongoschema":
       case "erd":
         openMongoSchemaTab();
@@ -649,6 +658,28 @@ export function EditorProvider({ children }) {
         type: "architecture",
         isPreview: true,
         isArchitecture: true
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
+  function openApiClientTab() {
+    const tabId = "hyperion-api-client";
+    const name = "API Client & cURL";
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name,
+        type: "api-client",
+        isPreview: true,
+        isApiClient: true
       };
       setActiveFile(newTab);
       return [...prev, newTab];
@@ -1141,6 +1172,7 @@ export function EditorProvider({ children }) {
         replaceInFiles,
         openLiveBrowserTab,
         openArchitectureTab,
+        openApiClientTab,
         openMongoSchemaTab,
         openBackendRoutesTab,
         openSeleniumStudioTab,

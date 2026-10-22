@@ -1,6 +1,7 @@
 import "./Tabs.css";
 
 import { FaTimes, FaProjectDiagram, FaDatabase, FaNetworkWired } from "react-icons/fa";
+import { GiCurledTentacle } from "react-icons/gi";
 import useEditor from "../../hooks/useEditor";
 import { getFileIcon } from "../../utils/fileIcons";
 
@@ -16,11 +17,14 @@ function Tabs() {
     <div className="tabs">
       {openFiles.map((tab) => {
         const isArch = tab.type === "architecture" || tab.isArchitecture;
+        const isApiClient = tab.type === "api-client" || tab.isApiClient;
         const isMongo = tab.type === "mongoschema" || tab.isMongoSchema;
         const isRoutes = tab.type === "backend-routes" || tab.isBackendRoutes;
         const isPreview = tab.type === "preview" || tab.isPreview;
         const icon = isArch ? (
           <FaProjectDiagram style={{ color: "#58a6ff" }} />
+        ) : isApiClient ? (
+          <GiCurledTentacle style={{ color: "#38bdf8" }} />
         ) : isMongo ? (
           <FaDatabase style={{ color: "#00ff88" }} />
         ) : isRoutes ? (

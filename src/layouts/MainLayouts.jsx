@@ -23,6 +23,7 @@ import SourceControl from "../components/SourceControl/SourceControl";
 import RunDebug from "../components/RunDebug/RunDebug";
 import CommandPalette from "../components/CommandPalette/CommandPalette";
 import ArchitecturePanel from "../components/Architecture/ArchitecturePanel";
+import ApiClient from "../components/ApiClient/ApiClient";
 import useEditor from "../hooks/useEditor";
 import useTerminal from "../hooks/useTerminal";
 import useFile from "../hooks/useFile";
@@ -46,6 +47,7 @@ function MainLayout() {
     commandPaletteMode,
     openView,
     openArchitectureTab,
+    openApiClientTab,
     toggleWordWrap,
     saveActiveFile
   } = useEditor();
@@ -108,6 +110,8 @@ function MainLayout() {
     { id: "view-repl", category: "View", label: "REPL", action: () => openView("repl") },
     { id: "view-selenium", category: "View", label: "Selenium: Run Previewer Automation & QA", action: () => openView("run") },
     { id: "view-selenium-studio", category: "View", label: "Selenium: Open Full QA Studio", action: () => openView("selenium-studio") },
+    { id: "view-api-client", category: "View", label: "API Client: Open cURL & Localhost Tester", action: () => openView("api-client") },
+    { id: "view-api-client-tab", category: "View", label: "API Client: Open Full Workspace Tab", action: openApiClientTab },
     
     // Toggles & Layout
     { id: "toggle-wrap", category: "View", label: "Toggle Word Wrap", shortcut: "Alt+Z", action: toggleWordWrap },
@@ -188,6 +192,8 @@ function MainLayout() {
                   <RunDebug />
                 ) : sidebarActive === "architecture" ? (
                   <ArchitecturePanel onOpenFullView={openArchitectureTab} />
+                ) : sidebarActive === "api-client" ? (
+                  <ApiClient onOpenFullView={openApiClientTab} />
                 ) : (
                   <Explorer />
                 )}

@@ -8,6 +8,7 @@ import ArchitectureCanvas from "../Architecture/ArchitectureCanvas";
 import MongoSchemaERD from "../Architecture/MongoSchemaERD";
 import BackendApiRoutes from "../Architecture/BackendApiRoutes";
 import SeleniumRunner from "../RunDebug/SeleniumRunner";
+import ApiClient from "../ApiClient/ApiClient";
 import SettingsPage from "../../pages/SettingsPage/SettingsPage";
 import {
   DocxPreview,
@@ -430,6 +431,15 @@ function Editor() {
     return (
       <div className="editor-container">
         <SeleniumRunner isStudioMode={true} />
+      </div>
+    );
+  }
+
+  // API Client & cURL tab
+  if (activeFile.type === "api-client" || activeFile.isApiClient) {
+    return (
+      <div className="editor-container">
+        <ApiClient isFullTab={true} />
       </div>
     );
   }

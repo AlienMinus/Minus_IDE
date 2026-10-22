@@ -649,18 +649,38 @@ Thank you for your question. Here is the technical breakdown and security-first 
 /**
  * GET /api/ai/status - Query AI service status
  */
-router.get('/status', (req, res) => {
+router.get('/status', async (req, res) => {
   const token = (process.env.HF_TOKEN || '').trim();
+
+  let localAiReady = false;
+  let localAiStatus = 'offline';
+  try {
+    const check = await fetch('http://127.0.0.1:5005/status', { signal: AbortSignal.timeout(800) });
+    if (check.ok) {
+      const d = await check.json();
+      localAiReady = Boolean(d.is_loaded);
+      localAiStatus = d.status;
+    }
+  } catch {}
+
   res.json({
     success: true,
     hfConfigured: Boolean(token && token.length > 10),
+    localAi: {
+      running: localAiStatus !== 'offline',
+      status: localAiStatus,
+      isLoaded: localAiReady,
+      model: 'Qwen/Qwen2.5-Coder-0.5B-Instruct',
+      device: 'cpu'
+    },
     models: [
+      { id: 'qwen-local', name: 'Qwen 2.5 Coder 0.5B (Local CPU - Offline)', tag: 'Local CPU / Offline', isLocal: true },
       { id: 'meta-llama/Llama-3.1-8B-Instruct', name: 'Meta LLaMA 3.1 8B Instruct', tag: 'Recommended' },
-      { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B', tag: 'Code Specialized' },
+      { id: 'Qwen/Qwen2.5-Coder-32B-Instruct', name: 'Qwen 2.5 Coder 32B (Cloud)', tag: 'Code Specialized' },
       { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek R1', tag: 'Reasoning' }
     ],
-    defaultModel: 'meta-llama/Llama-3.1-8B-Instruct',
-    features: ['code-security-analysis', 'vulnerability-scanner', 'secure-code-refactor', 'interactive-chat']
+    defaultModel: 'qwen-local',
+    features: ['code-security-analysis', 'vulnerability-scanner', 'secure-code-refactor', 'interactive-chat', 'local-code-generation', 'explain-code', 'apply-fixes']
   });
 });
 
@@ -777,7 +797,58 @@ router.post('/chat', async (req, res) => {
     const token = (process.env.HF_TOKEN || '').trim().replace(/^["']|["']$/g, '');
     const hasToken = Boolean(token && token.length > 10);
 
-    // 1. Try Hugging Face Router API if token is configured
+    // 0. Route to Local Qwen Coder AI Service if requested or if Qwen is selected locally
+    const isQwenRequested = model === 'qwen-local' || model.toLowerCase().includes('qwen');
+    if (isQwenRequested && (!hasToken || model === 'qwen-local')) {
+      try {
+        const localMode = req.body.mode || (userPrompt.toLowerCase().includes('explain') ? 'explain' : (userPrompt.toLowerCase().includes('fix') ? 'fix' : 'generate'));
+        const localRes = await fetch('http://127.0.0.1:5005/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages,
+            prompt: userPrompt,
+            code: rawCodeSnippet,
+            filename: targetFileName,
+            mode: localMode,
+            max_tokens: req.body.max_tokens || 180,
+            temperature: 0.2
+          }),
+          signal: AbortSignal.timeout(90000)
+        });
+
+        if (localRes.ok) {
+          const localData = await localRes.json();
+          if (localData.success && localData.message) {
+            return res.json({
+              success: true,
+              message: localData.message,
+              provider: 'qwen-local-cpu',
+              model: 'Qwen/Qwen2.5-Coder-0.5B-Instruct',
+              metrics: localData.metrics
+            });
+          }
+        }
+      } catch (localErr) {
+        console.warn('[LocalAI] Local Qwen query failed, falling back to Cypher Engine:', localErr.message);
+        if (model === 'qwen-local') {
+          // Immediately fall back to Cypher Intelligence Engine - NEVER send 'qwen-local' to HF Cloud Router
+          const cypherFallback = generateCypherIntelligenceResponse(userPrompt, rawCodeSnippet, 'Qwen/Qwen2.5-Coder-0.5B-Instruct', false, targetFileName);
+          return res.json({
+            success: true,
+            message: `> ℹ️ *[Local Qwen CPU]: Offline engine busy or response timed out. Falling back to Cypher Intelligence Engine.*\n\n${cypherFallback}`,
+            provider: 'cypher-security-engine',
+            model: 'qwen-local'
+          });
+        }
+      }
+    }
+
+    // 1. Try Hugging Face Router API if token is configured (skip for local-only models)
+    if (hasToken && model !== 'qwen-local') {
+      const hfModel = (model === 'qwen-local' || model.toLowerCase().includes('qwen'))
+        ? 'Qwen/Qwen2.5-Coder-32B-Instruct'
+        : model;
     if (hasToken) {
       try {
         const systemPrompt = `You are Cypher, an expert AI Code Security Analyst and programming assistant in Hyperion IDE.
@@ -810,7 +881,7 @@ When evaluating code or answering questions:
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model,
+            model: hfModel || model,
             messages: hfMessages,
             max_tokens: 1024,
             temperature: 0.3
@@ -848,6 +919,103 @@ When evaluating code or answering questions:
   } catch (error) {
     console.error('AI chat endpoint error:', error);
     res.status(500).json({ error: error.message || 'Internal server error in AI service' });
+  }
+});
+
+/**
+ * POST /api/ai/explain - Specialized code explanation endpoint
+ */
+router.post('/explain', async (req, res) => {
+  try {
+    const { code, filename, prompt } = req.body;
+    try {
+      const localRes = await fetch('http://127.0.0.1:5005/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, filename, prompt }),
+        signal: AbortSignal.timeout(120000)
+      });
+      if (localRes.ok) {
+        const data = await localRes.json();
+        return res.json(data);
+      }
+    } catch {}
+
+    // Fallback to Cypher explanation
+    const cypherMessage = generateCypherIntelligenceResponse(
+      prompt || 'Explain this code in detail with structure, logic, and complexity',
+      code,
+      'Qwen/Qwen2.5-Coder-0.5B-Instruct',
+      false,
+      filename || 'Code'
+    );
+    res.json({ success: true, message: cypherMessage, provider: 'cypher-security-engine' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/ai/fix - Specialized code fix and vulnerability hardening endpoint
+ */
+router.post('/fix', async (req, res) => {
+  try {
+    const { code, filename, prompt } = req.body;
+    try {
+      const localRes = await fetch('http://127.0.0.1:5005/fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, filename, prompt }),
+        signal: AbortSignal.timeout(120000)
+      });
+      if (localRes.ok) {
+        const data = await localRes.json();
+        return res.json(data);
+      }
+    } catch {}
+
+    const cypherMessage = generateCypherIntelligenceResponse(
+      prompt || 'Fix all bugs, errors, and security vulnerabilities in this code and provide the corrected version.',
+      code,
+      'Qwen/Qwen2.5-Coder-0.5B-Instruct',
+      false,
+      filename || 'Code'
+    );
+    res.json({ success: true, message: cypherMessage, provider: 'cypher-security-engine' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/ai/generate - Specialized code generation endpoint
+ */
+router.post('/generate', async (req, res) => {
+  try {
+    const { prompt, language = 'javascript' } = req.body;
+    try {
+      const localRes = await fetch('http://127.0.0.1:5005/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, mode: 'generate' }),
+        signal: AbortSignal.timeout(120000)
+      });
+      if (localRes.ok) {
+        const data = await localRes.json();
+        return res.json(data);
+      }
+    } catch {}
+
+    const cypherMessage = generateCypherIntelligenceResponse(
+      prompt || `Generate clean ${language} code`,
+      '',
+      'Qwen/Qwen2.5-Coder-0.5B-Instruct',
+      false,
+      `generated.${language}`
+    );
+    res.json({ success: true, message: cypherMessage, provider: 'cypher-security-engine' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

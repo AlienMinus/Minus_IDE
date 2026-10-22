@@ -78,3 +78,51 @@ export async function scanCodebaseFile(filePath, workspacePath = null, code = nu
     };
   }
 }
+
+/**
+ * Explain Code using Local Qwen Coder
+ */
+export async function explainCode(code, filename = 'active_file', prompt = '') {
+  try {
+    const res = await fetch(`${API_BASE}/explain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, filename, prompt })
+    });
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Fix and Harden Code using Local Qwen Coder
+ */
+export async function fixCode(code, filename = 'active_file', prompt = '') {
+  try {
+    const res = await fetch(`${API_BASE}/fix`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, filename, prompt })
+    });
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Generate Code using Local Qwen Coder
+ */
+export async function generateCode(prompt, language = 'javascript') {
+  try {
+    const res = await fetch(`${API_BASE}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, language })
+    });
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}

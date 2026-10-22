@@ -16,7 +16,12 @@ import {
   FaFileCode,
   FaPaperclip,
   FaTimes,
-  FaFolderOpen
+  FaFolderOpen,
+  FaCheck,
+  FaBrain,
+  FaWrench,
+  FaMagic,
+  FaBookOpen
 } from "react-icons/fa";
 import {
   sendChatMessage,
@@ -38,8 +43,9 @@ const DEFAULT_MESSAGE = {
 };
 
 function Chat() {
-  const { activeFile } = useEditor();
+  const { activeFile, updateContent, getSelectedText, createOrOpenFile } = useEditor();
   const [message, setMessage] = useState("");
+  const [appliedNotice, setAppliedNotice] = useState(null);
 
   const [messages, setMessages] = useState(() => {
     try {
@@ -536,6 +542,106 @@ function Chat() {
     }
   };
 
+  const handleApplyFix = (fixedCode) => {
+    if (!activeFile) {
+      if (createOrOpenFile) {
+        createOrOpenFile("generated_code.py", fixedCode);
+        setAppliedNotice("✔ Created and opened generated_code.py with fix!");
+        setTimeout(() => setAppliedNotice(null), 3500);
+        return;
+      }
+      alert("Please open a file in the editor first before applying code.");
+      return;
+    }
+    updateContent(fixedCode);
+    setAppliedNotice(`✔ Applied code directly to ${activeFile.name}!`);
+    setTimeout(() => setAppliedNotice(null), 3500);
+  };
+
+  const handleExplainActiveFile = () => {
+    const selected = getSelectedText ? getSelectedText() : "";
+    const codeToExplain = selected || activeFile?.content || "";
+    const name = activeFile?.name || "Code";
+    if (!codeToExplain.trim()) {
+      handleSend("Explain programming concepts, design patterns, and idiomatic practices.");
+      return;
+    }
+    const fragment = {
+      id: activeFile?.id || "snippet",
+      name,
+      language: activeFile?.language || "text",
+      content: codeToExplain,
+      lineCount: codeToExplain.split("\n").length
+    };
+    handleSend("Explain this code in detail: break down the logic, functions, time/space complexity, and edge cases.", fragment);
+  };
+
+  const handleFixActiveFile = () => {
+    const selected = getSelectedText ? getSelectedText() : "";
+    const codeToFix = selected || activeFile?.content || "";
+    const name = activeFile?.name || "Code";
+    if (!codeToFix.trim()) {
+      handleSend("Analyze code for bugs, errors, and vulnerabilities and provide fixed code.");
+      return;
+    }
+    const fragment = {
+      id: activeFile?.id || "snippet",
+      name,
+      language: activeFile?.language || "text",
+      content: codeToFix,
+      lineCount: codeToFix.split("\n").length
+    };
+    handleSend("Analyze this code for bugs, logic errors, and security vulnerabilities. Provide the complete corrected code in a code block and explain each fix.", fragment);
+  };
+
+  const handleGenerateCodePrompt = () => {
+    const lang = activeFile?.language || "Python";
+    setMessage(`Write a complete ${lang} function to `);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  const markdownComponents = {
+    code({ node, inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || "");
+      const lang = match ? match[1] : "";
+      const codeString = String(children).replace(/\n$/, "");
+
+      if (!inline && (match || codeString.includes("\n"))) {
+        return (
+          <div className="chat-code-block-wrapper">
+            <div className="chat-code-block-header">
+              <span className="chat-code-lang">{lang || "code"}</span>
+              <div className="chat-code-block-btns">
+                <button
+                  type="button"
+                  className="chat-code-action-btn"
+                  onClick={() => handleCopyMessage(codeString)}
+                  title="Copy code to clipboard"
+                >
+                  <FaCopy /> Copy
+                </button>
+                <button
+                  type="button"
+                  className="chat-code-action-btn apply-btn"
+                  onClick={() => handleApplyFix(codeString)}
+                  title="Apply this code directly to your active editor file"
+                >
+                  <FaCheck /> Apply to File
+                </button>
+              </div>
+            </div>
+            <pre className={className}>
+              <code {...props}>{children}</code>
+            </pre>
+          </div>
+        );
+      }
+      return <code className={className} {...props}>{children}</code>;
+    }
+  };
+
   const handleEditMessage = (id, text) => {
     setEditingMessageId(id);
     setMessage(text);
@@ -636,8 +742,9 @@ function Chat() {
           onChange={(e) => handleModelChange(e.target.value)}
           className="chat-model-select"
         >
+          <option value="qwen-local">Qwen 2.5 Coder 0.5B (Local CPU - Offline)</option>
           <option value="meta-llama/Llama-3.1-8B-Instruct">Meta LLaMA 3.1 8B Instruct</option>
-          <option value="Qwen/Qwen2.5-Coder-32B-Instruct">Qwen 2.5 Coder 32B</option>
+          <option value="Qwen/Qwen2.5-Coder-32B-Instruct">Qwen 2.5 Coder 32B (Cloud HF)</option>
           <option value="deepseek-ai/DeepSeek-R1">DeepSeek R1</option>
         </select>
       </div>
@@ -672,7 +779,7 @@ function Chat() {
                 )}
                 <div className="chat-message-text">
                   {item.sender === "assistant" ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                       {typedText[item.id] ?? item.text}
                     </ReactMarkdown>
                   ) : (
@@ -752,11 +859,51 @@ function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Security Actions */}
+      {/* Applied toast notification */}
+      {appliedNotice && (
+        <div className="chat-applied-toast">
+          <FaCheck /> {appliedNotice}
+        </div>
+      )}
+
+      {/* Quick Security & AI Coding Actions */}
       <div className="chat-quick-actions">
         <button
           type="button"
           className="quick-action-pill highlight"
+          onClick={handleExplainActiveFile}
+          disabled={isLoading || Boolean(scanProgress)}
+          title="Explain active file or selected code with Local Qwen Coder"
+        >
+          <FaBookOpen className="pill-icon blue" />
+          <span>Explain Code</span>
+        </button>
+
+        <button
+          type="button"
+          className="quick-action-pill highlight"
+          onClick={handleFixActiveFile}
+          disabled={isLoading || Boolean(scanProgress)}
+          title="Analyze bugs, errors, and vulnerabilities and generate ready-to-apply fixes"
+        >
+          <FaWrench className="pill-icon green" />
+          <span>Fix & Harden</span>
+        </button>
+
+        <button
+          type="button"
+          className="quick-action-pill"
+          onClick={handleGenerateCodePrompt}
+          disabled={isLoading || Boolean(scanProgress)}
+          title="Prompt Qwen Coder to generate new code functions or components"
+        >
+          <FaMagic className="pill-icon yellow" />
+          <span>Generate Code</span>
+        </button>
+
+        <button
+          type="button"
+          className="quick-action-pill"
           onClick={handleFullCodebaseScan}
           disabled={isLoading || Boolean(scanProgress)}
           title="Run full SAST security scan across all codebase files one-by-one (strictly respecting .gitignore)"

@@ -10,6 +10,7 @@ import {
     VscSettingsGear
 } from "react-icons/vsc";
 import { FaProjectDiagram, FaChevronRight, FaCheck, FaTimes } from "react-icons/fa";
+import { GiCurledTentacle } from "react-icons/gi";
 import useEditor from "../../hooks/useEditor";
 import useTheme from "../../hooks/useTheme";
 
@@ -176,6 +177,11 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
             id: "architecture",
             icon: <FaProjectDiagram />,
             title: "Architecture & Codebase Diagram (Ctrl+Shift+A)"
+        },
+        {
+            id: "api-client",
+            icon: <GiCurledTentacle />,
+            title: "API Client (cURL & Localhost Tester)"
         }
     ];
 

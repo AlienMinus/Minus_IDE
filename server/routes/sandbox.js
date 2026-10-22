@@ -575,4 +575,82 @@ router.post('/repl/exit', (req, res) => {
   }
 });
 
+
+// POST /curl-proxy - Proxy localhost HTTP requests without CORS restrictions for API testing
+router.post('/curl-proxy', async (req, res) => {
+  const startTime = Date.now();
+  try {
+    const { method = 'GET', url, headers = {}, body, timeoutMs = 30000 } = req.body;
+    if (!url) {
+      return res.status(400).json({ success: false, error: 'URL is required' });
+    }
+
+    const cleanHeaders = { ...headers };
+    delete cleanHeaders['host'];
+    delete cleanHeaders['connection'];
+    delete cleanHeaders['content-length'];
+
+    // Provide browser-like User-Agent for production APIs that block generic node fetch
+    if (!cleanHeaders['user-agent'] && !cleanHeaders['User-Agent']) {
+      cleanHeaders['User-Agent'] = 'Hyperion-API-Client/1.0 (Windows NT 10.0; Win64; x64)';
+    }
+
+    const fetchOptions = {
+      method: method.toUpperCase(),
+      headers: cleanHeaders,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(Math.min(Math.max(Number(timeoutMs) || 30000, 1000), 120000))
+    };
+
+    if (body && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+      fetchOptions.body = typeof body === 'object' ? JSON.stringify(body) : String(body);
+    }
+
+    const response = await fetch(url, fetchOptions);
+    const durationMs = Date.now() - startTime;
+    const responseHeaders = {};
+    response.headers.forEach((val, key) => {
+      responseHeaders[key] = val;
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+    let responseData;
+    let rawText = '';
+
+    try {
+      rawText = await response.text();
+      if (contentType.includes('application/json')) {
+        responseData = JSON.parse(rawText);
+      } else {
+        responseData = rawText;
+      }
+    } catch {
+      responseData = rawText;
+    }
+
+    const sizeBytes = Buffer.byteLength(rawText || '', 'utf8');
+
+    res.json({
+      success: true,
+      status: response.status,
+      statusText: response.statusText,
+      durationMs,
+      sizeBytes,
+      headers: responseHeaders,
+      data: responseData,
+      rawText
+    });
+  } catch (err) {
+    const durationMs = Date.now() - startTime;
+    res.json({
+      success: false,
+      status: 0,
+      statusText: 'Connection Failed',
+      durationMs,
+      error: err.message,
+      data: null
+    });
+  }
+});
+
 export default router;
