@@ -159,12 +159,16 @@ function TerminalComponent({ hideToolbar = false }) {
   const outputLines = useRef(0);
   const historyIndex = useRef(-1);
   const lastTerminalId = useRef(mainSession?.id);
+  const justTypedEnterRef = useRef(false);
+  const prevOutputRef = useRef(mainSession?.output);
 
   const splitCurrentCommand = useRef("");
   const splitCursorPos = useRef(0);
   const splitOutputLines = useRef(0);
   const splitHistoryIndex = useRef(-1);
   const lastSplitTerminalId = useRef(splitSession?.id);
+  const splitJustTypedEnterRef = useRef(false);
+  const splitPrevOutputRef = useRef(splitSession?.output);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownAnchorRef = useRef(null);
@@ -519,9 +523,8 @@ function TerminalComponent({ hideToolbar = false }) {
             }
             return;
           }
+          justTypedEnterRef.current = true;
           term.write('\r\n');
-          // Advance outputLines by 1 so the command echo in activeTerminal.output is not printed twice!
-          outputLines.current += 1;
           if (mainSessionRef.current) {
             executeCommandRef.current(toExecute, mainSessionRef.current.id);
           }
@@ -586,14 +589,30 @@ function TerminalComponent({ hideToolbar = false }) {
       return;
     }
 
+    // In-place replacement check (e.g. idle prompt replaced by commandWithPrompt)
+    if (mainSession.output.length === outputLines.current && mainSession.output.length > 0) {
+      const prevLast = prevOutputRef.current?.[prevOutputRef.current.length - 1];
+      const currLast = mainSession.output[mainSession.output.length - 1];
+      if (prevLast !== currLast && typeof currLast === 'string') {
+        if (!justTypedEnterRef.current) {
+          term.write('\r\x1b[2K' + String(currLast).replace(/\r?\n/g, '\r\n') + '\r\n');
+        }
+      }
+      justTypedEnterRef.current = false;
+      prevOutputRef.current = mainSession.output;
+      return;
+    }
+
     if (mainSession.output.length > outputLines.current) {
       const newLines = mainSession.output.slice(outputLines.current);
       writeOutput(newLines);
       outputLines.current = mainSession.output.length;
+      prevOutputRef.current = mainSession.output;
     } else if (mainSession.output.length < outputLines.current) {
       term.reset();
       writeOutput(mainSession.output);
       outputLines.current = mainSession.output.length;
+      prevOutputRef.current = mainSession.output;
     }
   }, [mainSession, mainSession?.output]);
 
@@ -836,8 +855,8 @@ function TerminalComponent({ hideToolbar = false }) {
             return;
           }
 
+          splitJustTypedEnterRef.current = true;
           term.write('\r\n');
-          splitOutputLines.current += 1;
           if (splitSessionRef.current) {
             executeCommandRef.current(toExecute, splitSessionRef.current.id);
           }
@@ -922,14 +941,30 @@ function TerminalComponent({ hideToolbar = false }) {
       return;
     }
 
+    // In-place replacement check for split terminal
+    if (splitSession.output.length === splitOutputLines.current && splitSession.output.length > 0) {
+      const prevLast = splitPrevOutputRef.current?.[splitPrevOutputRef.current.length - 1];
+      const currLast = splitSession.output[splitSession.output.length - 1];
+      if (prevLast !== currLast && typeof currLast === 'string') {
+        if (!splitJustTypedEnterRef.current) {
+          term.write('\r\x1b[2K' + String(currLast).replace(/\r?\n/g, '\r\n') + '\r\n');
+        }
+      }
+      splitJustTypedEnterRef.current = false;
+      splitPrevOutputRef.current = splitSession.output;
+      return;
+    }
+
     if (splitSession.output.length > splitOutputLines.current) {
       const newLines = splitSession.output.slice(splitOutputLines.current);
       writeSplitOutput(newLines);
       splitOutputLines.current = splitSession.output.length;
+      splitPrevOutputRef.current = splitSession.output;
     } else if (splitSession.output.length < splitOutputLines.current) {
       term.reset();
       writeSplitOutput(splitSession.output);
       splitOutputLines.current = splitSession.output.length;
+      splitPrevOutputRef.current = splitSession.output;
     }
   }, [splitSession, splitSession?.output, isSplit]);
 

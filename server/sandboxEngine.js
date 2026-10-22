@@ -154,13 +154,37 @@ function cleanupDir(dirPath) {
 function writeVirtualFiles(dirPath, files = []) {
   for (const file of files) {
     if (!file || !file.name) continue;
+    const content = file.content != null ? String(file.content) : '';
+
+    // 1. Write at full relPath
     const relPath = file.path || file.name;
     const fullPath = path.join(dirPath, relPath);
     const parentDir = path.dirname(fullPath);
     if (!fs.existsSync(parentDir)) {
       fs.mkdirSync(parentDir, { recursive: true });
     }
-    fs.writeFileSync(fullPath, file.content || '', 'utf8');
+    fs.writeFileSync(fullPath, content, 'utf8');
+
+    // 2. Strip leading root workspace folder if present (e.g. "Practice/Logical.py" -> "Logical.py")
+    const normalizedRel = relPath.replace(/\\/g, '/').replace(/^\/+/, '');
+    const parts = normalizedRel.split('/');
+    if (parts.length > 1) {
+      const strippedRel = parts.slice(1).join('/');
+      const strippedFullPath = path.join(dirPath, strippedRel);
+      const strippedParent = path.dirname(strippedFullPath);
+      if (!fs.existsSync(strippedParent)) {
+        fs.mkdirSync(strippedParent, { recursive: true });
+      }
+      fs.writeFileSync(strippedFullPath, content, 'utf8');
+    }
+
+    // 3. Always ensure direct filename exists at root of dirPath
+    const rootNamePath = path.join(dirPath, file.name);
+    try {
+      if (!fs.existsSync(rootNamePath)) {
+        fs.writeFileSync(rootNamePath, content, 'utf8');
+      }
+    } catch {}
   }
 }
 

@@ -762,6 +762,7 @@ export function EditorProvider({ children }) {
 
   const [isScanningWorkspace, setIsScanningWorkspace] = useState(false);
   const [scanProgress, setScanProgress] = useState(null);
+  const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1, selectedCount: 0 });
 
   async function scanWorkspaceFiles(force = false) {
     if (isScanningWorkspace) return;
@@ -914,6 +915,36 @@ export function EditorProvider({ children }) {
 
   function setEditorInstance(editor) {
     editorRef.current = editor;
+    if (editor) {
+      try {
+        const pos = editor.getPosition();
+        if (pos) {
+          setCursorPosition({ line: pos.lineNumber, column: pos.column, selectedCount: 0 });
+        }
+        editor.onDidChangeCursorPosition((e) => {
+          setCursorPosition((prev) => ({
+            ...prev,
+            line: e.position?.lineNumber ?? prev.line,
+            column: e.position?.column ?? prev.column
+          }));
+        });
+        editor.onDidChangeCursorSelection((e) => {
+          const selection = e.selection;
+          const model = editor.getModel();
+          let selectedCount = 0;
+          if (model && selection && !selection.isEmpty()) {
+            const selectedText = model.getValueInRange(selection);
+            selectedCount = selectedText.length;
+          }
+          setCursorPosition((prev) => ({
+            ...prev,
+            line: selection?.positionLineNumber ?? prev.line,
+            column: selection?.positionColumn ?? prev.column,
+            selectedCount
+          }));
+        });
+      } catch {}
+    }
   }
 
   function getSelectedText() {
@@ -1087,6 +1118,8 @@ export function EditorProvider({ children }) {
         setActiveFile,
         editorRef,
         setEditorInstance,
+        cursorPosition,
+        setCursorPosition,
         getSelectedText,
         createOrOpenFile,
         sidebarActive,

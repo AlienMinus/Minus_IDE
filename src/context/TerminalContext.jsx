@@ -15,6 +15,7 @@ import {
 import { EditorContext } from "./EditorContext";
 import { FileContext } from "./FileContext";
 import { getStoredWorkspaceState, saveWorkspaceState } from "../services/workspacePersistence";
+import { executeCypherCommand } from "../services/cypherCliService";
 
 export const TerminalContext = createContext();
 
@@ -60,7 +61,23 @@ const DEFAULT_TASKS_JSON = JSON.stringify({
   ]
 }, null, 2);
 
-// Helper to calculate prompt for a profile and working directory
+
+// Helper to test if a line is just an uncommitted prompt
+// Helper to test if a line is just an uncommitted prompt
+export const isPromptOnlyLine = (str) => {
+    if (!str || typeof str !== "string") return false;
+    const clean = str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "").trim();
+    return (
+        clean.endsWith(">") ||
+        clean.endsWith("$") ||
+        clean.endsWith("#") ||
+        clean.endsWith(">>>") ||
+        clean.endsWith("...") ||
+        clean.endsWith("cypher>") ||
+        clean.endsWith("agent>")
+    );
+};
+
 export const getPromptForProfile = (prof, cwd) => {
     const cleanCwd = cwd || "D:\\Rough\\WebIDE";
     if (prof === 'cmd') return `${cleanCwd}> `;
@@ -575,6 +592,354 @@ export function TerminalProvider({ children }) {
     }, []);
 
     /**
+     * Execute Terminal Command
+     */
+    const executeCommand = useCallback(async (command, targetTermId = null) => {
+        const targetId = targetTermId ?? activeTerminalIdRef.current;
+        const targetTerm = terminalsRef.current.find(t => t.id === targetId) || terminals.find(t => t.id === targetId) || activeTerminal;
+        if (!targetTerm) return;
+
+        const trimmed = command.trim();
+
+        // 1. If currently in an active REPL session, route input directly to REPL engine
+        if (targetTerm?.replState?.active) {
+            const repl = targetTerm.replState;
+            const currentPrompt = repl.prompt || (repl.runtime === 'node' ? '> ' : '>>> ');
+            const commandWithPrompt = `${currentPrompt}${command}`;
+            const newHistory = [...targetTerm.history, command];
+
+            // If empty enter on single-line prompt, just reprint prompt
+            if (!trimmed && !repl.isMultiLine) {
+                setTerminals(prev => prev.map(t => {
+                    if (t.id !== targetId) return t;
+                    return {
+                        ...t,
+                        output: [...t.output, currentPrompt]
+                    };
+                }));
+                return;
+            }
+
+            setTerminals(prev => prev.map(t => {
+                if (t.id !== targetId) return t;
+                return {
+                    ...t,
+                    history: newHistory,
+                    output: [...t.output, commandWithPrompt]
+                };
+            }));
+
+            // Handle user typing exit
+            const isExit = trimmed === 'exit()' || trimmed === 'quit()' || trimmed === '.exit' ||
+                (trimmed === 'exit' && (repl.runtime === 'python' || repl.runtime === 'node'));
+
+            if (isExit) {
+                exitReplSession(repl.sessionId).catch(() => {});
+                const shellPrompt = getTerminalPrompt(targetTerm);
+                setTerminals(prev => prev.map(t => {
+                    if (t.id !== targetId) return t;
+                    return {
+                        ...t,
+                        replState: null,
+                        output: [...t.output, `\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, shellPrompt]
+                    };
+                }));
+                return;
+            }
+
+            setIsRunning(true);
+            try {
+                const res = await evalReplCode({
+                    sessionId: repl.sessionId,
+                    code: command
+                });
+
+                if (res.exited) {
+                    const shellPrompt = getTerminalPrompt(targetTerm);
+                    setTerminals(prev => prev.map(t => {
+                        if (t.id !== targetId) return t;
+                        const outLines = [];
+                        if (res.output) {
+                            outLines.push(...res.output.replace(/\r\n/g, '\n').split('\n'));
+                        }
+                        outLines.push(`\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, shellPrompt);
+                        return {
+                            ...t,
+                            replState: null,
+                            output: [...t.output, ...outLines]
+                        };
+                    }));
+                } else {
+                    const outLines = [];
+                    if (res.output) {
+                        outLines.push(...res.output.replace(/\r\n/g, '\n').split('\n'));
+                    }
+                    const nextPrompt = res.prompt || (repl.runtime === 'node' ? '> ' : '>>> ');
+                    outLines.push(nextPrompt);
+
+                    setTerminals(prev => prev.map(t => {
+                        if (t.id !== targetId) return t;
+                        return {
+                            ...t,
+                            replState: {
+                                ...t.replState,
+                                prompt: nextPrompt,
+                                isMultiLine: !!res.isMultiLine
+                            },
+                            output: [...t.output, ...outLines]
+                        };
+                    }));
+                }
+            } catch (err) {
+                appendToTerminal([`\x1b[31mREPL evaluation error: ${err.message}\x1b[0m`, currentPrompt], targetId);
+            } finally {
+                setIsRunning(false);
+            }
+            return;
+        }
+
+        const activePrompt = getTerminalPrompt(targetTerm);
+        const commandWithPrompt = `${activePrompt}${command}`;
+        const newHistory = [...targetTerm.history, command];
+
+        if (!trimmed) {
+            setTerminals(prev => prev.map(t => {
+                if (t.id !== targetId) return t;
+                return {
+                    ...t,
+                    output: [...t.output, activePrompt]
+                };
+            }));
+            return;
+        }
+
+        setTerminals(prev => prev.map(t => {
+            if (t.id !== targetId) return t;
+            return {
+                ...t,
+                history: newHistory,
+                output: [...t.output, commandWithPrompt]
+            };
+        }));
+
+        // 1.5 Cypher Security Terminal CLI Routing
+        if (targetTerm?.profile === 'cypher' || trimmed.toLowerCase().startsWith('cypher ')) {
+            setIsRunning(true);
+            try {
+                const res = await executeCypherCommand({
+                    command: trimmed,
+                    activeFile,
+                    files,
+                    workspacePath: currentWorkspacePath
+                });
+
+                if (res.type === 'clear') {
+                    setTerminalOutput([...res.lines, activePrompt], targetId);
+                } else if (res.type === 'output') {
+                    appendToTerminal([...res.lines, activePrompt], targetId);
+                }
+
+                if (res.analysis) {
+                    setLatestExecution({
+                        filename: res.analysis.filename || activeFile?.name || 'Security Audit',
+                        language: 'security',
+                        timestamp: new Date().toLocaleTimeString(),
+                        duration: 150,
+                        exitCode: res.analysis.riskLevel === 'CRITICAL' ? 1 : 0,
+                        success: res.analysis.riskLevel !== 'CRITICAL',
+                        stdout: res.lines.join('\n'),
+                        stderr: null,
+                        stage: 'security-scan'
+                    });
+                }
+            } catch (err) {
+                appendToTerminal([`\x1b[31m[Cypher Error] ${err.message}\x1b[0m`, activePrompt], targetId);
+            } finally {
+                setIsRunning(false);
+            }
+            return;
+        }
+
+        const parts = trimmed.split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+        const argsStr = parts.slice(1).join(" ");
+
+        if (cmd === "clear" || cmd === "cls") {
+            setTerminalOutput([activePrompt], targetId);
+            return;
+        }
+
+        if (cmd === "kill" || cmd === "exit") {
+            killTerminal(targetId);
+            return;
+        }
+
+        if (cmd === "cd") {
+            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
+            const target = argsStr.trim();
+            if (!target || target === "~") {
+                const cached = getStoredWorkspaceState();
+                const workspacePath = fileCtx?.persistedFolderInfo?.path || cached?.folderPath;
+                const homeOrRoot = (workspacePath && workspacePath !== "~/HyperionIDE" && workspacePath !== "portfolio_v1")
+                    ? workspacePath
+                    : (currentWorkspacePath || "D:\\Rough\\WebIDE");
+                const nextPrompt = (targetTerm?.profile === 'cmd') ? `${homeOrRoot}> ` : `PS ${homeOrRoot}> `;
+                if (targetTerm) {
+                    targetTerm.cwd = homeOrRoot;
+                    targetTerm.prompt = nextPrompt;
+                }
+                setTerminals((prev) =>
+                    prev.map((t) => (t.id === targetId ? { ...t, cwd: homeOrRoot, prompt: nextPrompt } : t))
+                );
+                appendToTerminal([nextPrompt], targetId);
+                return;
+            }
+
+            let candidate = target.replace(/^["']|["']$/g, "");
+            if (!candidate.includes(":") && !candidate.startsWith("/") && !candidate.startsWith("\\")) {
+                const base = currentCwd.replace(/\\/g, "/");
+                if (candidate === "..") {
+                    const parts = base.split("/").filter(Boolean);
+                    parts.pop();
+                    candidate = parts.join("/");
+                    if (candidate.endsWith(":")) candidate += "/";
+                } else if (candidate === ".") {
+                    candidate = base;
+                } else {
+                    candidate = `${base}/${candidate}`;
+                }
+            }
+
+            try {
+                const check = await validateWorkspacePath(candidate);
+                if (check.exists && check.isDirectory) {
+                    const finalPath = check.path;
+                    const nextPrompt = (targetTerm?.profile === 'cmd') ? `${finalPath}> ` : `PS ${finalPath}> `;
+                    if (targetTerm) {
+                        targetTerm.cwd = finalPath;
+                        targetTerm.prompt = nextPrompt;
+                    }
+                    setTerminals((prev) =>
+                        prev.map((t) => (t.id === targetId ? { ...t, cwd: finalPath, prompt: nextPrompt } : t))
+                    );
+                    if (fileCtx?.setWorkspacePath) {
+                        fileCtx.setWorkspacePath(finalPath);
+                    }
+                    saveWorkspaceState({ folderPath: finalPath });
+                    appendToTerminal([nextPrompt], targetId);
+                } else {
+                    appendToTerminal([`cd: no such file or directory: ${target}`, activePrompt], targetId);
+                }
+            } catch (err) {
+                appendToTerminal([`cd error: ${err.message}`, activePrompt], targetId);
+            }
+            return;
+        }
+
+        if (cmd === "pwd" || cmd === "cwd") {
+            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
+            appendToTerminal([currentCwd, activePrompt], targetId);
+            return;
+        }
+
+        // Direct System Shell execution (PowerShell / Command Prompt / Bash)
+        // Stream command execution directly in native host OS shell with live interactive stdin
+        const targetCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
+        const isPhysical = targetCwd && (targetCwd.includes(':') || targetCwd.startsWith('/'));
+
+        const streamId = `term_${targetId}_${Date.now()}`;
+        const abortCtrl = new AbortController();
+        activeProcessAbortCtrl.current = abortCtrl;
+        activeStreamsRef.current[targetId] = { streamId, abortCtrl };
+
+        setIsRunning(true);
+        setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: true, activeStreamId: streamId } : t));
+        lastActionRef.current = { type: 'command', command: trimmed };
+
+        // Ensure virtualFiles includes latest content from activeFile and openFiles
+        const openFilesList = editorCtx?.openFiles || [];
+        const mergedFiles = Array.isArray(files) ? [...files] : [];
+        for (const of of openFilesList) {
+            if (of && of.name) {
+                const idx = mergedFiles.findIndex(f => f.name === of.name || f.path === of.path || f.id === of.id);
+                if (idx >= 0) {
+                    mergedFiles[idx] = { ...mergedFiles[idx], ...of };
+                } else {
+                    mergedFiles.push(of);
+                }
+            }
+        }
+        if (activeFile && activeFile.name) {
+            const idx = mergedFiles.findIndex(f => f.name === activeFile.name || f.path === activeFile.path || f.id === activeFile.id);
+            if (idx >= 0) {
+                mergedFiles[idx] = { ...mergedFiles[idx], ...activeFile };
+            } else {
+                mergedFiles.push(activeFile);
+            }
+        }
+
+        let collectedOutput = "";
+
+        try {
+            await streamShellCommand({
+                streamId,
+                command: trimmed,
+                cwd: targetCwd,
+                profile: targetTerm?.profile || defaultProfile || 'powershell',
+                virtualFiles: mergedFiles,
+                timeoutMs: 0,
+                signal: abortCtrl.signal,
+                onChunk: (chunk) => {
+                    collectedOutput += chunk;
+                    const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
+                    appendToTerminal(chunkLines, targetId);
+
+                    // Scan for local dev server URLs WITH explicit port
+                    const cleanCollected = String(collectedOutput)
+                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+                        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+
+                    const portUrlRegex = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/gi;
+                    let match;
+                    while ((match = portUrlRegex.exec(cleanCollected)) !== null) {
+                        let detectedUrl = match[0].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
+                        if (!detectedUrlsRef.current.has(detectedUrl)) {
+                            detectedUrlsRef.current.add(detectedUrl);
+                            appendToTerminal([
+                                `\r\n\x1b[1;32m✔ Local Dev Server detected:\x1b[0m \x1b[1;36m${detectedUrl}\x1b[0m`,
+                                `\x1b[90m➜ Opening Live Preview in Editor...\x1b[0m\r\n`
+                            ], targetId);
+                            if (editorCtx?.openLiveBrowserTab) {
+                                editorCtx.openLiveBrowserTab(detectedUrl, `Preview: ${detectedUrl}`);
+                            }
+                        }
+                    }
+                },
+                onExit: (code) => {
+                    delete activeStreamsRef.current[targetId];
+                    activeProcessAbortCtrl.current = null;
+                    setIsRunning(false);
+                    setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
+                    const termPrompt = getTerminalPrompt(targetTerm);
+                    appendToTerminal([termPrompt], targetId);
+                }
+            });
+        } catch (err) {
+            delete activeStreamsRef.current[targetId];
+            setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
+            if (err.name !== 'AbortError') {
+                const termPrompt = getTerminalPrompt(targetTerm);
+                appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, termPrompt], targetId);
+            }
+        } finally {
+            delete activeStreamsRef.current[targetId];
+            activeProcessAbortCtrl.current = null;
+            setIsRunning(false);
+            setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
+        }
+    }, [activeTerminal, activeTerminalId, files, currentWorkspacePath, fileCtx, appendToTerminal, setTerminalOutput, editorCtx, getTerminalPrompt]);
+
+    /**
      * Run Code in the Sandbox
      */
     const runCodeSnippet = useCallback(async ({ language, code, filename, targetFile }) => {
@@ -736,7 +1101,7 @@ export function TerminalProvider({ children }) {
     const runBuildTask = useCallback(async () => {
         appendToTerminal([
             "\x1b[34m[Build Task]\x1b[0m Executing project build task...",
-            "$ npm run build"
+            `PS ${targetCwd || "D:\\Rough\\WebIDE"}> npm run build`
         ]);
 
         setIsRunning(true);
@@ -861,7 +1226,7 @@ export function TerminalProvider({ children }) {
      */
     const runTask = useCallback(async (taskCmd) => {
         setIsTaskPickerOpen(false);
-        appendToTerminal([`\x1b[34m[Task Runner]\x1b[0m $ ${taskCmd}`]);
+        appendToTerminal([`\x1b[34m[Task Runner]\x1b[0m > ${taskCmd}`]);
         setIsRunning(true);
         lastActionRef.current = { type: 'command', command: taskCmd };
 
@@ -887,293 +1252,7 @@ export function TerminalProvider({ children }) {
         }
     }, [files, activeTerminal?.cwd, currentWorkspacePath, appendToTerminal]);
 
-    /**
-     * Execute Terminal Command
-     */
-    const executeCommand = useCallback(async (command, targetTermId = null) => {
-        const targetId = targetTermId ?? activeTerminalIdRef.current;
-        const targetTerm = terminalsRef.current.find(t => t.id === targetId) || terminals.find(t => t.id === targetId) || activeTerminal;
-        if (!targetTerm) return;
 
-        const trimmed = command.trim();
-
-        // 1. If currently in an active REPL session, route input directly to REPL engine
-        if (targetTerm?.replState?.active) {
-            const repl = targetTerm.replState;
-            const currentPrompt = repl.prompt || (repl.runtime === 'node' ? '> ' : '>>> ');
-            const commandWithPrompt = `${currentPrompt}${command}`;
-            const newHistory = [...targetTerm.history, command];
-
-            // If empty enter on single-line prompt, just reprint prompt
-            if (!trimmed && !repl.isMultiLine) {
-                setTerminals(prev => prev.map(t => {
-                    if (t.id !== targetId) return t;
-                    return {
-                        ...t,
-                        output: [...t.output, currentPrompt]
-                    };
-                }));
-                return;
-            }
-
-            setTerminals(prev => prev.map(t => {
-                if (t.id !== targetId) return t;
-                return {
-                    ...t,
-                    history: newHistory,
-                    output: [...t.output, commandWithPrompt]
-                };
-            }));
-
-            // Handle user typing exit
-            const isExit = trimmed === 'exit()' || trimmed === 'quit()' || trimmed === '.exit' ||
-                (trimmed === 'exit' && (repl.runtime === 'python' || repl.runtime === 'node'));
-
-            if (isExit) {
-                exitReplSession(repl.sessionId).catch(() => {});
-                const shellPrompt = getTerminalPrompt(targetTerm);
-                setTerminals(prev => prev.map(t => {
-                    if (t.id !== targetId) return t;
-                    return {
-                        ...t,
-                        replState: null,
-                        output: [...t.output, `\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, shellPrompt]
-                    };
-                }));
-                return;
-            }
-
-            setIsRunning(true);
-            try {
-                const res = await evalReplCode({
-                    sessionId: repl.sessionId,
-                    code: command
-                });
-
-                if (res.exited) {
-                    const shellPrompt = getTerminalPrompt(targetTerm);
-                    setTerminals(prev => prev.map(t => {
-                        if (t.id !== targetId) return t;
-                        const outLines = [];
-                        if (res.output) {
-                            outLines.push(...res.output.replace(/\r\n/g, '\n').split('\n'));
-                        }
-                        outLines.push(`\x1b[90m[Exited ${repl.runtime.toUpperCase()} REPL]\x1b[0m`, shellPrompt);
-                        return {
-                            ...t,
-                            replState: null,
-                            output: [...t.output, ...outLines]
-                        };
-                    }));
-                } else {
-                    const outLines = [];
-                    if (res.output) {
-                        outLines.push(...res.output.replace(/\r\n/g, '\n').split('\n'));
-                    }
-                    const nextPrompt = res.prompt || (repl.runtime === 'node' ? '> ' : '>>> ');
-                    outLines.push(nextPrompt);
-
-                    setTerminals(prev => prev.map(t => {
-                        if (t.id !== targetId) return t;
-                        return {
-                            ...t,
-                            replState: {
-                                ...t.replState,
-                                prompt: nextPrompt,
-                                isMultiLine: !!res.isMultiLine
-                            },
-                            output: [...t.output, ...outLines]
-                        };
-                    }));
-                }
-            } catch (err) {
-                appendToTerminal([`\x1b[31mREPL evaluation error: ${err.message}\x1b[0m`, currentPrompt], targetId);
-            } finally {
-                setIsRunning(false);
-            }
-            return;
-        }
-
-        const activePrompt = getTerminalPrompt(targetTerm);
-        const commandWithPrompt = `${activePrompt}${command}`;
-        const newHistory = [...targetTerm.history, command];
-
-        if (!trimmed) {
-            setTerminals(prev => prev.map(t => {
-                if (t.id !== targetId) return t;
-                return {
-                    ...t,
-                    output: [...t.output, activePrompt]
-                };
-            }));
-            return;
-        }
-
-        setTerminals(prev => prev.map(t => {
-            if (t.id !== targetId) return t;
-            return {
-                ...t,
-                history: newHistory,
-                output: [...t.output, commandWithPrompt]
-            };
-        }));
-
-        const parts = trimmed.split(/\s+/);
-        const cmd = parts[0].toLowerCase();
-        const argsStr = parts.slice(1).join(" ");
-
-        if (cmd === "clear" || cmd === "cls") {
-            setTerminalOutput([activePrompt], targetId);
-            return;
-        }
-
-        if (cmd === "kill" || cmd === "exit") {
-            killTerminal(targetId);
-            return;
-        }
-
-        if (cmd === "cd") {
-            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
-            const target = argsStr.trim();
-            if (!target || target === "~") {
-                const cached = getStoredWorkspaceState();
-                const workspacePath = fileCtx?.persistedFolderInfo?.path || cached?.folderPath;
-                const homeOrRoot = (workspacePath && workspacePath !== "~/HyperionIDE" && workspacePath !== "portfolio_v1")
-                    ? workspacePath
-                    : (currentWorkspacePath || "D:\\Rough\\WebIDE");
-                const nextPrompt = (targetTerm?.profile === 'cmd') ? `${homeOrRoot}> ` : `PS ${homeOrRoot}> `;
-                if (targetTerm) {
-                    targetTerm.cwd = homeOrRoot;
-                    targetTerm.prompt = nextPrompt;
-                }
-                setTerminals((prev) =>
-                    prev.map((t) => (t.id === targetId ? { ...t, cwd: homeOrRoot, prompt: nextPrompt } : t))
-                );
-                appendToTerminal([nextPrompt], targetId);
-                return;
-            }
-
-            let candidate = target.replace(/^["']|["']$/g, "");
-            if (!candidate.includes(":") && !candidate.startsWith("/") && !candidate.startsWith("\\")) {
-                const base = currentCwd.replace(/\\/g, "/");
-                if (candidate === "..") {
-                    const parts = base.split("/").filter(Boolean);
-                    parts.pop();
-                    candidate = parts.join("/");
-                    if (candidate.endsWith(":")) candidate += "/";
-                } else if (candidate === ".") {
-                    candidate = base;
-                } else {
-                    candidate = `${base}/${candidate}`;
-                }
-            }
-
-            try {
-                const check = await validateWorkspacePath(candidate);
-                if (check.exists && check.isDirectory) {
-                    const finalPath = check.path;
-                    const nextPrompt = (targetTerm?.profile === 'cmd') ? `${finalPath}> ` : `PS ${finalPath}> `;
-                    if (targetTerm) {
-                        targetTerm.cwd = finalPath;
-                        targetTerm.prompt = nextPrompt;
-                    }
-                    setTerminals((prev) =>
-                        prev.map((t) => (t.id === targetId ? { ...t, cwd: finalPath, prompt: nextPrompt } : t))
-                    );
-                    if (fileCtx?.setWorkspacePath) {
-                        fileCtx.setWorkspacePath(finalPath);
-                    }
-                    saveWorkspaceState({ folderPath: finalPath });
-                    appendToTerminal([nextPrompt], targetId);
-                } else {
-                    appendToTerminal([`cd: no such file or directory: ${target}`, activePrompt], targetId);
-                }
-            } catch (err) {
-                appendToTerminal([`cd error: ${err.message}`, activePrompt], targetId);
-            }
-            return;
-        }
-
-        if (cmd === "pwd" || cmd === "cwd") {
-            const currentCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
-            appendToTerminal([currentCwd, activePrompt], targetId);
-            return;
-        }
-
-        // Direct System Shell execution (PowerShell / Command Prompt / Bash)
-        // Stream command execution directly in native host OS shell with live interactive stdin
-        const targetCwd = targetTerm?.cwd || currentWorkspacePath || "D:\\Rough\\WebIDE";
-        const isPhysical = targetCwd && (targetCwd.includes(':') || targetCwd.startsWith('/'));
-
-        const streamId = `term_${targetId}_${Date.now()}`;
-        const abortCtrl = new AbortController();
-        activeProcessAbortCtrl.current = abortCtrl;
-        activeStreamsRef.current[targetId] = { streamId, abortCtrl };
-
-        setIsRunning(true);
-        setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: true, activeStreamId: streamId } : t));
-        lastActionRef.current = { type: 'command', command: trimmed };
-
-        let collectedOutput = "";
-
-        try {
-            await streamShellCommand({
-                streamId,
-                command: trimmed,
-                cwd: targetCwd,
-                profile: targetTerm?.profile || defaultProfile || 'powershell',
-                virtualFiles: files,
-                timeoutMs: 0,
-                signal: abortCtrl.signal,
-                onChunk: (chunk) => {
-                    collectedOutput += chunk;
-                    const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
-                    appendToTerminal(chunkLines, targetId);
-
-                    // Scan for local dev server URLs WITH explicit port
-                    const cleanCollected = String(collectedOutput)
-                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-                        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
-
-                    const portUrlRegex = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/gi;
-                    let match;
-                    while ((match = portUrlRegex.exec(cleanCollected)) !== null) {
-                        let detectedUrl = match[0].replace('0.0.0.0', 'localhost').replace(/[\.,;:]$/, '');
-                        if (!detectedUrlsRef.current.has(detectedUrl)) {
-                            detectedUrlsRef.current.add(detectedUrl);
-                            appendToTerminal([
-                                `\r\n\x1b[1;32m✔ Local Dev Server detected:\x1b[0m \x1b[1;36m${detectedUrl}\x1b[0m`,
-                                `\x1b[90m➜ Opening Live Preview in Editor...\x1b[0m\r\n`
-                            ], targetId);
-                            if (editorCtx?.openLiveBrowserTab) {
-                                editorCtx.openLiveBrowserTab(detectedUrl, `Preview: ${detectedUrl}`);
-                            }
-                        }
-                    }
-                },
-                onExit: (code) => {
-                    delete activeStreamsRef.current[targetId];
-                    activeProcessAbortCtrl.current = null;
-                    setIsRunning(false);
-                    setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
-                    const termPrompt = getTerminalPrompt(targetTerm);
-                    appendToTerminal([termPrompt], targetId);
-                }
-            });
-        } catch (err) {
-            delete activeStreamsRef.current[targetId];
-            setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
-            if (err.name !== 'AbortError') {
-                const termPrompt = getTerminalPrompt(targetTerm);
-                appendToTerminal([`\x1b[31m${err.message}\x1b[0m`, termPrompt], targetId);
-            }
-        } finally {
-            delete activeStreamsRef.current[targetId];
-            activeProcessAbortCtrl.current = null;
-            setIsRunning(false);
-            setTerminals(prev => prev.map(t => t.id === targetId ? { ...t, isRunning: false, activeStreamId: null } : t));
-        }
-    }, [activeTerminal, activeTerminalId, files, currentWorkspacePath, fileCtx, runActiveFile, runCodeSnippet, appendToTerminal, setTerminalOutput, editorCtx]);
 
     const value = {
         terminals,

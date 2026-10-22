@@ -20,7 +20,7 @@
     "framer-motion": "^12.43.0",
     "jszip": "^3.10.1",
     "mammoth": "^1.13.0",
-    "monaco-editor": "^0.56.0",
+    "monaco-editor": "^0.57.0",
     "papaparse": "^5.7.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -30,7 +30,7 @@
     "react-router-dom": "^7.12.0",
     "remark-gfm": "^4.0.1",
     "three": "^0.186.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -42,5 +42,9 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "vite": "^7.2.4"
+  },
+  "overrides": {
+    "argparse": "^2.0.1",
+    "dompurify": "^3.4.17"
   }
 }
