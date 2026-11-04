@@ -353,7 +353,7 @@ async def preview_proxy_endpoint(url: Optional[str] = "http://localhost:5174", r
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "User-Agent": request.headers.get("user-agent", "HyperionIDE-Preview") if request else "HyperionIDE-Preview"
         }
-        res = requests.get(clean_url, headers=req_headers, timeout=10)
+        res = await asyncio.to_thread(requests.get, clean_url, headers=req_headers, timeout=10)
         if not res.ok:
             return HTMLResponse(f"<h3>Preview Proxy Error: Target returned status {res.status_code}</h3>", status_code=res.status_code)
 
@@ -537,15 +537,18 @@ async def curl_proxy_endpoint(req: CurlProxyRequest):
             else:
                 data = str(req.body).encode("utf-8")
 
-        response = requests.request(
-            method=req.method.upper(),
-            url=req.url,
-            headers=clean_headers,
-            data=data,
-            json=json_data,
-            timeout=timeout_sec,
-            allow_redirects=True
-        )
+        def _perform_request():
+            return requests.request(
+                method=req.method.upper(),
+                url=req.url,
+                headers=clean_headers,
+                data=data,
+                json=json_data,
+                timeout=timeout_sec,
+                allow_redirects=True
+            )
+
+        response = await asyncio.to_thread(_perform_request)
 
         duration_ms = int((time.time() - start_time) * 1000)
         raw_text = response.text

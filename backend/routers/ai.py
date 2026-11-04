@@ -3,6 +3,7 @@ FastAPI Router for Hyperion IDE AI, Cypher Code Security, and Local Qwen Coder S
 Full feature parity with server/routes/ai.js.
 """
 import os
+import asyncio
 import requests
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -311,20 +312,23 @@ async def chat_endpoint(req: ChatRequest):
                     "content": content
                 })
 
-            hf_resp = requests.post(
-                "https://router.huggingface.co/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {HF_TOKEN}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": hf_model,
-                    "messages": hf_messages,
-                    "max_tokens": 1024,
-                    "temperature": 0.3
-                },
-                timeout=45
-            )
+            def _call_hf_router():
+                return requests.post(
+                    "https://router.huggingface.co/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {HF_TOKEN}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": hf_model,
+                        "messages": hf_messages,
+                        "max_tokens": 1024,
+                        "temperature": 0.3
+                    },
+                    timeout=45
+                )
+
+            hf_resp = await asyncio.to_thread(_call_hf_router)
 
             if hf_resp.ok:
                 data = hf_resp.json()

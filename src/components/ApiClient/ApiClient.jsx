@@ -47,27 +47,34 @@ import { extractWorkspaceRoutes } from "../../services/backendRouteParser";
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
 
 const LOCAL_PORTS = [
-  { port: "3000", label: ":3000 Express" },
+  { port: "8000", label: ":8000 Python" },
+  { port: "5173", label: ":5173 Vite" },
   { port: "5000", label: ":5000 App" },
   { port: "5005", label: ":5005 Local AI" },
-  { port: "5173", label: ":5173 Vite" },
-  { port: "8000", label: ":8000 Python" },
   { port: "8080", label: ":8080 Backend" }
 ];
 
 const PRESETS_LOCAL = [
   {
-    name: "Hyperion Health (3000)",
+    name: "Hyperion Health (8000)",
     method: "GET",
-    url: "http://localhost:3000/health",
+    url: "http://localhost:8000/api/health",
     headers: [],
     body: "",
     env: "localhost"
   },
   {
-    name: "Sandbox Server Status (3000)",
+    name: "Sandbox Server Status (8000)",
     method: "GET",
-    url: "http://localhost:3000/api/sandbox/status",
+    url: "http://localhost:8000/api/sandbox/status",
+    headers: [],
+    body: "",
+    env: "localhost"
+  },
+  {
+    name: "Selenium Automation Status (8000)",
+    method: "GET",
+    url: "http://localhost:8000/api/selenium/status",
     headers: [],
     body: "",
     env: "localhost"
@@ -81,20 +88,12 @@ const PRESETS_LOCAL = [
     env: "localhost"
   },
   {
-    name: "Local Qwen AI Chat (5005)",
+    name: "IDE AI Router Chat (8000)",
     method: "POST",
-    url: "http://127.0.0.1:5005/chat",
-    headers: [{ key: "Content-Type", value: "application/json", enabled: true }],
-    body: JSON.stringify({ prompt: "Write a hello world function", max_new_tokens: 120 }, null, 2),
-    env: "localhost"
-  },
-  {
-    name: "IDE AI Router Chat (3000)",
-    method: "POST",
-    url: "http://localhost:3000/api/ai/chat",
+    url: "http://localhost:8000/api/ai/chat",
     headers: [{ key: "Content-Type", value: "application/json", enabled: true }],
     body: JSON.stringify({
-      messages: [{ role: "user", content: "Explain how express router works" }],
+      messages: [{ role: "user", content: "Explain how Python FastAPI backend works in Hyperion" }],
       model: "qwen-local"
     }, null, 2),
     env: "localhost"
@@ -226,7 +225,7 @@ export default function ApiClient({ onOpenFullView = null, isFullTab = false }) 
       return saved
         ? JSON.parse(saved)
         : {
-            localhostBase: "http://localhost:3000",
+            localhostBase: "http://localhost:8000",
             productionBase: "https://api.example.com",
             stagingBase: "https://staging-api.example.com",
             customBase: "https://",
@@ -238,7 +237,7 @@ export default function ApiClient({ onOpenFullView = null, isFullTab = false }) 
           };
     } catch {
       return {
-        localhostBase: "http://localhost:3000",
+        localhostBase: "http://localhost:8000",
         productionBase: "https://api.example.com",
         stagingBase: "https://staging-api.example.com",
         customBase: "https://",
@@ -256,7 +255,7 @@ export default function ApiClient({ onOpenFullView = null, isFullTab = false }) 
 
   // Request State
   const [method, setMethod] = useState("GET");
-  const [url, setUrl] = useState("http://localhost:3000/health");
+  const [url, setUrl] = useState("http://localhost:8000/api/health");
   const [requestTab, setRequestTab] = useState("params");
   const [queryParams, setQueryParams] = useState([]);
   const [headers, setHeaders] = useState([
@@ -341,7 +340,7 @@ export default function ApiClient({ onOpenFullView = null, isFullTab = false }) 
         return envConfig.customBase?.trim().replace(/\/+$/, "") || "";
       case "localhost":
       default:
-        return envConfig.localhostBase?.trim().replace(/\/+$/, "") || "http://localhost:3000";
+        return envConfig.localhostBase?.trim().replace(/\/+$/, "") || "http://localhost:8000";
     }
   }, [environment, envConfig]);
 
@@ -379,7 +378,7 @@ export default function ApiClient({ onOpenFullView = null, isFullTab = false }) 
       }
     } else if (newEnv === "localhost" && url.startsWith("https://")) {
       const path = url.replace(/^https?:\/\/[^/]+/, "");
-      setUrl(`http://localhost:3000${path || "/"}`);
+      setUrl(`http://localhost:8000${path || "/"}`);
     }
   };
 
@@ -1099,7 +1098,7 @@ Provide the exact corrected cURL command and payload.`;
                 placeholder={
                   environment === "production"
                     ? "https://api.yourdomain.com/v1/... or {{baseUrl}}/api/..."
-                    : "http://localhost:3000/api/endpoint"
+                    : "http://localhost:8000/api/endpoint"
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
@@ -1570,7 +1569,7 @@ Provide the exact corrected cURL command and payload.`;
                       setUrl(
                         environment === "production"
                           ? `{{baseUrl}}${ep.path}`
-                          : `http://localhost:3000${ep.path}`
+                          : `http://localhost:8000${ep.path}`
                       );
                     }}
                     title={`Discovered Route: ${ep.method} ${ep.path}`}

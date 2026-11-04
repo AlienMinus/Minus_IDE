@@ -69,6 +69,15 @@ app.include_router(ai.router)
 app.include_router(selenium.router)
 
 
+# Explicit top-level health aliases for direct observability
+@app.get("/health", tags=["health"])
+@app.get("/api/health", tags=["health"])
+@app.get("/status", tags=["health"])
+@app.get("/api/status", tags=["health"])
+async def root_health_check():
+    return await health.health_check()
+
+
 def start_server():
     print(f"[Hyperion Production Backend] Starting Uvicorn on {HOST}:{PORT}...", flush=True)
     try:
