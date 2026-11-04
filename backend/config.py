@@ -8,9 +8,8 @@ from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# Attempt to load .env from server/.env, backend/.env, or root .env
+# Attempt to load .env from backend/.env or root .env
 for env_file in [
-    PROJECT_ROOT / "server" / ".env",
     PROJECT_ROOT / "backend" / ".env",
     PROJECT_ROOT / ".env"
 ]:
