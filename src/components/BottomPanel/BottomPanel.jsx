@@ -342,7 +342,7 @@ function BottomPanel() {
       const rawOutput = (t.output || []).join("\n");
       const cleanOutput = String(rawOutput)
         .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+        .replace(/[\x1b\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
 
       const portMatch = cleanOutput.match(/https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/i);
       if (portMatch) {

@@ -42,6 +42,7 @@ import {
   VscShield
 } from "react-icons/vsc";
 import useEditor from "../../hooks/useEditor";
+import useFile from "../../hooks/useFile";
 import { extractWorkspaceRoutes } from "../../services/backendRouteParser";
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
@@ -344,7 +345,29 @@ export default function ApiClient({ onOpenFullView = null, isFullTab = false }) 
     }
   }, [environment, envConfig]);
 
-  // Resolve {{baseUrl}} or relative paths into absolute URL
+  const { files: workspaceFiles } = useFile();
+
+  // Dynamically load workspace .env variables for seamless environment connections
+  const workspaceEnvVars = useMemo(() => {
+    const map = {};
+    (workspaceFiles || []).forEach((f) => {
+      if (f.name?.startsWith(".env") && f.content) {
+        f.content.split("\n").forEach((line) => {
+          const l = line.trim();
+          if (l && !l.startsWith("#") && l.includes("=")) {
+            const [k, ...rest] = l.split("=");
+            const val = rest.join("=").trim().replace(/^['"]/, "").replace(/['"]$/, "");
+            if (k.trim() && !map[k.trim()]) {
+              map[k.trim()] = val;
+            }
+          }
+        });
+      }
+    });
+    return map;
+  }, [workspaceFiles]);
+
+  // Resolve {{baseUrl}}, {{token}}, {{apiKey}}, and workspace .env variables into absolute URL
   const resolvedUrl = useMemo(() => {
     if (!url) return "";
     let res = url.trim();
@@ -360,8 +383,20 @@ export default function ApiClient({ onOpenFullView = null, isFullTab = false }) 
       res = res.replace(/\{\{token\}\}/g, tok || "");
     }
 
+    if (res.includes("{{apiKey}}")) {
+      res = res.replace(/\{\{apiKey\}\}/g, envConfig.prodApiKey || "");
+    }
+
+    // Replace any workspace .env variables: {{PORT}}, {{HF_TOKEN}}, {{API_KEY}}, etc.
+    Object.entries(workspaceEnvVars).forEach(([k, v]) => {
+      if (v) {
+        const regex = new RegExp(`\\{\\{${k}\\}\\}`, "g");
+        res = res.replace(regex, v);
+      }
+    });
+
     return res;
-  }, [url, activeBaseUrl, environment, envConfig]);
+  }, [url, activeBaseUrl, environment, envConfig, workspaceEnvVars]);
 
   const isHttps = useMemo(() => {
     return (resolvedUrl || url).toLowerCase().startsWith("https://");
@@ -625,6 +660,12 @@ export default function ApiClient({ onOpenFullView = null, isFullTab = false }) 
         if (val === "{{token}}") {
           val = (environment === "production" ? envConfig.prodToken : envConfig.stagingToken) || "";
         }
+        if (val === "{{apiKey}}") {
+          val = envConfig.prodApiKey || "";
+        }
+        Object.entries(workspaceEnvVars).forEach(([k, v]) => {
+          if (v) val = val.replace(new RegExp(`\\{\\{${k}\\}\\}`, "g"), v);
+        });
         finalHeadersObj[h.key.trim()] = val;
       }
     });

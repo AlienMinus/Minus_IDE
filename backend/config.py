@@ -20,6 +20,13 @@ HOST = os.environ.get("BACKEND_HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", os.environ.get("BACKEND_PORT", 8000)))
 FASTAPI_ENV = os.environ.get("FASTAPI_ENV", "production")
 
+# Ensure loopback and local development addresses bypass any environment HTTP proxies
+_existing_no_proxy = os.environ.get("NO_PROXY", os.environ.get("no_proxy", ""))
+_loopback_entries = ["localhost", "127.0.0.1", "::1", "0.0.0.0"]
+_merged_no_proxy = list(set([p.strip() for p in _existing_no_proxy.split(",") if p.strip()] + _loopback_entries))
+os.environ["NO_PROXY"] = ",".join(_merged_no_proxy)
+os.environ["no_proxy"] = os.environ["NO_PROXY"]
+
 # Hugging Face API Configuration
 HF_TOKEN = os.environ.get("HF_TOKEN", "").strip().strip('"').strip("'")
 

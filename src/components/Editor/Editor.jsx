@@ -9,6 +9,7 @@ import MongoSchemaERD from "../Architecture/MongoSchemaERD";
 import BackendApiRoutes from "../Architecture/BackendApiRoutes";
 import SeleniumRunner from "../RunDebug/SeleniumRunner";
 import ApiClient from "../ApiClient/ApiClient";
+import SourceControl from "../SourceControl/SourceControl";
 import SettingsPage from "../../pages/SettingsPage/SettingsPage";
 import {
   DocxPreview,
@@ -440,6 +441,15 @@ function Editor() {
     return (
       <div className="editor-container">
         <ApiClient isFullTab={true} />
+      </div>
+    );
+  }
+
+  // Source Control Git Studio tab
+  if (activeFile.type === "source-control" || activeFile.isSourceControl) {
+    return (
+      <div className="editor-container">
+        <SourceControl isFullTab={true} />
       </div>
     );
   }

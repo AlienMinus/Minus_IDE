@@ -35,3 +35,4 @@ venv/
 
 backend/venv/
 .venv/
+.hyperion_sandbox

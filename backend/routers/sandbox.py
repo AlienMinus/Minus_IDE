@@ -33,6 +33,7 @@ from backend.services.sandbox_engine import (
 )
 from backend.services.stream_engine import global_stream_engine
 from backend.services.repl_engine import global_repl_manager
+from backend.config import HOST, PORT
 
 router = APIRouter(tags=["sandbox"])
 
@@ -529,6 +530,26 @@ async def curl_proxy_endpoint(req: CurlProxyRequest):
 
         timeout_sec = min(max(float(req.timeoutMs or 30000) / 1000.0, 1.0), 120.0)
 
+        # Normalize relative URLs to local backend
+        req_url = (req.url or "").strip()
+        if req_url.startswith("/"):
+            req_url = f"http://127.0.0.1:{PORT}{req_url}"
+
+        parsed = urlparse(req_url)
+        hostname = (parsed.hostname or "").lower()
+        is_loopback = hostname in ("localhost", "127.0.0.1", "::1", "0.0.0.0") or hostname.endswith(".local")
+
+        # In Windows environments, 'localhost' resolves to IPv6 '::1' first.
+        # If the local server is listening on IPv4 127.0.0.1, replace localhost with 127.0.0.1 to avoid IPv6 connection stalls.
+        target_url = req_url
+        if hostname == "localhost":
+            if "://localhost:" in target_url:
+                target_url = target_url.replace("://localhost:", "://127.0.0.1:", 1)
+            elif target_url.startswith("http://localhost/"):
+                target_url = target_url.replace("http://localhost/", "http://127.0.0.1/", 1)
+            elif target_url.startswith("https://localhost/"):
+                target_url = target_url.replace("https://localhost/", "https://127.0.0.1/", 1)
+
         data = None
         json_data = None
         if req.body and req.method.upper() in ("POST", "PUT", "PATCH", "DELETE"):
@@ -538,9 +559,14 @@ async def curl_proxy_endpoint(req: CurlProxyRequest):
                 data = str(req.body).encode("utf-8")
 
         def _perform_request():
-            return requests.request(
+            session = requests.Session()
+            if is_loopback:
+                # Critical: do not route loopback/localhost traffic through corporate or system HTTP proxies
+                session.trust_env = False
+                session.proxies = {"http": None, "https": None}
+            return session.request(
                 method=req.method.upper(),
-                url=req.url,
+                url=target_url,
                 headers=clean_headers,
                 data=data,
                 json=json_data,

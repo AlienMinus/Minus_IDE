@@ -48,6 +48,7 @@ function MainLayout() {
     openView,
     openArchitectureTab,
     openApiClientTab,
+    openSourceControlTab,
     toggleWordWrap,
     saveActiveFile
   } = useEditor();
@@ -191,7 +192,7 @@ function MainLayout() {
                 ) : sidebarActive === "search" ? (
                   <Search />
                 ) : sidebarActive === "git" ? (
-                  <SourceControl />
+                  <SourceControl onOpenFullView={openSourceControlTab} />
                 ) : sidebarActive === "run" ? (
                   <RunDebug />
                 ) : sidebarActive === "architecture" ? (

@@ -431,4 +431,26 @@ export async function getFileHistory(cwd, filePath, limit = 15) {
   }
 }
 
+/**
+ * Get git diff for a specific file (staged or unstaged)
+ */
+export async function getFileDiff(cwd, filePath, staged = false) {
+  try {
+    const cleanPath = filePath ? filePath.replace(/\\/g, "/") : "";
+    const flag = staged ? "--cached" : "";
+    const res = await runGit(`git diff ${flag} -- "${cleanPath}"`, cwd);
+    if (res.success && res.stdout) {
+      return res.stdout;
+    }
+    // If untracked file, display whole file as diff additions
+    if (!res.stdout && !staged) {
+      const showRes = await runGit(`git diff --no-index /dev/null "${cleanPath}"`, cwd);
+      if (showRes.stdout) return showRes.stdout;
+    }
+    return res.stdout || "";
+  } catch {
+    return "";
+  }
+}
+
 

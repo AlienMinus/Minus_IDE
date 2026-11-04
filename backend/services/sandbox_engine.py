@@ -394,9 +394,40 @@ def kill_process_tree(pid: Optional[int]) -> None:
             pass
 
 
+def load_workspace_env(work_dir: Optional[str]) -> Dict[str, str]:
+    """
+    Parse .env, .env.local, and .env.development files from workspace/target directory
+    into an environment variable dictionary for subprocesses and runners.
+    """
+    env_vars = {}
+    candidate_dirs = []
+    if work_dir and os.path.isdir(work_dir):
+        candidate_dirs.append(Path(work_dir))
+    if PROJECT_ROOT.is_dir() and PROJECT_ROOT not in candidate_dirs:
+        candidate_dirs.append(PROJECT_ROOT)
+
+    for cdir in candidate_dirs:
+        for env_name in [".env", ".env.local", ".env.development"]:
+            env_file = cdir / env_name
+            if env_file.is_file():
+                try:
+                    for line in env_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k = k.strip()
+                            v = v.strip().strip('"').strip("'")
+                            if k and k not in env_vars:
+                                env_vars[k] = v
+                except Exception:
+                    pass
+    return env_vars
+
+
 def run_process_sync(cmd: str, args: List[str], cwd: str, stdin_data: str = "", timeout_ms: int = 15000, env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Execute command synchronously with timeout and capture output."""
-    full_env = {**os.environ, **(env or {})}
+    workspace_env = load_workspace_env(cwd)
+    full_env = {**os.environ, **workspace_env, **(env or {})}
     timeout_sec = timeout_ms / 1000.0
 
     try:

@@ -585,7 +585,13 @@ export function TerminalProvider({ children }) {
      */
     const sendTerminalInput = useCallback(async (data, targetTermId = null) => {
         const destId = targetTermId ?? activeTerminalIdRef.current;
-        const active = activeStreamsRef.current[destId];
+        let active = activeStreamsRef.current[destId];
+        if (!active?.streamId) {
+            const entries = Object.values(activeStreamsRef.current || {});
+            if (entries.length > 0) {
+                active = entries[entries.length - 1];
+            }
+        }
         if (active?.streamId) {
             await sendStreamStdin(active.streamId, data);
         }
@@ -901,6 +907,16 @@ export function TerminalProvider({ children }) {
             stage: "execution"
         });
 
+        const sanitizeConsoleOutput = (str) => {
+            return String(str || '')
+                .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '')
+                .replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, '')
+                .replace(/\x1b[@-Z\\-_]/g, '')
+                .replace(/\r\n/g, '\n')
+                .replace(/\r/g, '')
+                .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
+        };
+
         let collectedOutput = "";
 
         try {
@@ -917,9 +933,7 @@ export function TerminalProvider({ children }) {
                     const chunkLines = chunk.replace(/\r\n/g, '\n').split('\n');
                     appendToTerminal(chunkLines, targetId);
 
-                    const cleanChunkCollected = String(collectedOutput)
-                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-                        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+                    const cleanChunkCollected = sanitizeConsoleOutput(collectedOutput);
 
                     setLatestExecution(prev => ({
                         ...(prev || {}),
@@ -935,9 +949,7 @@ export function TerminalProvider({ children }) {
                     }));
 
                     // Scan for local dev server URLs WITH explicit port
-                    const cleanCollected = String(collectedOutput)
-                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-                        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+                    const cleanCollected = sanitizeConsoleOutput(collectedOutput);
 
                     const portUrlRegex = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):(\d{2,5})(?:\/[^\s"'\)\]>]*)?/gi;
                     let match;
@@ -964,9 +976,7 @@ export function TerminalProvider({ children }) {
                     const termPrompt = getTerminalPrompt(targetTerm);
                     appendToTerminal([termPrompt], targetId);
 
-                    const cleanCollected = String(collectedOutput)
-                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-                        .replace(/[\x1b\x00-\x1f\x7f]/g, '');
+                    const cleanCollected = sanitizeConsoleOutput(collectedOutput);
 
                     setLatestExecution({
                         filename: targetFileName || activeFile?.name || trimmed,
@@ -1117,7 +1127,7 @@ export function TerminalProvider({ children }) {
         let runCmd = '';
         const fileName = fileToRun.name;
         if (lang === 'python') {
-            runCmd = `python "${fileName}"`;
+            runCmd = `python -u "${fileName}"`;
         } else if (lang === 'javascript' || lang === 'node') {
             runCmd = `node "${fileName}"`;
         } else if (lang === 'c') {
@@ -1345,6 +1355,7 @@ export function TerminalProvider({ children }) {
         commands,
         isRunning,
         latestExecution,
+        clearLatestExecution: () => setLatestExecution(null),
         isSplit,
         isMaximized,
         isTaskPickerOpen,

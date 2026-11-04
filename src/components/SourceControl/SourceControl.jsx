@@ -15,7 +15,13 @@ import {
   VscHistory,
   VscClose,
   VscFolderOpened,
-  VscRepo
+  VscRepo,
+  VscDiff,
+  VscScreenFull,
+  VscCopy,
+  VscArrowUp,
+  VscArrowDown,
+  VscSparkle
 } from "react-icons/vsc";
 import { FaGitAlt, FaGithub } from "react-icons/fa";
 import useTerminal from "../../hooks/useTerminal";
@@ -46,13 +52,23 @@ import {
   publishToGitHub,
   gitStash,
   gitStashPop,
-  getGitLog
+  getGitLog,
+  getFileDiff
 } from "../../services/gitService";
 import "./SourceControl.css";
 
-export default function SourceControl() {
+const COMMIT_PREFIXES = [
+  { label: "feat", prefix: "feat: " },
+  { label: "fix", prefix: "fix: " },
+  { label: "refactor", prefix: "refactor: " },
+  { label: "docs", prefix: "docs: " },
+  { label: "chore", prefix: "chore: " },
+  { label: "test", prefix: "test: " }
+];
+
+export default function SourceControl({ isFullTab = false, onOpenFullView = null }) {
   const { persistedFolderInfo, files, refreshWorkspace } = useFile();
-  const { openFile } = useEditor();
+  const { openFile, openSourceControlTab } = useEditor();
   const { executeCommand } = useTerminal();
 
   const cwd = persistedFolderInfo?.path || "";
@@ -77,6 +93,13 @@ export default function SourceControl() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyList, setHistoryList] = useState([]);
+
+  // Diff Viewer States
+  const [selectedDiffFile, setSelectedDiffFile] = useState(null); // { path, fileName, code, status, isStaged }
+  const [diffText, setDiffText] = useState("");
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [studioTab, setStudioTab] = useState("diff"); // "diff" | "history" | "branches"
+  const [copiedHash, setCopiedHash] = useState(null);
 
   // Form states
   const [newBranchName, setNewBranchName] = useState("");
@@ -128,6 +151,12 @@ export default function SourceControl() {
         setRemotes(remotesList);
         setStaged(statusRes.staged || []);
         setUnstaged(statusRes.unstaged || []);
+
+        // Also refresh history if loaded
+        if (showHistoryModal || studioTab === "history") {
+          const logs = await getGitLog(cwd, 25);
+          setHistoryList(logs);
+        }
       }
     } catch (err) {
       console.error("Error fetching git status:", err);
@@ -140,6 +169,28 @@ export default function SourceControl() {
   useEffect(() => {
     fetchStatus();
   }, [cwd]);
+
+  // Diff inspection
+  const handleSelectDiff = async (item, isStaged = false) => {
+    setSelectedDiffFile({ ...item, isStaged });
+    setDiffLoading(true);
+    setStudioTab("diff");
+    try {
+      const diff = await getFileDiff(cwd, item.path, isStaged);
+      setDiffText(diff || `No text diff available for ${item.fileName}. File may be untracked or binary.`);
+    } catch (err) {
+      setDiffText(`Error loading diff: ${err.message}`);
+    } finally {
+      setDiffLoading(false);
+    }
+  };
+
+  const handleCopyHash = (hash) => {
+    if (!hash) return;
+    navigator.clipboard?.writeText(hash);
+    setCopiedHash(hash);
+    setTimeout(() => setCopiedHash(null), 2000);
+  };
 
   // Actions
   const handleInitRepo = async () => {
@@ -178,6 +229,8 @@ export default function SourceControl() {
         showToast(`Committed: "${commitMsg.trim()}"`, "success");
         setCommitMsg("");
         setIsAmending(false);
+        setSelectedDiffFile(null);
+        setDiffText("");
         await fetchStatus();
         if (refreshWorkspace) refreshWorkspace();
       } else {
@@ -194,8 +247,14 @@ export default function SourceControl() {
     setActionLoading(`stage-${filePath}`);
     try {
       const res = await stageFile(cwd, filePath);
-      if (res.success) await fetchStatus();
-      else showToast(`Failed to stage: ${res.stderr}`, "error");
+      if (res.success) {
+        await fetchStatus();
+        if (selectedDiffFile?.path === filePath) {
+          handleSelectDiff({ ...selectedDiffFile, isStaged: true }, true);
+        }
+      } else {
+        showToast(`Failed to stage: ${res.stderr}`, "error");
+      }
     } finally {
       setActionLoading(null);
     }
@@ -205,8 +264,14 @@ export default function SourceControl() {
     setActionLoading(`unstage-${filePath}`);
     try {
       const res = await unstageFile(cwd, filePath);
-      if (res.success) await fetchStatus();
-      else showToast(`Failed to unstage: ${res.stderr}`, "error");
+      if (res.success) {
+        await fetchStatus();
+        if (selectedDiffFile?.path === filePath) {
+          handleSelectDiff({ ...selectedDiffFile, isStaged: false }, false);
+        }
+      } else {
+        showToast(`Failed to unstage: ${res.stderr}`, "error");
+      }
     } finally {
       setActionLoading(null);
     }
@@ -216,8 +281,14 @@ export default function SourceControl() {
     setActionLoading("stage-all");
     try {
       const res = await stageAll(cwd);
-      if (res.success) await fetchStatus();
-      else showToast(`Failed to stage all: ${res.stderr}`, "error");
+      if (res.success) {
+        await fetchStatus();
+        if (selectedDiffFile) {
+          handleSelectDiff({ ...selectedDiffFile, isStaged: true }, true);
+        }
+      } else {
+        showToast(`Failed to stage all: ${res.stderr}`, "error");
+      }
     } finally {
       setActionLoading(null);
     }
@@ -227,8 +298,14 @@ export default function SourceControl() {
     setActionLoading("unstage-all");
     try {
       const res = await unstageAll(cwd);
-      if (res.success) await fetchStatus();
-      else showToast(`Failed to unstage all: ${res.stderr}`, "error");
+      if (res.success) {
+        await fetchStatus();
+        if (selectedDiffFile) {
+          handleSelectDiff({ ...selectedDiffFile, isStaged: false }, false);
+        }
+      } else {
+        showToast(`Failed to unstage all: ${res.stderr}`, "error");
+      }
     } finally {
       setActionLoading(null);
     }
@@ -243,6 +320,10 @@ export default function SourceControl() {
       const res = await discardFile(cwd, file.path, file.status === "Untracked");
       if (res.success) {
         showToast(`Discarded changes in ${file.fileName}`, "info");
+        if (selectedDiffFile?.path === file.path) {
+          setSelectedDiffFile(null);
+          setDiffText("");
+        }
         await fetchStatus();
         if (refreshWorkspace) refreshWorkspace();
       } else {
@@ -254,18 +335,24 @@ export default function SourceControl() {
   };
 
   const handleDiscardAll = async () => {
-    if (!window.confirm("Discard ALL uncommitted changes in working tree? This cannot be undone.")) {
+    if (
+      !window.confirm(
+        `Are you sure you want to discard ALL uncommitted changes in ${unstaged.length} file(s)? This action cannot be undone.`
+      )
+    ) {
       return;
     }
     setActionLoading("discard-all");
     try {
       const res = await discardAll(cwd);
       if (res.success) {
-        showToast("Discarded all changes.", "info");
+        showToast("Discarded all uncommitted changes.", "info");
+        setSelectedDiffFile(null);
+        setDiffText("");
         await fetchStatus();
         if (refreshWorkspace) refreshWorkspace();
       } else {
-        showToast(`Failed to discard changes: ${res.stderr}`, "error");
+        showToast(`Failed to discard: ${res.stderr}`, "error");
       }
     } finally {
       setActionLoading(null);
@@ -275,16 +362,16 @@ export default function SourceControl() {
   const handleSync = async () => {
     setActionLoading("sync");
     try {
-      const res = await gitSync(cwd);
+      const res = await gitSync(cwd, branch);
       if (res.success) {
-        showToast("Synchronized branch with remote successfully.", "success");
+        showToast("Synchronized commits with remote.", "success");
         await fetchStatus();
         if (refreshWorkspace) refreshWorkspace();
       } else {
-        showToast(`Sync error: ${res.stderr || res.stdout}`, "error");
+        showToast(`Sync failed: ${res.stderr || res.stdout}`, "error");
       }
     } catch (err) {
-      showToast(`Sync error: ${err.message}`, "error");
+      showToast(`Sync failed: ${err.message}`, "error");
     } finally {
       setActionLoading(null);
     }
@@ -293,9 +380,9 @@ export default function SourceControl() {
   const handlePush = async () => {
     setActionLoading("push");
     try {
-      const res = await gitPush(cwd, { branch, setUpstream: !tracking.upstream });
+      const res = await gitPush(cwd, "origin", branch);
       if (res.success) {
-        showToast(`Pushed branch ${branch} to remote.`, "success");
+        showToast(`Pushed branch "${branch}" to origin.`, "success");
         await fetchStatus();
       } else {
         showToast(`Push failed: ${res.stderr || res.stdout}`, "error");
@@ -406,9 +493,13 @@ export default function SourceControl() {
   const handleViewHistory = async () => {
     setActionLoading("history");
     try {
-      const logs = await getGitLog(cwd, 25);
+      const logs = await getGitLog(cwd, 30);
       setHistoryList(logs);
-      setShowHistoryModal(true);
+      if (isFullTab) {
+        setStudioTab("history");
+      } else {
+        setShowHistoryModal(true);
+      }
     } catch (err) {
       showToast(`Error fetching history: ${err.message}`, "error");
     } finally {
@@ -449,7 +540,6 @@ export default function SourceControl() {
   };
 
   const handleOpenFileItem = (item) => {
-    // Attempt to locate in loaded file objects
     const found = files.find(
       (f) => f.path === item.path || f.name === item.fileName || f.path?.endsWith(item.path)
     );
@@ -464,14 +554,432 @@ export default function SourceControl() {
     }
   };
 
-  const totalChanges = staged.length + unstaged.length;
+  // Render Diff Viewer Code Lines
+  const renderDiffLines = () => {
+    if (diffLoading) {
+      return (
+        <div className="sc-diff-empty">
+          <VscRefresh className="spin-icon" style={{ fontSize: 24, marginBottom: 8 }} />
+          <span>Generating Git Diff...</span>
+        </div>
+      );
+    }
+
+    if (!diffText) {
+      return (
+        <div className="sc-diff-empty">
+          <VscDiff style={{ fontSize: 32, opacity: 0.5, marginBottom: 8 }} />
+          <span>Select any modified or staged file to view its real-time diff.</span>
+        </div>
+      );
+    }
+
+    const lines = diffText.split("\n");
+    return (
+      <div className="sc-diff-code-wrapper">
+        {lines.map((line, idx) => {
+          let lineType = "context";
+          if (line.startsWith("+++") || line.startsWith("---")) lineType = "meta";
+          else if (line.startsWith("+")) lineType = "addition";
+          else if (line.startsWith("-")) lineType = "deletion";
+          else if (line.startsWith("@@")) lineType = "hunk";
+
+          return (
+            <div key={idx} className={`sc-diff-line sc-diff-${lineType}`}>
+              <span className="sc-diff-line-num">{idx + 1}</span>
+              <span className="sc-diff-marker">
+                {lineType === "addition" ? "+" : lineType === "deletion" ? "-" : " "}
+              </span>
+              <span className="sc-diff-text">
+                {lineType === "addition" || lineType === "deletion" ? line.slice(1) : line}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Sidebar changes section rendering
+  const renderChangesPanel = () => {
+    return (
+      <div className="source-control-body">
+        {/* State 1: Checking repo state */}
+        {isRepo === null ? (
+          <div className="sc-empty-state">
+            <VscRefresh className="spin-icon" style={{ fontSize: 24, marginBottom: 8 }} />
+            <span>Checking Git repository status...</span>
+          </div>
+        ) : !isRepo ? (
+          /* State 2: Folder is NOT a Git repo */
+          <div className="sc-no-repo-state">
+            <div className="sc-no-repo-icon-wrap">
+              <VscSourceControl className="sc-no-repo-icon" />
+            </div>
+            <h3>No Git Repository</h3>
+            <p>
+              The workspace directory doesn't have a Git repository. You can initialize one to enable
+              source control, branch tracking, and commit staging.
+            </p>
+
+            <button
+              className="sc-btn sc-btn-primary"
+              onClick={handleInitRepo}
+              disabled={actionLoading === "init"}
+            >
+              <FaGitAlt /> {actionLoading === "init" ? "Initializing..." : "Initialize Repository"}
+            </button>
+
+            <button
+              className="sc-btn sc-btn-secondary"
+              onClick={() => {
+                handleInitRepo().then(() => setShowPublishModal(true));
+              }}
+              style={{ marginTop: 6 }}
+            >
+              <FaGithub /> Initialize & Publish to GitHub
+            </button>
+          </div>
+        ) : (
+          /* State 3: Active Git Repository */
+          <>
+            {/* Branch and Sync Bar */}
+            <div className="sc-repo-status-bar">
+              <button
+                className="sc-branch-pill"
+                onClick={() => setShowBranchModal(true)}
+                title="Click to switch or create branch"
+              >
+                <VscGitBranch className="sc-branch-icon" />
+                <span className="sc-branch-name">{branch}</span>
+              </button>
+
+              <div className="sc-sync-actions">
+                {remotes.length > 0 ? (
+                  <button
+                    className="sc-sync-btn"
+                    onClick={handleSync}
+                    disabled={actionLoading === "sync"}
+                    title={
+                      tracking.upstream
+                        ? `Sync (${tracking.behind} behind, ${tracking.ahead} ahead)`
+                        : "Push branch to remote"
+                    }
+                  >
+                    <VscSync className={actionLoading === "sync" ? "spin-icon" : ""} />
+                    {tracking.upstream ? (
+                      <span className="sc-sync-counts">
+                        {tracking.behind > 0 && <span className="sync-down"><VscArrowDown />{tracking.behind}</span>}
+                        {tracking.ahead > 0 && <span className="sync-up"><VscArrowUp />{tracking.ahead}</span>}
+                        {tracking.behind === 0 && tracking.ahead === 0 && "Sync"}
+                      </span>
+                    ) : (
+                      <span>Publish</span>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    className="sc-publish-btn"
+                    onClick={() => setShowPublishModal(true)}
+                    title="Publish repository to GitHub"
+                  >
+                    <VscCloudUpload />
+                    <span>Publish</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Commit Message Box */}
+            <div className="sc-commit-box">
+              {/* Quick Commit Prefix Chips */}
+              <div className="sc-commit-prefixes">
+                {COMMIT_PREFIXES.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    className="sc-prefix-chip"
+                    onClick={() => {
+                      if (!commitMsg.startsWith(p.prefix)) {
+                        setCommitMsg(p.prefix + commitMsg.replace(/^[a-z]+:\s*/i, ""));
+                      }
+                    }}
+                    title={`Add "${p.prefix}" prefix`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                placeholder="Message (Ctrl+Enter to commit)"
+                value={commitMsg}
+                onChange={(e) => setCommitMsg(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.ctrlKey && e.key === "Enter") {
+                    handleCommit();
+                  }
+                }}
+                rows={2}
+              />
+
+              <div className="sc-commit-options">
+                <label className="sc-amend-label" title="Amend previous commit message and files">
+                  <input
+                    type="checkbox"
+                    checked={isAmending}
+                    onChange={(e) => setIsAmending(e.target.checked)}
+                  />
+                  <span>Amend</span>
+                </label>
+
+                <button
+                  className="sc-commit-btn"
+                  onClick={handleCommit}
+                  disabled={!commitMsg.trim() || !!actionLoading}
+                >
+                  <VscCheck />
+                  {actionLoading === "commit"
+                    ? "Committing..."
+                    : isAmending
+                    ? "Amend Commit"
+                    : staged.length > 0
+                    ? `Commit Staged (${staged.length})`
+                    : `Commit (${unstaged.length})`}
+                </button>
+              </div>
+            </div>
+
+            {/* Staged Changes Section */}
+            {staged.length > 0 && (
+              <div className="sc-section">
+                <div
+                  className="sc-section-header"
+                  onClick={() => setStagedOpen((prev) => !prev)}
+                >
+                  <div className="sc-section-title">
+                    <span className="sc-section-arrow">{stagedOpen ? "▾" : "▸"}</span>
+                    <span>STAGED CHANGES</span>
+                    <span className="sc-count-badge staged">{staged.length}</span>
+                  </div>
+                  <div
+                    className="sc-section-actions"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      className="sc-section-btn"
+                      onClick={handleUnstageAll}
+                      title="Unstage All Changes"
+                      disabled={actionLoading === "unstage-all"}
+                    >
+                      <VscRemove />
+                    </button>
+                  </div>
+                </div>
+
+                {stagedOpen && (
+                  <div className="sc-file-list">
+                    {staged.map((item) => (
+                      <div
+                        key={`staged-${item.path}`}
+                        className={`sc-file-item ${selectedDiffFile?.path === item.path && selectedDiffFile?.isStaged ? "active-diff" : ""}`}
+                        onClick={() => handleSelectDiff(item, true)}
+                        title={`Click to view diff for ${item.path}`}
+                      >
+                        <div className="sc-file-icon-wrap">
+                          {getFileIcon(item.fileName)}
+                        </div>
+                        <div className="sc-file-info">
+                          <span className="sc-file-name">{item.fileName}</span>
+                          <span className="sc-file-dir">
+                            {item.path.includes("/") || item.path.includes("\\")
+                              ? item.path.substring(
+                                  0,
+                                  Math.max(item.path.lastIndexOf("/"), item.path.lastIndexOf("\\"))
+                                )
+                              : ""}
+                          </span>
+                        </div>
+
+                        <span className={`sc-badge sc-badge-${item.code.toLowerCase()}`}>
+                          {item.code}
+                        </span>
+
+                        <div
+                          className="sc-item-actions"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className="sc-item-btn"
+                            onClick={() => handleOpenFileItem(item)}
+                            title="Open File in Editor"
+                          >
+                            <VscGoToFile />
+                          </button>
+                          <button
+                            className="sc-item-btn"
+                            onClick={() => handleUnstageFile(item.path)}
+                            title="Unstage Changes"
+                          >
+                            <VscRemove />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Changes Section */}
+            <div className="sc-section">
+              <div
+                className="sc-section-header"
+                onClick={() => setUnstagedOpen((prev) => !prev)}
+              >
+                <div className="sc-section-title">
+                  <span className="sc-section-arrow">{unstagedOpen ? "▾" : "▸"}</span>
+                  <span>CHANGES</span>
+                  <span className="sc-count-badge">{unstaged.length}</span>
+                </div>
+                {unstaged.length > 0 && (
+                  <div
+                    className="sc-section-actions"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      className="sc-section-btn"
+                      onClick={handleDiscardAll}
+                      title="Discard All Changes"
+                      disabled={actionLoading === "discard-all"}
+                    >
+                      <VscDiscard />
+                    </button>
+                    <button
+                      className="sc-section-btn"
+                      onClick={handleStageAll}
+                      title="Stage All Changes"
+                      disabled={actionLoading === "stage-all"}
+                    >
+                      <VscAdd />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {unstagedOpen && (
+                <div className="sc-file-list">
+                  {unstaged.length === 0 ? (
+                    <div className="sc-empty">
+                      <VscCheck style={{ color: "#22c55e", marginRight: 6 }} />
+                      No uncommitted changes. Working tree clean.
+                    </div>
+                  ) : (
+                    unstaged.map((item) => (
+                      <div
+                        key={`unstaged-${item.path}`}
+                        className={`sc-file-item ${selectedDiffFile?.path === item.path && !selectedDiffFile?.isStaged ? "active-diff" : ""}`}
+                        onClick={() => handleSelectDiff(item, false)}
+                        title={`Click to view diff for ${item.path}`}
+                      >
+                        <div className="sc-file-icon-wrap">
+                          {getFileIcon(item.fileName)}
+                        </div>
+                        <div className="sc-file-info">
+                          <span className="sc-file-name">{item.fileName}</span>
+                          <span className="sc-file-dir">
+                            {item.path.includes("/") || item.path.includes("\\")
+                              ? item.path.substring(
+                                  0,
+                                  Math.max(item.path.lastIndexOf("/"), item.path.lastIndexOf("\\"))
+                                )
+                              : ""}
+                          </span>
+                        </div>
+
+                        <span className={`sc-badge sc-badge-${item.code.toLowerCase()}`}>
+                          {item.code}
+                        </span>
+
+                        <div
+                          className="sc-item-actions"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className="sc-item-btn"
+                            onClick={() => handleOpenFileItem(item)}
+                            title="Open File in Editor"
+                          >
+                            <VscGoToFile />
+                          </button>
+                          <button
+                            className="sc-item-btn"
+                            onClick={() => handleDiscardFile(item)}
+                            title="Discard Changes"
+                          >
+                            <VscDiscard />
+                          </button>
+                          <button
+                            className="sc-item-btn"
+                            onClick={() => handleStageFile(item.path)}
+                            title="Stage Changes"
+                          >
+                            <VscAdd />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div className="source-control-container">
+    <div className={`source-control-container ${isFullTab ? "sc-studio-mode" : ""}`}>
       {/* Top Header */}
       <div className="source-control-header">
-        <span className="source-control-title">SOURCE CONTROL</span>
+        <div className="sc-header-left">
+          <VscSourceControl className="sc-brand-icon" />
+          <span className="source-control-title">
+            {isFullTab ? "SOURCE CONTROL STUDIO" : "SOURCE CONTROL"}
+          </span>
+          {isRepo && (
+            <span className="sc-active-branch-chip" onClick={() => setShowBranchModal(true)}>
+              <VscGitBranch /> {branch}
+            </span>
+          )}
+        </div>
+
         <div className="source-control-actions" ref={moreMenuRef}>
+          {/* Studio Tab Switcher (in Full Tab Mode) */}
+          {isFullTab && isRepo && (
+            <div className="sc-studio-nav">
+              <button
+                className={`sc-tab-btn ${studioTab === "diff" ? "active" : ""}`}
+                onClick={() => setStudioTab("diff")}
+              >
+                <VscDiff /> Diff View
+              </button>
+              <button
+                className={`sc-tab-btn ${studioTab === "history" ? "active" : ""}`}
+                onClick={() => handleViewHistory()}
+              >
+                <VscHistory /> Commit Log
+              </button>
+              <button
+                className={`sc-tab-btn ${studioTab === "branches" ? "active" : ""}`}
+                onClick={() => setShowBranchModal(true)}
+              >
+                <VscGitBranch /> Branches ({branches.length})
+              </button>
+            </div>
+          )}
+
           <button
             className="sc-icon-btn"
             onClick={fetchStatus}
@@ -480,6 +988,17 @@ export default function SourceControl() {
           >
             <VscRefresh className={loading ? "spin-icon" : ""} />
           </button>
+
+          {/* Open in Editor Tab button (when in sidebar mode) */}
+          {!isFullTab && onOpenFullView && (
+            <button
+              className="sc-icon-btn"
+              onClick={onOpenFullView}
+              title="Open Source Control Studio in Editor Tab"
+            >
+              <VscScreenFull />
+            </button>
+          )}
 
           {isRepo && (
             <button
@@ -632,307 +1151,166 @@ export default function SourceControl() {
         </div>
       )}
 
-      {/* Body Section */}
-      <div className="source-control-body">
-        {/* State 1: Checking repo state */}
-        {isRepo === null ? (
-          <div className="sc-empty-state">
-            <VscRefresh className="spin-icon" style={{ fontSize: 24, marginBottom: 8 }} />
-            <span>Checking Git repository status...</span>
+      {/* Layout Body */}
+      {isFullTab ? (
+        <div className="sc-studio-body">
+          {/* Left Column: Changes Sidebar */}
+          <div className="sc-studio-sidebar">
+            {renderChangesPanel()}
           </div>
-        ) : !isRepo ? (
-          /* State 2: Folder is NOT a Git repo */
-          <div className="sc-no-repo-state">
-            <div className="sc-no-repo-icon-wrap">
-              <VscSourceControl className="sc-no-repo-icon" />
-            </div>
-            <h3>No Git Repository</h3>
-            <p>
-              The folder currently open doesn't have a Git repository. You can initialize a
-              repository to enable full source control and track changes.
-            </p>
 
-            <button
-              className="sc-btn sc-btn-primary"
-              onClick={handleInitRepo}
-              disabled={actionLoading === "init"}
-            >
-              <FaGitAlt /> {actionLoading === "init" ? "Initializing..." : "Initialize Repository"}
-            </button>
-
-            <button
-              className="sc-btn sc-btn-secondary"
-              onClick={() => {
-                handleInitRepo().then(() => setShowPublishModal(true));
-              }}
-              style={{ marginTop: 6 }}
-            >
-              <FaGithub /> Initialize & Publish to GitHub
-            </button>
-          </div>
-        ) : (
-          /* State 3: Active Git Repository */
-          <>
-            {/* Branch and Sync Bar */}
-            <div className="sc-repo-status-bar">
-              <button
-                className="sc-branch-pill"
-                onClick={() => setShowBranchModal(true)}
-                title="Click to switch or create branch"
-              >
-                <VscGitBranch className="sc-branch-icon" />
-                <span className="sc-branch-name">{branch}</span>
-              </button>
-
-              <div className="sc-sync-actions">
-                {remotes.length > 0 ? (
-                  <button
-                    className="sc-sync-btn"
-                    onClick={handleSync}
-                    disabled={actionLoading === "sync"}
-                    title={
-                      tracking.upstream
-                        ? `Sync (${tracking.behind} behind, ${tracking.ahead} ahead)`
-                        : "Push branch to remote"
-                    }
-                  >
-                    <VscSync className={actionLoading === "sync" ? "spin-icon" : ""} />
-                    {tracking.upstream ? (
-                      <span className="sc-sync-counts">
-                        {tracking.behind > 0 && `↓${tracking.behind}`}
-                        {tracking.ahead > 0 && `↑${tracking.ahead}`}
-                        {tracking.behind === 0 && tracking.ahead === 0 && "Sync"}
-                      </span>
+          {/* Right Column: Diff Viewer / History Studio Pane */}
+          <div className="sc-studio-main">
+            {studioTab === "diff" && (
+              <div className="sc-diff-container">
+                <div className="sc-diff-header">
+                  <div className="sc-diff-header-info">
+                    <VscDiff className="sc-diff-icon" />
+                    {selectedDiffFile ? (
+                      <>
+                        <span className="sc-diff-filename">{selectedDiffFile.fileName}</span>
+                        <span className="sc-diff-path">{selectedDiffFile.path}</span>
+                        <span className={`sc-diff-badge ${selectedDiffFile.isStaged ? "staged" : "unstaged"}`}>
+                          {selectedDiffFile.isStaged ? "STAGED" : "WORKING TREE"}
+                        </span>
+                      </>
                     ) : (
-                      <span>Publish</span>
+                      <span className="sc-diff-filename">No File Selected</span>
                     )}
-                  </button>
-                ) : (
-                  <button
-                    className="sc-publish-btn"
-                    onClick={() => setShowPublishModal(true)}
-                    title="Publish repository to GitHub"
-                  >
-                    <VscCloudUpload />
-                    <span>Publish</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Commit Message Box */}
-            <div className="sc-commit-box">
-              <textarea
-                placeholder="Message (Ctrl+Enter to commit)"
-                value={commitMsg}
-                onChange={(e) => setCommitMsg(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.ctrlKey && e.key === "Enter") {
-                    handleCommit();
-                  }
-                }}
-                rows={2}
-              />
-
-              <div className="sc-commit-options">
-                <label className="sc-amend-label" title="Amend previous commit message and files">
-                  <input
-                    type="checkbox"
-                    checked={isAmending}
-                    onChange={(e) => setIsAmending(e.target.checked)}
-                  />
-                  <span>Amend</span>
-                </label>
-
-                <button
-                  className="sc-commit-btn"
-                  onClick={handleCommit}
-                  disabled={!commitMsg.trim() || !!actionLoading}
-                >
-                  <VscCheck />
-                  {actionLoading === "commit"
-                    ? "Committing..."
-                    : isAmending
-                    ? "Amend Commit"
-                    : staged.length > 0
-                    ? "Commit Staged"
-                    : "Commit"}
-                </button>
-              </div>
-            </div>
-
-            {/* Staged Changes Section */}
-            {staged.length > 0 && (
-              <div className="sc-section">
-                <div
-                  className="sc-section-header"
-                  onClick={() => setStagedOpen((prev) => !prev)}
-                >
-                  <div className="sc-section-title">
-                    <span className="sc-section-arrow">{stagedOpen ? "▾" : "▸"}</span>
-                    <span>STAGED CHANGES</span>
-                    <span className="sc-count-badge">{staged.length}</span>
                   </div>
-                  <div
-                    className="sc-section-actions"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      className="sc-section-btn"
-                      onClick={handleUnstageAll}
-                      title="Unstage All Changes"
-                      disabled={actionLoading === "unstage-all"}
-                    >
-                      <VscRemove />
-                    </button>
-                  </div>
+
+                  {selectedDiffFile && (
+                    <div className="sc-diff-header-actions">
+                      {selectedDiffFile.isStaged ? (
+                        <button
+                          className="sc-btn sc-btn-secondary sc-btn-sm"
+                          onClick={() => handleUnstageFile(selectedDiffFile.path)}
+                        >
+                          <VscRemove /> Unstage
+                        </button>
+                      ) : (
+                        <button
+                          className="sc-btn sc-btn-primary sc-btn-sm"
+                          onClick={() => handleStageFile(selectedDiffFile.path)}
+                        >
+                          <VscAdd /> Stage
+                        </button>
+                      )}
+                      <button
+                        className="sc-btn sc-btn-secondary sc-btn-sm"
+                        onClick={() => handleOpenFileItem(selectedDiffFile)}
+                        title="Open file in Monaco Editor"
+                      >
+                        <VscGoToFile /> Open
+                      </button>
+                      <button
+                        className="sc-btn-icon"
+                        onClick={() => {
+                          setSelectedDiffFile(null);
+                          setDiffText("");
+                        }}
+                        title="Close Diff"
+                      >
+                        <VscClose />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {stagedOpen && (
-                  <div className="sc-file-list">
-                    {staged.map((item) => (
-                      <div
-                        key={`staged-${item.path}`}
-                        className="sc-file-item"
-                        onClick={() => handleOpenFileItem(item)}
-                        title={`Click to open ${item.path}`}
-                      >
-                        <div className="sc-file-icon-wrap">
-                          {getFileIcon(item.fileName)}
-                        </div>
-                        <div className="sc-file-info">
-                          <span className="sc-file-name">{item.fileName}</span>
-                          <span className="sc-file-dir">
-                            {item.path.includes("/") || item.path.includes("\\")
-                              ? item.path.substring(
-                                  0,
-                                  Math.max(item.path.lastIndexOf("/"), item.path.lastIndexOf("\\"))
-                                )
-                              : ""}
-                          </span>
-                        </div>
-
-                        <span className={`sc-badge sc-badge-${item.code.toLowerCase()}`}>
-                          {item.code}
-                        </span>
-
-                        <div
-                          className="sc-item-actions"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            className="sc-item-btn"
-                            onClick={() => handleUnstageFile(item.path)}
-                            title="Unstage Changes"
-                          >
-                            <VscRemove />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="sc-diff-content">
+                  {renderDiffLines()}
+                </div>
               </div>
             )}
 
-            {/* Changes Section */}
-            <div className="sc-section">
-              <div
-                className="sc-section-header"
-                onClick={() => setUnstagedOpen((prev) => !prev)}
-              >
-                <div className="sc-section-title">
-                  <span className="sc-section-arrow">{unstagedOpen ? "▾" : "▸"}</span>
-                  <span>CHANGES</span>
-                  <span className="sc-count-badge">{unstaged.length}</span>
+            {studioTab === "history" && (
+              <div className="sc-history-studio">
+                <div className="sc-history-studio-header">
+                  <h3>
+                    <VscHistory /> Commit Log Timeline ({branch})
+                  </h3>
+                  <button className="sc-btn sc-btn-secondary sc-btn-sm" onClick={handleViewHistory}>
+                    <VscRefresh /> Refresh Log
+                  </button>
                 </div>
-                {unstaged.length > 0 && (
-                  <div
-                    className="sc-section-actions"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      className="sc-section-btn"
-                      onClick={handleDiscardAll}
-                      title="Discard All Changes"
-                      disabled={actionLoading === "discard-all"}
-                    >
-                      <VscDiscard />
-                    </button>
-                    <button
-                      className="sc-section-btn"
-                      onClick={handleStageAll}
-                      title="Stage All Changes"
-                      disabled={actionLoading === "stage-all"}
-                    >
-                      <VscAdd />
-                    </button>
-                  </div>
-                )}
-              </div>
 
-              {unstagedOpen && (
-                <div className="sc-file-list">
-                  {unstaged.length === 0 ? (
-                    <div className="sc-empty">
-                      <VscCheck style={{ color: "#22c55e", marginRight: 6 }} />
-                      No uncommitted changes detected. Working tree clean.
-                    </div>
+                <div className="sc-history-studio-list">
+                  {historyList.length === 0 ? (
+                    <div className="sc-empty">No commits found in this branch.</div>
                   ) : (
-                    unstaged.map((item) => (
-                      <div
-                        key={`unstaged-${item.path}`}
-                        className="sc-file-item"
-                        onClick={() => handleOpenFileItem(item)}
-                        title={`Click to open ${item.path}`}
-                      >
-                        <div className="sc-file-icon-wrap">
-                          {getFileIcon(item.fileName)}
+                    historyList.map((log) => (
+                      <div key={log.hash} className="sc-studio-history-row">
+                        <div className="sc-commit-graph-indicator">
+                          <div className="sc-commit-dot" />
+                          <div className="sc-commit-line" />
                         </div>
-                        <div className="sc-file-info">
-                          <span className="sc-file-name">{item.fileName}</span>
-                          <span className="sc-file-dir">
-                            {item.path.includes("/") || item.path.includes("\\")
-                              ? item.path.substring(
-                                  0,
-                                  Math.max(item.path.lastIndexOf("/"), item.path.lastIndexOf("\\"))
-                                )
-                              : ""}
-                          </span>
-                        </div>
-
-                        <span className={`sc-badge sc-badge-${item.code.toLowerCase()}`}>
-                          {item.code}
-                        </span>
-
-                        <div
-                          className="sc-item-actions"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            className="sc-item-btn"
-                            onClick={() => handleDiscardFile(item)}
-                            title="Discard Changes"
-                          >
-                            <VscDiscard />
-                          </button>
-                          <button
-                            className="sc-item-btn"
-                            onClick={() => handleStageFile(item.path)}
-                            title="Stage Changes"
-                          >
-                            <VscAdd />
-                          </button>
+                        <div className="sc-commit-row-content">
+                          <div className="sc-commit-row-top">
+                            <span className="sc-commit-subject">{log.subject}</span>
+                            <span className="sc-commit-date">{log.date}</span>
+                          </div>
+                          <div className="sc-commit-row-bottom">
+                            <span className="sc-commit-author">{log.author}</span>
+                            <button
+                              className="sc-commit-hash-pill"
+                              onClick={() => handleCopyHash(log.hash)}
+                              title="Click to copy commit hash"
+                            >
+                              <VscGitCommit />
+                              <span>{log.hash}</span>
+                              {copiedHash === log.hash ? (
+                                <span className="sc-copied-tag">Copied!</span>
+                              ) : (
+                                <VscCopy size={11} />
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
-              )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Standard Sidebar View */
+        renderChangesPanel()
+      )}
+
+      {/* Floating Diff Modal in Sidebar Mode */}
+      {!isFullTab && selectedDiffFile && (
+        <div className="sc-modal-backdrop" onClick={() => setSelectedDiffFile(null)}>
+          <div className="sc-modal-card sc-modal-card-diff" onClick={(e) => e.stopPropagation()}>
+            <div className="sc-modal-header">
+              <span className="sc-modal-title">
+                <VscDiff /> Diff: {selectedDiffFile.fileName}
+              </span>
+              <div style={{ display: "flex", gap: "6px" }}>
+                {onOpenFullView && (
+                  <button
+                    className="sc-modal-close"
+                    onClick={() => {
+                      setSelectedDiffFile(null);
+                      onOpenFullView();
+                    }}
+                    title="Expand into Full Tab"
+                  >
+                    <VscScreenFull />
+                  </button>
+                )}
+                <button className="sc-modal-close" onClick={() => setSelectedDiffFile(null)}>
+                  <VscClose />
+                </button>
+              </div>
             </div>
-          </>
-        )}
-      </div>
+            <div className="sc-modal-body sc-diff-modal-body">
+              {renderDiffLines()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Branch Switcher & Creator Modal */}
       {showBranchModal && (
@@ -1049,7 +1427,7 @@ export default function SourceControl() {
         </div>
       )}
 
-      {/* Commit History Modal */}
+      {/* Commit History Modal (in Sidebar Mode) */}
       {showHistoryModal && (
         <div className="sc-modal-backdrop" onClick={() => setShowHistoryModal(false)}>
           <div className="sc-modal-card sc-modal-card-large" onClick={(e) => e.stopPropagation()}>

@@ -899,6 +899,50 @@ export function scanCodebaseArchitecture(files = []) {
         }
       });
     }
+
+    // 5. Connection via Environment & Configuration (.env connections)
+    const content = sourceNode.content || "";
+    const usesEnv =
+      content.includes("process.env.") ||
+      content.includes("import.meta.env.") ||
+      content.includes("os.environ") ||
+      content.includes("os.getenv") ||
+      content.includes("load_dotenv") ||
+      content.includes("dotenv.config") ||
+      content.includes(".loadEnvFile") ||
+      sourceNode.imports?.some(i => i.source.includes(".env") || i.source.includes("dotenv") || i.source.includes("config"));
+
+    if (usesEnv && sourceNode.layer !== "config") {
+      const sourceDir = (sourceNode.filePath || "").replace(/\\/g, "/");
+      const envNodes = nodes.filter(n => n.fileName?.toLowerCase().startsWith(".env") || n.layer === "config");
+
+      let targetEnvNode = null;
+      if (sourceDir.includes("backend/") || sourceDir.startsWith("backend/")) {
+        targetEnvNode = envNodes.find(n => (n.filePath || "").includes("backend/.env") || n.fileName === ".env");
+      }
+      if (!targetEnvNode) {
+        targetEnvNode = envNodes.find(n => n.fileName === ".env" || n.fileName === ".env.local" || n.fileName === ".env.development") || envNodes[0];
+      }
+
+      if (targetEnvNode && targetEnvNode.id !== sourceNode.id) {
+        const edgeId = `${sourceNode.id}->${targetEnvNode.id}-env`;
+        if (!edges.some(e => e.id === edgeId || (e.source === sourceNode.id && e.target === targetEnvNode.id))) {
+          const envMatches = Array.from(content.matchAll(/(?:process\.env|import\.meta\.env)\.([a-zA-Z0-9_]+)|(?:os\.environ(?:\.get)?|os\.getenv)\(\s*['"]([a-zA-Z0-9_]+)['"]/g))
+            .map(m => m[1] || m[2])
+            .filter(Boolean);
+          const uniqueVars = Array.from(new Set(envMatches)).slice(0, 3);
+          const varLabel = uniqueVars.length > 0 ? `uses ${uniqueVars.join(", ")}` : "reads .env config";
+
+          edges.push({
+            id: edgeId,
+            source: sourceNode.id,
+            target: targetEnvNode.id,
+            label: varLabel,
+            kind: "config"
+          });
+        }
+      }
+    }
   });
 
   return {

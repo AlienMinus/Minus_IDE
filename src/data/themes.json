@@ -1,5 +1,30 @@
 [
   {
+    "id": "pixelatte",
+    "name": "Pixelatte (Retro 8-Bit Arcade)",
+    "type": "featured",
+    "category": "featured",
+    "isFeatured": true,
+    "description": "Retro 8-bit arcade aesthetic with deep violet surfaces, golden pixel coins, 1-up cyan, and sharp pixel borders.",
+    "ui": {
+      "bgPrimary": "#0f0728",
+      "bgSecondary": "#170c3d",
+      "bgTertiary": "#221356",
+      "textPrimary": "#ffff00",
+      "textSecondary": "#00f5d4",
+      "accentColor": "#facc15",
+      "borderColor": "#facc15",
+      "tabActiveBg": "#1b0e45",
+      "editorBg": "#0f0728",
+      "sidebarBg": "#170c3d",
+      "activityBarBg": "#1b0e45",
+      "statusBarBg": "#ff007f",
+      "cardBg": "#1b0e45",
+      "inputBg": "#170c3d",
+      "hoverBg": "rgba(250, 204, 21, 0.15)"
+    }
+  },
+  {
     "id": "light-2026",
     "name": "Light 2026 (Default Light)",
     "type": "light",

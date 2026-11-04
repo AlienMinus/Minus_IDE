@@ -153,6 +153,8 @@ function TerminalComponent({ hideToolbar = false }) {
 
   const activeTerminalRef = useRef(activeTerminal);
   activeTerminalRef.current = activeTerminal;
+  const isRunningRef = useRef(isRunning);
+  isRunningRef.current = isRunning;
 
   const currentCommand = useRef("");
   const cursorPos = useRef(0);
@@ -344,7 +346,7 @@ function TerminalComponent({ hideToolbar = false }) {
         if (!term) return;
 
         const currentPrompt = resolvePrompt(mainSessionRef.current);
-        const isMainRunning = !!(mainSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === mainSessionRef.current?.id));
+        const isMainRunning = Boolean(isRunningRef.current || mainSessionRef.current?.isRunning || mainSessionRef.current?.activeStreamId || activeTerminalRef.current?.activeStreamId);
 
         // When a command is actively running, ignore arrow-key history recalling
         if (isMainRunning && (domEvent.key === 'ArrowUp' || domEvent.key === 'ArrowDown')) {
@@ -477,7 +479,7 @@ function TerminalComponent({ hideToolbar = false }) {
         }
 
         const currentPrompt = resolvePrompt(mainSessionRef.current);
-        const isMainRunning = !!(mainSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === mainSessionRef.current?.id));
+        const isMainRunning = Boolean(isRunningRef.current || mainSessionRef.current?.isRunning || mainSessionRef.current?.activeStreamId || activeTerminalRef.current?.activeStreamId);
 
         // When process is actively running in this terminal, route input directly to stdin
         if (isMainRunning) {
@@ -593,7 +595,7 @@ function TerminalComponent({ hideToolbar = false }) {
       const prevLast = prevOutputRef.current?.[prevOutputRef.current.length - 1];
       const currLast = mainSession.output[mainSession.output.length - 1];
       if (prevLast !== currLast && typeof currLast === 'string') {
-        const isMainRunning = !!(mainSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === mainSessionRef.current?.id));
+        const isMainRunning = Boolean(isRunningRef.current || mainSessionRef.current?.isRunning || mainSessionRef.current?.activeStreamId || activeTerminalRef.current?.activeStreamId);
         if (!justTypedEnterRef.current && isPromptLine(prevLast) && !isMainRunning) {
           term.write('\r\x1b[2K' + String(currLast).replace(/\r?\n/g, '\r\n') + '\r\n');
         }
@@ -676,7 +678,7 @@ function TerminalComponent({ hideToolbar = false }) {
         if (!term) return;
 
         const currentPrompt = resolvePrompt(splitSessionRef.current);
-        const isSplitRunning = !!(splitSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === splitSessionRef.current?.id));
+        const isSplitRunning = Boolean(splitSessionRef.current?.isRunning || splitSessionRef.current?.activeStreamId || (isRunningRef.current && activeTerminalRef.current?.id === splitSessionRef.current?.id));
 
         if (isSplitRunning && (domEvent.key === 'ArrowUp' || domEvent.key === 'ArrowDown')) {
           domEvent.preventDefault();
@@ -808,7 +810,7 @@ function TerminalComponent({ hideToolbar = false }) {
         }
 
         const currentPrompt = resolvePrompt(splitSessionRef.current);
-        const isSplitRunning = !!(splitSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === splitSessionRef.current?.id));
+        const isSplitRunning = Boolean(splitSessionRef.current?.isRunning || splitSessionRef.current?.activeStreamId || (isRunningRef.current && activeTerminalRef.current?.id === splitSessionRef.current?.id));
 
         if (isSplitRunning) {
           if (data === "\r") {
@@ -945,7 +947,7 @@ function TerminalComponent({ hideToolbar = false }) {
       const prevLast = splitPrevOutputRef.current?.[splitPrevOutputRef.current.length - 1];
       const currLast = splitSession.output[splitSession.output.length - 1];
       if (prevLast !== currLast && typeof currLast === 'string') {
-        const isSplitRunning = !!(splitSessionRef.current?.isRunning || (isRunning && activeTerminalRef.current?.id === splitSessionRef.current?.id));
+        const isSplitRunning = Boolean(splitSessionRef.current?.isRunning || splitSessionRef.current?.activeStreamId || (isRunningRef.current && activeTerminalRef.current?.id === splitSessionRef.current?.id));
         if (!splitJustTypedEnterRef.current && isPromptLine(prevLast) && !isSplitRunning) {
           term.write('\r\x1b[2K' + String(currLast).replace(/\r?\n/g, '\r\n') + '\r\n');
         }

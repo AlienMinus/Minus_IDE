@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=Roboto+Mono:wght@400;500;700&display=swap');
+
 :root {
   color-scheme: dark;
 }
@@ -60,4 +62,77 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ==========================================================================
+   Pixelatte Theme Tokens & Retro 8-Bit Arcade Styling (from E:/Portfolio)
+   ========================================================================== */
+:root[data-theme-id="pixelatte"] {
+  --bg-primary: #0f0728;
+  --bg-secondary: #170c3d;
+  --bg-tertiary: #221356;
+  --bg-surface: #1b0e45;
+  --bg-surface-elevated: #281566;
+  --bg-surface-hover: #351c86;
+
+  --glass-bg: #1c0e48;
+  --glass-bg-subtle: rgba(255, 230, 0, 0.05);
+  --glass-border: #facc15;
+  --glass-border-hover: #00f5d4;
+  --glass-border-active: #ff007f;
+
+  --text-primary: #ffff00;
+  --text-secondary: #00f5d4;
+  --text-muted: #ff70a6;
+  --text-dim: #7b2cbf;
+  --text-inverse: #0f0728;
+
+  --accent-color: #facc15;
+  --accent-neon: #facc15;
+  --accent-neon-bright: #00f5d4;
+  --accent-emerald: #00f076;
+  --accent-lime: #ffe600;
+  --accent-amber: #ff9e00;
+  --accent-rose: #ff0055;
+
+  --border-color: #facc15;
+  --editor-bg: #0f0728;
+  --sidebar-bg: #170c3d;
+  --activity-bar-bg: #1b0e45;
+  --status-bar-bg: #ff007f;
+  --tab-active-bg: #1b0e45;
+  --card-bg: #1b0e45;
+  --input-bg: #170c3d;
+  --hover-bg: rgba(250, 204, 21, 0.15);
+
+  --font-pixel: 'Pixelify Sans', 'Press Start 2P', monospace, sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+
+  /* Hard pixel shadows and sharp 0px borders */
+  --shadow-sm: 2px 2px 0px #000000;
+  --shadow-md: 4px 4px 0px #000000;
+  --shadow-lg: 6px 6px 0px #000000;
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+}
+
+:root[data-theme-id="pixelatte"] * {
+  border-radius: 0px !important;
+}
+
+:root[data-theme-id="pixelatte"] .sidebar-btn.active,
+:root[data-theme-id="pixelatte"] .tab.active,
+:root[data-theme-id="pixelatte"] .sc-btn-primary,
+:root[data-theme-id="pixelatte"] .api-send-btn {
+  box-shadow: 3px 3px 0px #000000 !important;
+  border: 1px solid #facc15 !important;
+}
+
+:root[data-theme-id="pixelatte"] .source-control-title,
+:root[data-theme-id="pixelatte"] .api-brand-text,
+:root[data-theme-id="pixelatte"] .sc-branch-name {
+  font-family: 'Pixelify Sans', 'Press Start 2P', monospace, sans-serif !important;
+  letter-spacing: 0.05em !important;
 }

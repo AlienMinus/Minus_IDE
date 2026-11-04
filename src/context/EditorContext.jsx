@@ -686,6 +686,28 @@ export function EditorProvider({ children }) {
     });
   }
 
+  function openSourceControlTab() {
+    const tabId = "hyperion-source-control";
+    const name = "Source Control: Git";
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name,
+        type: "source-control",
+        isPreview: true,
+        isSourceControl: true
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
   function openMongoSchemaTab(modelName = null) {
     const tabId = "hyperion-mongoschema-erd";
     const name = "MongoSchema ERD";
@@ -1173,6 +1195,7 @@ export function EditorProvider({ children }) {
         openLiveBrowserTab,
         openArchitectureTab,
         openApiClientTab,
+        openSourceControlTab,
         openMongoSchemaTab,
         openBackendRoutesTab,
         openSeleniumStudioTab,

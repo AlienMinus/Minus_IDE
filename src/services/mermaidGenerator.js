@@ -198,6 +198,7 @@ export function generateArchitectureFlowchart(architectureGraph) {
       else if (edge.kind === "render") edgeLabel = "|renders|";
       else if (edge.kind === "relation") edgeLabel = "|references|";
       else if (edge.kind === "fetch") edgeLabel = "|fetches|";
+      else if (edge.kind === "config") edgeLabel = "|loads env|";
       else if (edge.label) edgeLabel = `|${edge.label.slice(0, 18)}|`;
 
       lines.push(`  ${fromId} -->${edgeLabel} ${toId}`);

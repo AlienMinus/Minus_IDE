@@ -19,7 +19,8 @@ from backend.services.sandbox_engine import (
     create_temp_dir,
     cleanup_dir,
     write_virtual_files,
-    kill_process_tree
+    kill_process_tree,
+    load_workspace_env
 )
 
 
@@ -35,7 +36,8 @@ class ActiveStream:
     def write_stdin(self, data: str) -> bool:
         if self.proc and self.proc.stdin and not self.proc.stdin.closed:
             try:
-                self.proc.stdin.write(data)
+                raw_bytes = data.encode("utf-8") if isinstance(data, str) else data
+                self.proc.stdin.write(raw_bytes)
                 self.proc.stdin.flush()
                 return True
             except Exception:
@@ -106,8 +108,13 @@ class StreamEngine:
             runner = paths["bash"]
             runner_args = ["-c", trimmed]
         elif is_windows and (profile == "powershell" or not profile or profile == "default"):
-            runner = "powershell.exe"
-            runner_args = ["-NoLogo", "-ExecutionPolicy", "Bypass", "-Command", trimmed]
+            is_ps_cmdlet = any(trimmed.lower().startswith(p) for p in ("get-", "set-", "new-", "remove-", "select-", "where-", "invoke-", "test-", "start-", "stop-", "$"))
+            if is_ps_cmdlet:
+                runner = "powershell.exe"
+                runner_args = ["-NoLogo", "-ExecutionPolicy", "Bypass", "-Command", trimmed]
+            else:
+                runner = os.environ.get("COMSPEC", "cmd.exe")
+                runner_args = ["/d", "/s", "/c", trimmed]
         elif is_windows:
             runner = os.environ.get("COMSPEC", "cmd.exe")
             runner_args = ["/d", "/s", "/c", trimmed]
@@ -115,8 +122,10 @@ class StreamEngine:
             runner = "/bin/sh"
             runner_args = ["-c", trimmed]
 
+        workspace_env = load_workspace_env(work_dir)
         env = {
             **os.environ,
+            **workspace_env,
             "PYTHONUNBUFFERED": "1",
             "TERM": "xterm-256color",
             "FORCE_COLOR": "1"
@@ -128,8 +137,7 @@ class StreamEngine:
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
+            bufsize=0,
             env=env
         )
 
@@ -137,24 +145,23 @@ class StreamEngine:
         with self._lock:
             self._streams[stream_id] = stream
 
-        # Reader threads
-        def _read_stdout():
+        # Reader threads reading raw chunks immediately without line-buffering
+        def _read_stream(pipe):
             try:
-                for line in iter(proc.stdout.readline, ''):
-                    if not line:
+                fd = pipe.fileno()
+                while True:
+                    chunk = os.read(fd, 4096)
+                    if not chunk:
                         break
-                    stream.queue.put(("chunk", line))
+                    text = chunk.decode("utf-8", errors="replace")
+                    stream.queue.put(("chunk", text))
             except Exception:
                 pass
-
-        def _read_stderr():
-            try:
-                for line in iter(proc.stderr.readline, ''):
-                    if not line:
-                        break
-                    stream.queue.put(("chunk", line))
-            except Exception:
-                pass
+            finally:
+                try:
+                    pipe.close()
+                except Exception:
+                    pass
 
         def _wait_exit():
             code = proc.wait()
@@ -163,8 +170,8 @@ class StreamEngine:
             if is_temp:
                 cleanup_dir(work_dir)
 
-        threading.Thread(target=_read_stdout, daemon=True).start()
-        threading.Thread(target=_read_stderr, daemon=True).start()
+        threading.Thread(target=_read_stream, args=(proc.stdout,), daemon=True).start()
+        threading.Thread(target=_read_stream, args=(proc.stderr,), daemon=True).start()
         threading.Thread(target=_wait_exit, daemon=True).start()
 
         if timeout_ms > 0:
