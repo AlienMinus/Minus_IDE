@@ -1,11 +1,28 @@
 """
-Configuration settings for Hyperion IDE Python Backend.
+Configuration settings for Hyperion IDE Python Production Backend.
+Supports full migration of Node.js Express server to Python FastAPI.
 """
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Attempt to load .env from server/.env, backend/.env, or root .env
+for env_file in [
+    PROJECT_ROOT / "server" / ".env",
+    PROJECT_ROOT / "backend" / ".env",
+    PROJECT_ROOT / ".env"
+]:
+    if env_file.exists():
+        load_dotenv(dotenv_path=env_file)
 
 HOST = os.environ.get("BACKEND_HOST", "127.0.0.1")
-PORT = int(os.environ.get("BACKEND_PORT", 8000))
+PORT = int(os.environ.get("PORT", os.environ.get("BACKEND_PORT", 8000)))
 FASTAPI_ENV = os.environ.get("FASTAPI_ENV", "production")
+
+# Hugging Face API Configuration
+HF_TOKEN = os.environ.get("HF_TOKEN", "").strip().strip('"').strip("'")
 
 # Local AI Configuration
 QWEN_MODEL_ID = os.environ.get("QWEN_MODEL_ID", "Qwen/Qwen2.5-Coder-0.5B-Instruct")

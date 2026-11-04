@@ -1,6 +1,11 @@
 """
 Hyperion IDE - Production FastAPI Server
-Modular Python backend serving real Selenium 4 WebDriver automation and Local Qwen AI services.
+Modular Python backend replacing Node.js server with complete feature parity:
+- Sandbox Engine (Compilers, Command Execution, Real-Time SSE Streaming, REPL)
+- Filesystem Management (Tree, Reveal, Delete, Rename, File Media Serving)
+- Cypher AI Security Intelligence & SAST Engine
+- Local Qwen 2.5 Coder AI Model on CPU
+- Selenium 4 WebDriver Automation & QA Agent
 """
 import sys
 import os
@@ -26,23 +31,25 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import HOST, PORT
-from backend.routers import selenium, ai, health
+from backend.routers import health, sandbox, ai, selenium
 from backend.services.selenium_engine import global_selenium_engine
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print(f"[FastAPI] Hyperion Backend initialized on http://{HOST}:{PORT}", flush=True)
+    print(f"[FastAPI] Hyperion Production Backend active on http://{HOST}:{PORT}", flush=True)
     yield
     # Shutdown
     print("[FastAPI] Shutting down. Cleaning up Selenium WebDriver...", flush=True)
     global_selenium_engine.close_driver()
     print("[FastAPI] Cleaned up resources successfully.", flush=True)
 
+
 app = FastAPI(
-    title="Hyperion IDE Python Backend",
-    description="Production FastAPI service for Selenium 4 Test Automation and Local Qwen Coder AI",
-    version="2.0.0",
+    title="Hyperion IDE Production Backend",
+    description="Full-featured Python backend replacing Node.js Express server with 100% parity",
+    version="3.0.0",
     lifespan=lifespan
 )
 
@@ -55,10 +62,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register modular routers
+# Register modular routers (mounted at both /api and root /)
 app.include_router(health.router)
-app.include_router(selenium.router)
+app.include_router(sandbox.router)
 app.include_router(ai.router)
+app.include_router(selenium.router)
+
 
 def start_server():
     print(f"[Hyperion Production Backend] Starting Uvicorn on {HOST}:{PORT}...", flush=True)
@@ -76,6 +85,7 @@ def start_server():
             print(f"[FastAPI] Hint: Run 'netstat -ano | findstr :{PORT}' to inspect active listeners.\n", flush=True)
         else:
             raise
+
 
 if __name__ == "__main__":
     start_server()

@@ -4,7 +4,7 @@
  * Supports real local Qwen 2.5 Coder offline execution, code explanation, bug fixing, and security scanning.
  */
 
-const API_BASE = typeof window !== 'undefined' ? '/api/ai' : 'http://localhost:3000/api/ai';
+const API_BASE = typeof window !== 'undefined' ? '/api/ai' : 'http://127.0.0.1:8000/api/ai';
 const PYTHON_FASTAPI_BASE = 'http://127.0.0.1:8000/api/ai';
 
 /**

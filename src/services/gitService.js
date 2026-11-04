@@ -5,7 +5,7 @@ export async function resolveEffectiveCwd(customCwd) {
     return customCwd;
   }
   const folderName = customCwd || "WebIDE";
-  const apiBase = typeof window !== "undefined" ? "/api/sandbox" : "http://localhost:3000/api/sandbox";
+  const apiBase = typeof window !== "undefined" ? "/api/sandbox" : "http://127.0.0.1:8000/api/sandbox";
   try {
     const res = await fetch(`${apiBase}/workspace/resolve`, {
       method: "POST",

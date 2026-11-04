@@ -43,7 +43,7 @@ class InspectRequest(BaseModel):
     selector: str = "body"
     by: Optional[str] = "css"
 
-@router.get("/status")
+@router.get("/selenium/status")
 @router.get("/api/selenium/status")
 async def get_status():
     """Retrieve Selenium engine version, active state, and configuration."""
@@ -58,7 +58,7 @@ async def get_status():
         "title": drv.title if drv else None
     }
 
-@router.post("/session/configure")
+@router.post("/selenium/session/configure")
 @router.post("/api/selenium/session/configure")
 async def configure_session(req: ConfigureRequest):
     """Configure browser settings (headless/visible, browser type, viewport)."""
@@ -70,7 +70,7 @@ async def configure_session(req: ConfigureRequest):
         "config": updated
     }
 
-@router.post("/session/start")
+@router.post("/selenium/session/start")
 @router.post("/api/selenium/session/start")
 async def start_session():
     """Explicitly launch WebDriver session."""
@@ -86,14 +86,14 @@ async def start_session():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/session/stop")
+@router.post("/selenium/session/stop")
 @router.post("/api/selenium/session/stop")
 async def stop_session():
     """Terminate active WebDriver session."""
     global_selenium_engine.close_driver()
     return {"success": True, "message": "Selenium session terminated"}
 
-@router.post("/navigate")
+@router.post("/selenium/navigate")
 @router.post("/api/selenium/navigate")
 async def navigate(req: NavigateRequest):
     """Navigate to a target URL and capture screenshot."""
@@ -110,7 +110,7 @@ async def navigate(req: NavigateRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/screenshot")
+@router.get("/selenium/screenshot")
 @router.get("/api/selenium/screenshot")
 async def get_screenshot():
     """Capture instant viewport screenshot as base64."""
@@ -125,14 +125,14 @@ async def get_screenshot():
         "title": drv.title if drv else None
     }
 
-@router.post("/execute-step")
+@router.post("/selenium/execute-step")
 @router.post("/api/selenium/execute-step")
 async def execute_step(step: StepRequest):
     """Execute a single Selenium test step."""
     res = global_selenium_engine.execute_step(step.model_dump())
     return res
 
-@router.post("/run-suite")
+@router.post("/selenium/run-suite")
 @router.post("/api/selenium/run-suite")
 async def run_suite(suite: SuiteRequest):
     """Run a complete modular test suite and generate a report."""
@@ -143,7 +143,7 @@ async def run_suite(suite: SuiteRequest):
     )
     return res
 
-@router.post("/agent/explore")
+@router.post("/selenium/agent/explore")
 @router.post("/api/selenium/agent/explore")
 async def agent_explore(agent_req: AgentExploreRequest):
     """Run autonomous QA agent exploration on target URL."""
@@ -153,7 +153,7 @@ async def agent_explore(agent_req: AgentExploreRequest):
     )
     return res
 
-@router.get("/templates")
+@router.get("/selenium/templates")
 @router.get("/api/selenium/templates")
 async def get_templates(url: str = "http://localhost:5174"):
     """Retrieve pre-built modular test suite templates."""
@@ -162,7 +162,7 @@ async def get_templates(url: str = "http://localhost:5174"):
         "templates": get_builtin_templates(url)
     }
 
-@router.post("/inspect")
+@router.post("/selenium/inspect")
 @router.post("/api/selenium/inspect")
 async def inspect_element(req: InspectRequest):
     """Inspect element details using real Selenium."""
