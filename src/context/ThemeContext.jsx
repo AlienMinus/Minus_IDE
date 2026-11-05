@@ -11,9 +11,9 @@ export function ThemeProvider({ children }) {
         const parsed = JSON.parse(storedSettings);
         if (parsed["workbench.colorTheme"]) return parsed["workbench.colorTheme"];
       }
-      return localStorage.getItem("hyperion_theme") || "pixelatte";
+      return localStorage.getItem("hyperion_theme") || "pixelatte-light";
     } catch {
-      return "pixelatte";
+      return "pixelatte-light";
     }
   });
 
@@ -46,6 +46,7 @@ export function ThemeProvider({ children }) {
     root.setAttribute("data-theme-category", activeTheme.category || themeType);
     root.setAttribute("data-theme-id", activeTheme.id);
     root.setAttribute("data-theme", activeTheme.id);
+    root.setAttribute("data-mode", themeType);
 
     try {
       localStorage.setItem("hyperion_theme", currentThemeId);

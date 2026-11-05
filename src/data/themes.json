@@ -1,5 +1,30 @@
 [
   {
+    "id": "pixelatte-light",
+    "name": "Pixelatte Light (Retro Gameboy Cream)",
+    "type": "light",
+    "category": "featured",
+    "isFeatured": true,
+    "description": "Retro Gameboy cream and arcade day aesthetic with warm cartridge surfaces, black ink borders, and brass coin accents.",
+    "ui": {
+      "bgPrimary": "#eae6d9",
+      "bgSecondary": "#ded9c8",
+      "bgTertiary": "#d0c9b4",
+      "textPrimary": "#1f1d16",
+      "textSecondary": "#007769",
+      "accentColor": "#f59e0b",
+      "borderColor": "#1f1d16",
+      "tabActiveBg": "#ffffff",
+      "editorBg": "#f7f4ea",
+      "sidebarBg": "#ded9c8",
+      "activityBarBg": "#d0c9b4",
+      "statusBarBg": "#c90057",
+      "cardBg": "#ffffff",
+      "inputBg": "#ffffff",
+      "hoverBg": "rgba(31, 29, 22, 0.08)"
+    }
+  },
+  {
     "id": "pixelatte",
     "name": "Pixelatte (Retro 8-Bit Arcade)",
     "type": "featured",

@@ -608,3 +608,595 @@
   background: #00f5d4 !important;
 }
 
+
+/* ==========================================================================
+   PIXELATTE LIGHT THEME - Retro Gameboy Cream & Arcade Day Aesthetic
+   Faithfully implemented from E:/portfolio/portfolio_v1 themes.css lines 2959-3376
+   ========================================================================== */
+
+:root[data-theme-id="pixelatte-light"],
+[data-theme="pixelatte-light"],
+:root[data-theme-id="pixelatte"][data-theme-type="light"],
+[data-mode="light"][data-theme="pixelatte"],
+[data-mode="light"] [data-theme="pixelatte"] {
+  /* Gameboy Cream & Arcade Day Palette */
+  --bg-primary: #eae6d9;
+  --bg-secondary: #ded9c8;
+  --bg-tertiary: #d0c9b4;
+  --bg-surface: #f7f4ea;
+  --bg-surface-elevated: #ffffff;
+  --bg-surface-hover: #ede8d8;
+
+  --glass-bg: #f7f4ea;
+  --glass-bg-subtle: rgba(179, 134, 0, 0.06);
+  --glass-border: #1f1d16;
+  --glass-border-hover: #007769;
+  --glass-border-active: #c90057;
+
+  --text-primary: #1f1d16;       /* Retro Ink Black */
+  --text-secondary: #007769;     /* Arcade Pine Cyan */
+  --text-muted: #a84200;         /* Terracotta Accent */
+  --text-dim: #7a288a;          /* Plum */
+  --text-inverse: #f7f4ea;
+
+  --accent-color: #f59e0b;       /* Gameboy Cartridge Gold */
+  --accent-neon: #b38600;
+  --accent-neon-bright: #007769;
+  --accent-emerald: #008744;     /* High-Score Forest Green */
+  --accent-lime: #b38600;
+  --accent-teal: #007769;
+  --accent-cyan: #007769;
+  --accent-amber: #c45500;
+  --accent-rose: #c90057;        /* Gameboy Berry Magenta */
+  --accent-glow: rgba(179, 134, 0, 0.3);
+
+  --border-color: #1f1d16;
+  --editor-bg: #f7f4ea;
+  --sidebar-bg: #ded9c8;
+  --activity-bar-bg: #d0c9b4;
+  --status-bar-bg: #c90057;
+  --tab-active-bg: #ffffff;
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --hover-bg: rgba(31, 29, 22, 0.08);
+
+  --font-pixel: 'Pixelify Sans', 'Press Start 2P', monospace, sans-serif;
+  --font-heading: 'Pixelify Sans', 'Press Start 2P', monospace, sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+
+  /* Crisp 8-Bit Gameboy Hard Shadows */
+  --shadow-sm: 2px 2px 0px #1f1d16;
+  --shadow-md: 4px 4px 0px #1f1d16;
+  --shadow-lg: 6px 6px 0px #1f1d16;
+  --shadow-glow: 0 0 15px rgba(179, 134, 0, 0.4);
+  --shadow-glow-bright: 0 0 25px rgba(0, 119, 105, 0.5);
+
+  --radius-xs: 0px !important;
+  --radius-sm: 0px !important;
+  --radius-md: 0px !important;
+  --radius-lg: 0px !important;
+  --radius-xl: 0px !important;
+  --radius-full: 0px !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: GLOBAL RULES
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] *,
+[data-theme="pixelatte-light"] *,
+:root[data-theme-id="pixelatte"][data-theme-type="light"] *,
+[data-mode="light"][data-theme="pixelatte"] * {
+  border-radius: 0px !important;
+}
+
+:root[data-theme-id="pixelatte-light"] ::selection,
+[data-theme="pixelatte-light"] ::selection,
+[data-mode="light"][data-theme="pixelatte"] ::selection {
+  background: #f59e0b !important;
+  color: #1f1d16 !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: NAVBAR & TITLEBAR
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] .navbar,
+[data-theme="pixelatte-light"] .navbar,
+:root[data-theme-id="pixelatte-light"] .title-bar,
+[data-theme="pixelatte-light"] .title-bar,
+[data-mode="light"][data-theme="pixelatte"] .navbar {
+  background: #ded9c8 !important;
+  border-bottom: 3px solid #1f1d16 !important;
+  box-shadow: 0 3px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .navbar-brand,
+[data-theme="pixelatte-light"] .navbar-brand,
+:root[data-theme-id="pixelatte-light"] .titlebar-title,
+[data-theme="pixelatte-light"] .titlebar-title,
+:root[data-theme-id="pixelatte-light"] .app-title,
+[data-theme="pixelatte-light"] .app-title,
+[data-mode="light"][data-theme="pixelatte"] .navbar-brand {
+  font-family: var(--font-pixel) !important;
+  color: #1f1d16 !important;
+  letter-spacing: 0.06em !important;
+  text-shadow: 2px 2px 0px #eae6d9 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .navbar-search,
+[data-theme="pixelatte-light"] .navbar-search,
+:root[data-theme-id="pixelatte-light"] .search-bar,
+[data-theme="pixelatte-light"] .search-bar,
+[data-mode="light"][data-theme="pixelatte"] .navbar-search {
+  background: #ffffff !important;
+  border: 2px solid #1f1d16 !important;
+  box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.1) !important;
+  color: #1f1d16 !important;
+  font-family: var(--font-mono) !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .navbar-search:focus-within,
+[data-theme="pixelatte-light"] .navbar-search:focus-within,
+[data-mode="light"][data-theme="pixelatte"] .navbar-search:focus-within {
+  border-color: #007769 !important;
+  box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.1), 0 0 0 1px #007769 !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: ACTIVITY BAR & SIDEBAR
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] .activity-bar,
+[data-theme="pixelatte-light"] .activity-bar,
+[data-mode="light"][data-theme="pixelatte"] .activity-bar {
+  background: #d0c9b4 !important;
+  border-right: 3px solid #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .activity-bar-icon,
+[data-theme="pixelatte-light"] .activity-bar-icon,
+:root[data-theme-id="pixelatte-light"] .sidebar-btn,
+[data-theme="pixelatte-light"] .sidebar-btn,
+[data-mode="light"][data-theme="pixelatte"] .activity-bar-icon {
+  color: #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .activity-bar-icon:hover,
+[data-theme="pixelatte-light"] .activity-bar-icon:hover,
+:root[data-theme-id="pixelatte-light"] .sidebar-btn:hover,
+[data-theme="pixelatte-light"] .sidebar-btn:hover,
+[data-mode="light"][data-theme="pixelatte"] .activity-bar-icon:hover {
+  color: #007769 !important;
+  background: #ded9c8 !important;
+  border: 1px solid #1f1d16 !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 2px 2px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .activity-bar-icon.active,
+[data-theme="pixelatte-light"] .activity-bar-icon.active,
+:root[data-theme-id="pixelatte-light"] .sidebar-btn.active,
+[data-theme="pixelatte-light"] .sidebar-btn.active,
+[data-mode="light"][data-theme="pixelatte"] .activity-bar-icon.active {
+  color: #1f1d16 !important;
+  background: #ffffff !important;
+  border: 2px solid #1f1d16 !important;
+  box-shadow: 3px 3px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .sidebar,
+[data-theme="pixelatte-light"] .sidebar,
+[data-mode="light"][data-theme="pixelatte"] .sidebar {
+  background: #ded9c8 !important;
+  border-right: 3px solid #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .sidebar-header,
+[data-theme="pixelatte-light"] .sidebar-header,
+:root[data-theme-id="pixelatte-light"] .sidebar-title,
+[data-theme="pixelatte-light"] .sidebar-title,
+[data-mode="light"][data-theme="pixelatte"] .sidebar-title {
+  font-family: var(--font-pixel) !important;
+  color: #1f1d16 !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 2px solid #1f1d16 !important;
+  text-shadow: 1px 1px 0px #eae6d9 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .explorer-item,
+[data-theme="pixelatte-light"] .explorer-item,
+:root[data-theme-id="pixelatte-light"] .tree-item,
+[data-theme="pixelatte-light"] .tree-item,
+[data-mode="light"][data-theme="pixelatte"] .explorer-item {
+  font-family: var(--font-mono) !important;
+  color: #1f1d16 !important;
+  border: 1px solid transparent !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .explorer-item:hover,
+[data-theme="pixelatte-light"] .explorer-item:hover,
+:root[data-theme-id="pixelatte-light"] .tree-item:hover,
+[data-theme="pixelatte-light"] .tree-item:hover,
+[data-mode="light"][data-theme="pixelatte"] .explorer-item:hover {
+  background: rgba(31, 29, 22, 0.08) !important;
+  color: #007769 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .explorer-item.active,
+[data-theme="pixelatte-light"] .explorer-item.active,
+:root[data-theme-id="pixelatte-light"] .tree-item.selected,
+[data-theme="pixelatte-light"] .tree-item.selected,
+[data-mode="light"][data-theme="pixelatte"] .explorer-item.active {
+  background: #ffffff !important;
+  color: #007769 !important;
+  border: 1px solid #1f1d16 !important;
+  box-shadow: 2px 2px 0px #1f1d16 !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: TABS & BREADCRUMBS
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] .tabs-bar,
+[data-theme="pixelatte-light"] .tabs-bar,
+:root[data-theme-id="pixelatte-light"] .tabs-header,
+[data-theme="pixelatte-light"] .tabs-header,
+[data-mode="light"][data-theme="pixelatte"] .tabs-bar {
+  background: #ded9c8 !important;
+  border-bottom: 3px solid #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .tab,
+[data-theme="pixelatte-light"] .tab,
+[data-mode="light"][data-theme="pixelatte"] .tab {
+  background: #eae6d9 !important;
+  color: #a84200 !important;
+  border-right: 2px solid #1f1d16 !important;
+  border-top: 2px solid transparent !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.85rem !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .tab:hover,
+[data-theme="pixelatte-light"] .tab:hover,
+[data-mode="light"][data-theme="pixelatte"] .tab:hover {
+  background: #f7f4ea !important;
+  color: #007769 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .tab.active,
+[data-theme="pixelatte-light"] .tab.active,
+[data-mode="light"][data-theme="pixelatte"] .tab.active {
+  background: #ffffff !important;
+  color: #1f1d16 !important;
+  border-top: 3px solid #007769 !important;
+  border-left: 2px solid #1f1d16 !important;
+  border-right: 2px solid #1f1d16 !important;
+  box-shadow: 2px 2px 0px #1f1d16 !important;
+  font-weight: 700 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .breadcrumb-bar,
+[data-theme="pixelatte-light"] .breadcrumb-bar,
+[data-mode="light"][data-theme="pixelatte"] .breadcrumb-bar {
+  background: #ded9c8 !important;
+  border-bottom: 2px solid #1f1d16 !important;
+  color: #007769 !important;
+  font-family: var(--font-mono) !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: BUTTONS (GAMEBOY RETRO CONTROLS)
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] .btn,
+[data-theme="pixelatte-light"] .btn,
+:root[data-theme-id="pixelatte-light"] button:not(.tab-close):not(.editor-action-btn),
+[data-theme="pixelatte-light"] button:not(.tab-close):not(.editor-action-btn),
+[data-mode="light"][data-theme="pixelatte"] .btn {
+  border: 2px solid #1f1d16 !important;
+  box-shadow: 3px 3px 0px #1f1d16 !important;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.04em !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .btn:hover,
+[data-theme="pixelatte-light"] .btn:hover,
+:root[data-theme-id="pixelatte-light"] button:not(.tab-close):not(.editor-action-btn):hover,
+[data-theme="pixelatte-light"] button:not(.tab-close):not(.editor-action-btn):hover,
+[data-mode="light"][data-theme="pixelatte"] .btn:hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .btn:active,
+[data-theme="pixelatte-light"] .btn:active,
+:root[data-theme-id="pixelatte-light"] button:not(.tab-close):not(.editor-action-btn):active,
+[data-theme="pixelatte-light"] button:not(.tab-close):not(.editor-action-btn):active,
+[data-mode="light"][data-theme="pixelatte"] .btn:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .btn-primary,
+[data-theme="pixelatte-light"] .btn-primary,
+:root[data-theme-id="pixelatte-light"] .sc-btn-primary,
+[data-theme="pixelatte-light"] .sc-btn-primary,
+:root[data-theme-id="pixelatte-light"] .api-send-btn,
+[data-theme="pixelatte-light"] .api-send-btn,
+:root[data-theme-id="pixelatte-light"] .run-btn,
+[data-theme="pixelatte-light"] .run-btn,
+[data-mode="light"][data-theme="pixelatte"] .btn.primary {
+  background: #f59e0b !important;
+  color: #1f1d16 !important;
+  border: 3px solid #1f1d16 !important;
+  box-shadow: 4px 4px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .btn-primary:hover,
+[data-theme="pixelatte-light"] .btn-primary:hover,
+:root[data-theme-id="pixelatte-light"] .sc-btn-primary:hover,
+[data-theme="pixelatte-light"] .sc-btn-primary:hover,
+:root[data-theme-id="pixelatte-light"] .api-send-btn:hover,
+[data-theme="pixelatte-light"] .api-send-btn:hover,
+:root[data-theme-id="pixelatte-light"] .run-btn:hover,
+[data-theme="pixelatte-light"] .run-btn:hover,
+[data-mode="light"][data-theme="pixelatte"] .btn.primary:hover {
+  background: #fbbf24 !important;
+  color: #1f1d16 !important;
+  box-shadow: 6px 6px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .btn-secondary,
+[data-theme="pixelatte-light"] .btn-secondary,
+:root[data-theme-id="pixelatte-light"] .sc-btn-secondary,
+[data-theme="pixelatte-light"] .sc-btn-secondary,
+[data-mode="light"][data-theme="pixelatte"] .btn.outline {
+  background: #ffffff !important;
+  color: #007769 !important;
+  border: 3px solid #007769 !important;
+  box-shadow: 3px 3px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .btn-secondary:hover,
+[data-theme="pixelatte-light"] .btn-secondary:hover,
+:root[data-theme-id="pixelatte-light"] .sc-btn-secondary:hover,
+[data-theme="pixelatte-light"] .sc-btn-secondary:hover {
+  background: #007769 !important;
+  color: #ffffff !important;
+  box-shadow: 5px 5px 0px #1f1d16 !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: INPUTS & FORM CONTROLS
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] input,
+[data-theme="pixelatte-light"] input,
+:root[data-theme-id="pixelatte-light"] textarea,
+[data-theme="pixelatte-light"] textarea,
+:root[data-theme-id="pixelatte-light"] select,
+[data-theme="pixelatte-light"] select,
+[data-mode="light"][data-theme="pixelatte"] input {
+  background: #ffffff !important;
+  border: 2px solid #1f1d16 !important;
+  color: #1f1d16 !important;
+  box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.1) !important;
+  font-family: var(--font-mono) !important;
+}
+
+:root[data-theme-id="pixelatte-light"] input:focus,
+[data-theme="pixelatte-light"] input:focus,
+:root[data-theme-id="pixelatte-light"] textarea:focus,
+[data-theme="pixelatte-light"] textarea:focus,
+:root[data-theme-id="pixelatte-light"] select:focus,
+[data-theme="pixelatte-light"] select:focus,
+[data-mode="light"][data-theme="pixelatte"] input:focus {
+  border-color: #007769 !important;
+  box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.1), 0 0 0 2px #007769 !important;
+  outline: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: BOTTOM PANEL
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] .bottom-panel,
+[data-theme="pixelatte-light"] .bottom-panel,
+:root[data-theme-id="pixelatte-light"] .terminal-panel,
+[data-theme="pixelatte-light"] .terminal-panel {
+  background: #ded9c8 !important;
+  border-top: 3px solid #1f1d16 !important;
+  box-shadow: 0 -3px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .bottom-panel-header,
+[data-theme="pixelatte-light"] .bottom-panel-header,
+:root[data-theme-id="pixelatte-light"] .panel-tabs,
+[data-theme="pixelatte-light"] .panel-tabs {
+  background: #ded9c8 !important;
+  border-bottom: 2px solid #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .panel-tab-btn,
+[data-theme="pixelatte-light"] .panel-tab-btn {
+  font-family: var(--font-pixel) !important;
+  color: #a84200 !important;
+  letter-spacing: 0.04em !important;
+  border-right: 2px solid #1f1d16 !important;
+  border-bottom: 2px solid transparent !important;
+  background: #ded9c8 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .panel-tab-btn:hover,
+[data-theme="pixelatte-light"] .panel-tab-btn:hover {
+  color: #007769 !important;
+  background: #eae6d9 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .panel-tab-btn.active,
+[data-theme="pixelatte-light"] .panel-tab-btn.active {
+  color: #1f1d16 !important;
+  background: #ffffff !important;
+  border-bottom: 3px solid #1f1d16 !important;
+  border-left: 2px solid #1f1d16 !important;
+  border-right: 2px solid #1f1d16 !important;
+  box-shadow: 2px 2px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .output-container,
+[data-theme="pixelatte-light"] .output-container {
+  background: #f7f4ea !important;
+  color: #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .output-gutter,
+[data-theme="pixelatte-light"] .output-gutter {
+  background: #ded9c8 !important;
+  border-right: 2px solid #1f1d16 !important;
+  color: #a09885 !important;
+  font-family: var(--font-mono) !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .output-toolbar,
+[data-theme="pixelatte-light"] .output-toolbar {
+  background: #ded9c8 !important;
+  border-bottom: 2px solid #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .output-stream-btn.active,
+[data-theme="pixelatte-light"] .output-stream-btn.active {
+  background: #f59e0b !important;
+  color: #1f1d16 !important;
+  box-shadow: 2px 2px 0px #1f1d16 !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: SOURCE CONTROL & API CLIENT
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] .source-control-container,
+[data-theme="pixelatte-light"] .source-control-container,
+:root[data-theme-id="pixelatte-light"] .api-client-container,
+[data-theme="pixelatte-light"] .api-client-container {
+  background: #eae6d9 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .source-control-title,
+[data-theme="pixelatte-light"] .source-control-title,
+:root[data-theme-id="pixelatte-light"] .api-brand-text,
+[data-theme="pixelatte-light"] .api-brand-text {
+  font-family: var(--font-pixel) !important;
+  color: #1f1d16 !important;
+  letter-spacing: 0.05em !important;
+  text-shadow: 1px 1px 0px #eae6d9 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .sc-branch-pill,
+[data-theme="pixelatte-light"] .sc-branch-pill {
+  background: #ffffff !important;
+  border: 2px solid #1f1d16 !important;
+  color: #007769 !important;
+  box-shadow: 2px 2px 0px #1f1d16 !important;
+  font-family: var(--font-pixel) !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .sc-file-item,
+[data-theme="pixelatte-light"] .sc-file-item {
+  border-bottom: 1px solid rgba(31, 29, 22, 0.15) !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .sc-file-item:hover,
+[data-theme="pixelatte-light"] .sc-file-item:hover {
+  background: rgba(31, 29, 22, 0.06) !important;
+  color: #007769 !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: STATUS BAR (BERRY MAGENTA #c90057)
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] .statusbar,
+[data-theme="pixelatte-light"] .statusbar {
+  background: #c90057 !important;
+  border-top: 2px solid #1f1d16 !important;
+  color: #ffffff !important;
+  box-shadow: 0 -2px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .statusbar-item,
+[data-theme="pixelatte-light"] .statusbar-item {
+  font-family: var(--font-pixel) !important;
+  letter-spacing: 0.04em !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .statusbar-item:hover,
+[data-theme="pixelatte-light"] .statusbar-item:hover {
+  background: #f59e0b !important;
+  color: #1f1d16 !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: MENUS & MODALS
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] .manage-menu,
+[data-theme="pixelatte-light"] .manage-menu,
+:root[data-theme-id="pixelatte-light"] .manage-submenu,
+[data-theme="pixelatte-light"] .manage-submenu,
+:root[data-theme-id="pixelatte-light"] .context-menu,
+[data-theme="pixelatte-light"] .context-menu,
+:root[data-theme-id="pixelatte-light"] .command-palette-modal,
+[data-theme="pixelatte-light"] .command-palette-modal,
+:root[data-theme-id="pixelatte-light"] .modal-content,
+[data-theme="pixelatte-light"] .modal-content {
+  background: #ded9c8 !important;
+  border: 3px solid #1f1d16 !important;
+  box-shadow: 6px 6px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .submenu-title,
+[data-theme="pixelatte-light"] .submenu-title {
+  font-family: var(--font-pixel) !important;
+  color: #1f1d16 !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 2px solid #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .submenu-item:hover,
+[data-theme="pixelatte-light"] .submenu-item:hover,
+:root[data-theme-id="pixelatte-light"] .palette-item.selected,
+[data-theme="pixelatte-light"] .palette-item.selected {
+  background: #f59e0b !important;
+  color: #1f1d16 !important;
+  border: 1px solid #1f1d16 !important;
+  box-shadow: 2px 2px 0px #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] .submenu-item.selected,
+[data-theme="pixelatte-light"] .submenu-item.selected {
+  background: #f59e0b !important;
+  color: #1f1d16 !important;
+  font-weight: 700 !important;
+}
+
+/* --------------------------------------------------------------------------
+   PIXELATTE LIGHT: 8-BIT SCROLLBAR
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte-light"] *::-webkit-scrollbar,
+[data-theme="pixelatte-light"] *::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+:root[data-theme-id="pixelatte-light"] *::-webkit-scrollbar-track,
+[data-theme="pixelatte-light"] *::-webkit-scrollbar-track {
+  background: #ded9c8 !important;
+  border-left: 1px solid #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] *::-webkit-scrollbar-thumb,
+[data-theme="pixelatte-light"] *::-webkit-scrollbar-thumb {
+  background: #f59e0b !important;
+  border: 2px solid #1f1d16 !important;
+}
+
+:root[data-theme-id="pixelatte-light"] *::-webkit-scrollbar-thumb:hover,
+[data-theme="pixelatte-light"] *::-webkit-scrollbar-thumb:hover {
+  background: #007769 !important;
+}

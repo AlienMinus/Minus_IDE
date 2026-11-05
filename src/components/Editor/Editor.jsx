@@ -268,9 +268,50 @@ function Editor() {
   }
 
   const getMonacoThemeConfig = (theme) => {
-    const isPixelatte = theme?.id === "pixelatte";
+    const isPixelatteDark = theme?.id === "pixelatte";
+    const isPixelatteLight = theme?.id === "pixelatte-light";
     const ui = theme?.ui || {};
-    if (isPixelatte) {
+
+    if (isPixelatteLight) {
+      return {
+        base: "vs",
+        inherit: true,
+        rules: [
+          { token: "", foreground: "1f1d16" },
+          { token: "keyword", foreground: "c90057", fontStyle: "bold" },
+          { token: "string", foreground: "008744" },
+          { token: "number", foreground: "a84200" },
+          { token: "comment", foreground: "7a288a", fontStyle: "italic" },
+          { token: "identifier", foreground: "1f1d16" },
+          { token: "type", foreground: "b38600", fontStyle: "bold" },
+          { token: "delimiter", foreground: "1f1d16" },
+          { token: "operator", foreground: "c90057" },
+          { token: "function", foreground: "007769", fontStyle: "bold" }
+        ],
+        colors: {
+          "editor.background": "#f7f4ea",
+          "editor.foreground": "#1f1d16",
+          "editorLineNumber.foreground": "#a09885",
+          "editorLineNumber.activeForeground": "#1f1d16",
+          "editorCursor.foreground": "#1f1d16",
+          "editor.selectionBackground": "#ded9c8bb",
+          "editor.inactiveSelectionBackground": "#eae6d988",
+          "editor.lineHighlightBackground": "#ede8d866",
+          "editor.lineHighlightBorder": "#1f1d1633",
+          "editorIndentGuide.background": "#d0c9b4",
+          "editorIndentGuide.activeBackground": "#1f1d16",
+          "editorGutter.background": "#ded9c8",
+          "editorWidget.background": "#ffffff",
+          "editorWidget.border": "#1f1d16",
+          "editorSuggestWidget.background": "#ffffff",
+          "editorSuggestWidget.border": "#1f1d16",
+          "editorSuggestWidget.selectedBackground": "#f59e0b",
+          "editorSuggestWidget.highlightForeground": "#007769"
+        }
+      };
+    }
+
+    if (isPixelatteDark) {
       return {
         base: "vs-dark",
         inherit: true,
