@@ -436,10 +436,10 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
                                                     </div>
                                                 )
                                             ) : (
-                                                ["light", "dark", "high-contrast"].map((cat) => {
+                                                ["featured", "dark", "light", "high-contrast"].map((cat) => {
                                                     const catThemes = themes.filter((t) => (t.category || t.type) === cat);
                                                     if (catThemes.length === 0) return null;
-                                                    const title = cat === "light" ? "light themes" : cat === "dark" ? "dark themes" : "high contrast themes";
+                                                    const title = cat === "featured" ? "★ Featured Themes" : cat === "light" ? "light themes" : cat === "dark" ? "dark themes" : "high contrast themes";
                                                     return (
                                                         <div key={cat} className="submenu-category-group">
                                                             <div className="submenu-title">

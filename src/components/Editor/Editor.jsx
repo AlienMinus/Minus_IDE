@@ -267,6 +267,59 @@ function Editor() {
     );
   }
 
+  const getMonacoThemeConfig = (theme) => {
+    const isPixelatte = theme?.id === "pixelatte";
+    const ui = theme?.ui || {};
+    if (isPixelatte) {
+      return {
+        base: "vs-dark",
+        inherit: true,
+        rules: [
+          { token: "", foreground: "ffff00" },
+          { token: "keyword", foreground: "ff70a6", fontStyle: "bold" },
+          { token: "string", foreground: "00f076" },
+          { token: "number", foreground: "ffe600" },
+          { token: "comment", foreground: "7b2cbf", fontStyle: "italic" },
+          { token: "identifier", foreground: "ffff00" },
+          { token: "type", foreground: "00f5d4" },
+          { token: "delimiter", foreground: "facc15" },
+          { token: "operator", foreground: "ff007f" },
+          { token: "function", foreground: "00f5d4", fontStyle: "bold" }
+        ],
+        colors: {
+          "editor.background": "#0f0728",
+          "editor.foreground": "#ffff00",
+          "editorLineNumber.foreground": "#7b2cbf",
+          "editorLineNumber.activeForeground": "#ffff00",
+          "editorCursor.foreground": "#ffff00",
+          "editor.selectionBackground": "#281566bb",
+          "editor.inactiveSelectionBackground": "#1b0e4588",
+          "editor.lineHighlightBackground": "#170c3d88",
+          "editor.lineHighlightBorder": "#facc1544",
+          "editorIndentGuide.background": "#221356",
+          "editorIndentGuide.activeBackground": "#facc15",
+          "editorGutter.background": "#0f0728",
+          "editorWidget.background": "#170c3d",
+          "editorWidget.border": "#facc15",
+          "editorSuggestWidget.background": "#170c3d",
+          "editorSuggestWidget.border": "#facc15",
+          "editorSuggestWidget.selectedBackground": "#351c86",
+          "editorSuggestWidget.highlightForeground": "#00f5d4"
+        }
+      };
+    }
+    return {
+      base: theme?.type === "light" ? "vs" : "vs-dark",
+      inherit: true,
+      rules: [],
+      colors: {
+        "editor.background": ui.editorBg || (theme?.type === "light" ? "#ffffff" : "#1e1e1e"),
+        "editorLineNumber.foreground": ui.textSecondary || "#858585",
+        "editorCursor.foreground": ui.accentColor || (theme?.type === "light" ? "#007acc" : "#ffffff")
+      }
+    };
+  };
+
   function handleEditorDidMount(editor, monaco) {
     editor.focus();
     editorRef.current = editor;
@@ -276,18 +329,8 @@ function Editor() {
     }
 
     const themeName = currentTheme ? `hyperion-${currentTheme.id}` : "hyperion-dark";
-    const ui = currentTheme?.ui || {};
-    monaco.editor.defineTheme(themeName, {
-      base: currentTheme?.type === "light" ? "vs" : "vs-dark",
-      inherit: true,
-      rules: [],
-      colors: {
-        "editor.background": ui.editorBg || (currentTheme?.type === "light" ? "#ffffff" : "#1e1e1e"),
-        "editorLineNumber.foreground": ui.textSecondary || "#858585",
-        "editorCursor.foreground": ui.accentColor || (currentTheme?.type === "light" ? "#007acc" : "#ffffff")
-      }
-    });
-
+    const themeConfig = getMonacoThemeConfig(currentTheme);
+    monaco.editor.defineTheme(themeName, themeConfig);
     monaco.editor.setTheme(themeName);
 
     // Run initial diagnostics on editor mount
@@ -338,17 +381,8 @@ function Editor() {
     if (!monacoRef.current || !currentTheme) return;
     const monaco = monacoRef.current;
     const themeName = `hyperion-${currentTheme.id}`;
-    const ui = currentTheme.ui || {};
-    monaco.editor.defineTheme(themeName, {
-      base: currentTheme.type === "light" ? "vs" : "vs-dark",
-      inherit: true,
-      rules: [],
-      colors: {
-        "editor.background": ui.editorBg || (currentTheme.type === "light" ? "#ffffff" : "#1e1e1e"),
-        "editorLineNumber.foreground": ui.textSecondary || "#858585",
-        "editorCursor.foreground": ui.accentColor || (currentTheme.type === "light" ? "#007acc" : "#ffffff")
-      }
-    });
+    const themeConfig = getMonacoThemeConfig(currentTheme);
+    monaco.editor.defineTheme(themeName, themeConfig);
     monaco.editor.setTheme(themeName);
   }, [currentTheme]);
 

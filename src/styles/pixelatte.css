@@ -1,0 +1,610 @@
+/* ==========================================================================
+   PIXELATTE THEME - Retro 8-Bit / 16-Bit Arcade Video Game Console Aesthetic
+   Faithfully implemented from E:/portfolio/portfolio_v1 themes.css & variables.css
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Press+Start+2P&family=Roboto+Mono:wght@400;600;700;800&display=swap');
+
+:root[data-theme-id="pixelatte"],
+[data-theme="pixelatte"] {
+  /* Core 8-bit Arcade Palette */
+  --bg-primary: #0f0728;
+  --bg-secondary: #170c3d;
+  --bg-tertiary: #221356;
+  --bg-surface: #1b0e45;
+  --bg-surface-elevated: #281566;
+  --bg-surface-hover: #351c86;
+
+  /* Glass / Overlay Tokens (Hard Solid Arcade Style) */
+  --glass-bg: #1c0e48;
+  --glass-bg-subtle: rgba(255, 230, 0, 0.05);
+  --glass-border: #facc15;
+  --glass-border-hover: #00f5d4;
+  --glass-border-active: #ff007f;
+
+  /* Text & Syntax Colors */
+  --text-primary: #ffff00;       /* Retro 8-bit Yellow */
+  --text-secondary: #00f5d4;     /* Arcade 1-Up Cyan */
+  --text-muted: #ff70a6;         /* Bubblegum Pink */
+  --text-dim: #7b2cbf;          /* Deep Arcane Purple */
+  --text-inverse: #0f0728;
+
+  /* Bright Neon / Coin Accents */
+  --accent-color: #facc15;
+  --accent-neon: #facc15;        /* Arcade Gold Coin */
+  --accent-neon-bright: #00f5d4; /* 1-Up Cyan */
+  --accent-emerald: #00f076;     /* High-Score Green */
+  --accent-lime: #ffe600;        /* Power-Up Yellow */
+  --accent-teal: #00f5d4;
+  --accent-cyan: #00f5d4;
+  --accent-amber: #ff9e00;       /* Boss Orange */
+  --accent-rose: #ff0055;        /* Heart Red */
+  --accent-glow: rgba(250, 204, 21, 0.5);
+
+  /* IDE Surfaces */
+  --border-color: #facc15;
+  --editor-bg: #0f0728;
+  --sidebar-bg: #170c3d;
+  --activity-bar-bg: #1b0e45;
+  --status-bar-bg: #ff007f;
+  --tab-active-bg: #1b0e45;
+  --card-bg: #1b0e45;
+  --input-bg: #140b33;
+  --hover-bg: rgba(250, 204, 21, 0.16);
+
+  /* Arcade Pixel Typography */
+  --font-pixel: 'Pixelify Sans', 'Press Start 2P', monospace, sans-serif;
+  --font-heading: 'Pixelify Sans', 'Press Start 2P', monospace, sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+
+  /* Hard Pixel Shadows & Razor Sharp Borders */
+  --shadow-sm: 2px 2px 0px #000000;
+  --shadow-md: 4px 4px 0px #000000;
+  --shadow-lg: 6px 6px 0px #000000;
+  --shadow-glow: 0 0 15px rgba(250, 204, 21, 0.6);
+  --shadow-glow-bright: 0 0 25px rgba(0, 245, 212, 0.8);
+
+  --radius-xs: 0px !important;
+  --radius-sm: 0px !important;
+  --radius-md: 0px !important;
+  --radius-lg: 0px !important;
+  --radius-xl: 0px !important;
+  --radius-full: 0px !important;
+}
+
+/* --------------------------------------------------------------------------
+   1. GLOBAL PIXEL OVERRIDES - Crisp 0px Sharp Corners
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] *,
+[data-theme="pixelatte"] * {
+  border-radius: 0px !important;
+}
+
+/* Selection */
+:root[data-theme-id="pixelatte"] ::selection,
+[data-theme="pixelatte"] ::selection {
+  background: #ff007f !important;
+  color: #ffffff !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. NAVBAR & TOP TITLEBAR
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .navbar,
+[data-theme="pixelatte"] .navbar,
+:root[data-theme-id="pixelatte"] .title-bar,
+[data-theme="pixelatte"] .title-bar {
+  background: #140b33 !important;
+  border-bottom: 3px solid #facc15 !important;
+  box-shadow: 0 3px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .navbar-brand,
+[data-theme="pixelatte"] .navbar-brand,
+:root[data-theme-id="pixelatte"] .titlebar-title,
+[data-theme="pixelatte"] .titlebar-title,
+:root[data-theme-id="pixelatte"] .app-title,
+[data-theme="pixelatte"] .app-title {
+  font-family: var(--font-pixel) !important;
+  color: #ffff00 !important;
+  letter-spacing: 0.06em !important;
+  text-shadow: 2px 2px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .navbar-search,
+[data-theme="pixelatte"] .navbar-search,
+:root[data-theme-id="pixelatte"] .search-bar,
+[data-theme="pixelatte"] .search-bar {
+  background: #1c0e48 !important;
+  border: 2px solid #facc15 !important;
+  box-shadow: inset 2px 2px 0px #000000 !important;
+  color: #ffff00 !important;
+  font-family: var(--font-mono) !important;
+}
+
+:root[data-theme-id="pixelatte"] .navbar-search:focus-within,
+[data-theme="pixelatte"] .navbar-search:focus-within {
+  border-color: #00f5d4 !important;
+  box-shadow: inset 2px 2px 0px #000000, 0 0 0 1px #00f5d4 !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. ACTIVITY BAR & SIDEBAR (Explorer, Git, Search, API Client)
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .activity-bar,
+[data-theme="pixelatte"] .activity-bar {
+  background: #1b0e45 !important;
+  border-right: 3px solid #facc15 !important;
+}
+
+:root[data-theme-id="pixelatte"] .activity-bar-icon,
+[data-theme="pixelatte"] .activity-bar-icon,
+:root[data-theme-id="pixelatte"] .sidebar-btn,
+[data-theme="pixelatte"] .sidebar-btn {
+  color: #ff70a6 !important;
+  border: 1px solid transparent !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+}
+
+:root[data-theme-id="pixelatte"] .activity-bar-icon:hover,
+[data-theme="pixelatte"] .activity-bar-icon:hover,
+:root[data-theme-id="pixelatte"] .sidebar-btn:hover,
+[data-theme="pixelatte"] .sidebar-btn:hover {
+  color: #00f5d4 !important;
+  background: #281566 !important;
+  border: 1px solid #00f5d4 !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .activity-bar-icon.active,
+[data-theme="pixelatte"] .activity-bar-icon.active,
+:root[data-theme-id="pixelatte"] .sidebar-btn.active,
+[data-theme="pixelatte"] .sidebar-btn.active {
+  color: #ffff00 !important;
+  background: #281566 !important;
+  border: 2px solid #facc15 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .sidebar,
+[data-theme="pixelatte"] .sidebar {
+  background: #170c3d !important;
+  border-right: 3px solid #facc15 !important;
+}
+
+:root[data-theme-id="pixelatte"] .sidebar-header,
+[data-theme="pixelatte"] .sidebar-header,
+:root[data-theme-id="pixelatte"] .sidebar-title,
+[data-theme="pixelatte"] .sidebar-title {
+  font-family: var(--font-pixel) !important;
+  color: #ffff00 !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 2px solid #facc15 !important;
+  text-shadow: 1px 1px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .explorer-item,
+[data-theme="pixelatte"] .explorer-item,
+:root[data-theme-id="pixelatte"] .tree-item,
+[data-theme="pixelatte"] .tree-item {
+  font-family: var(--font-mono) !important;
+  color: #ffff00 !important;
+  border: 1px solid transparent !important;
+}
+
+:root[data-theme-id="pixelatte"] .explorer-item:hover,
+[data-theme="pixelatte"] .explorer-item:hover,
+:root[data-theme-id="pixelatte"] .tree-item:hover,
+[data-theme="pixelatte"] .tree-item:hover {
+  background: rgba(250, 204, 21, 0.14) !important;
+  color: #00f5d4 !important;
+}
+
+:root[data-theme-id="pixelatte"] .explorer-item.active,
+[data-theme="pixelatte"] .explorer-item.active,
+:root[data-theme-id="pixelatte"] .tree-item.selected,
+[data-theme="pixelatte"] .tree-item.selected {
+  background: #1b0e45 !important;
+  color: #00f5d4 !important;
+  border: 1px solid #facc15 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. TABS & EDITOR HEADER
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .tabs-bar,
+[data-theme="pixelatte"] .tabs-bar,
+:root[data-theme-id="pixelatte"] .tabs-header,
+[data-theme="pixelatte"] .tabs-header {
+  background: #140b33 !important;
+  border-bottom: 3px solid #facc15 !important;
+}
+
+:root[data-theme-id="pixelatte"] .tab,
+[data-theme="pixelatte"] .tab {
+  background: #170c3d !important;
+  color: #ff70a6 !important;
+  border-right: 2px solid #000000 !important;
+  border-top: 2px solid transparent !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.85rem !important;
+  transition: transform 0.08s ease !important;
+}
+
+:root[data-theme-id="pixelatte"] .tab:hover,
+[data-theme="pixelatte"] .tab:hover {
+  background: #221356 !important;
+  color: #00f5d4 !important;
+}
+
+:root[data-theme-id="pixelatte"] .tab.active,
+[data-theme="pixelatte"] .tab.active {
+  background: #1b0e45 !important;
+  color: #ffff00 !important;
+  border-top: 3px solid #00f5d4 !important;
+  border-left: 2px solid #facc15 !important;
+  border-right: 2px solid #facc15 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+  font-weight: 700 !important;
+}
+
+:root[data-theme-id="pixelatte"] .breadcrumb-bar,
+[data-theme="pixelatte"] .breadcrumb-bar {
+  background: #170c3d !important;
+  border-bottom: 2px solid #facc15 !important;
+  color: #00f5d4 !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.8rem !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. BUTTONS (CHUNKY 8-BIT RETRO CONTROLS)
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .btn,
+[data-theme="pixelatte"] .btn,
+:root[data-theme-id="pixelatte"] button:not(.tab-close):not(.editor-action-btn),
+[data-theme="pixelatte"] button:not(.tab-close):not(.editor-action-btn) {
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.04em !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+}
+
+:root[data-theme-id="pixelatte"] .btn:hover,
+[data-theme="pixelatte"] .btn:hover,
+:root[data-theme-id="pixelatte"] button:not(.tab-close):not(.editor-action-btn):hover,
+[data-theme="pixelatte"] button:not(.tab-close):not(.editor-action-btn):hover {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .btn:active,
+[data-theme="pixelatte"] .btn:active,
+:root[data-theme-id="pixelatte"] button:not(.tab-close):not(.editor-action-btn):active,
+[data-theme="pixelatte"] button:not(.tab-close):not(.editor-action-btn):active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000000 !important;
+}
+
+/* Primary Arcade Coin Gold Button */
+:root[data-theme-id="pixelatte"] .btn-primary,
+[data-theme="pixelatte"] .btn-primary,
+:root[data-theme-id="pixelatte"] .sc-btn-primary,
+[data-theme="pixelatte"] .sc-btn-primary,
+:root[data-theme-id="pixelatte"] .api-send-btn,
+[data-theme="pixelatte"] .api-send-btn,
+:root[data-theme-id="pixelatte"] .run-btn,
+[data-theme="pixelatte"] .run-btn {
+  background: #facc15 !important;
+  color: #0f0728 !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .btn-primary:hover,
+[data-theme="pixelatte"] .btn-primary:hover,
+:root[data-theme-id="pixelatte"] .sc-btn-primary:hover,
+[data-theme="pixelatte"] .sc-btn-primary:hover,
+:root[data-theme-id="pixelatte"] .api-send-btn:hover,
+[data-theme="pixelatte"] .api-send-btn:hover,
+:root[data-theme-id="pixelatte"] .run-btn:hover,
+[data-theme="pixelatte"] .run-btn:hover {
+  background: #00f5d4 !important;
+  color: #0f0728 !important;
+  box-shadow: 6px 6px 0px #000000 !important;
+}
+
+/* Secondary 1-Up Cyan Button */
+:root[data-theme-id="pixelatte"] .btn-secondary,
+[data-theme="pixelatte"] .btn-secondary,
+:root[data-theme-id="pixelatte"] .sc-btn-secondary,
+[data-theme="pixelatte"] .sc-btn-secondary {
+  background: #1b0e45 !important;
+  color: #00f5d4 !important;
+  border: 2px solid #00f5d4 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .btn-secondary:hover,
+[data-theme="pixelatte"] .btn-secondary:hover,
+:root[data-theme-id="pixelatte"] .sc-btn-secondary:hover,
+[data-theme="pixelatte"] .sc-btn-secondary:hover {
+  background: #00f5d4 !important;
+  color: #0f0728 !important;
+  box-shadow: 5px 5px 0px #000000 !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. INPUTS & FORM CONTROLS
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] input,
+[data-theme="pixelatte"] input,
+:root[data-theme-id="pixelatte"] textarea,
+[data-theme="pixelatte"] textarea,
+:root[data-theme-id="pixelatte"] select,
+[data-theme="pixelatte"] select {
+  background: #140b33 !important;
+  border: 2px solid #facc15 !important;
+  color: #ffff00 !important;
+  box-shadow: inset 2px 2px 0px #000000 !important;
+  font-family: var(--font-mono) !important;
+}
+
+:root[data-theme-id="pixelatte"] input:focus,
+[data-theme="pixelatte"] input:focus,
+:root[data-theme-id="pixelatte"] textarea:focus,
+[data-theme="pixelatte"] textarea:focus,
+:root[data-theme-id="pixelatte"] select:focus,
+[data-theme="pixelatte"] select:focus {
+  border-color: #00f5d4 !important;
+  box-shadow: inset 2px 2px 0px #000000, 0 0 0 2px #00f5d4 !important;
+  outline: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. BOTTOM PANEL (TERMINAL, OUTPUT, PROBLEMS, PORTS, REPL)
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .bottom-panel,
+[data-theme="pixelatte"] .bottom-panel,
+:root[data-theme-id="pixelatte"] .terminal-panel,
+[data-theme="pixelatte"] .terminal-panel {
+  background: #140b33 !important;
+  border-top: 3px solid #facc15 !important;
+  box-shadow: 0 -3px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .bottom-panel-header,
+[data-theme="pixelatte"] .bottom-panel-header,
+:root[data-theme-id="pixelatte"] .panel-tabs,
+[data-theme="pixelatte"] .panel-tabs {
+  background: #170c3d !important;
+  border-bottom: 2px solid #facc15 !important;
+}
+
+:root[data-theme-id="pixelatte"] .panel-tab-btn,
+[data-theme="pixelatte"] .panel-tab-btn {
+  font-family: var(--font-pixel) !important;
+  color: #ff70a6 !important;
+  letter-spacing: 0.04em !important;
+  border-right: 2px solid #000000 !important;
+  border-bottom: 2px solid transparent !important;
+  background: #170c3d !important;
+}
+
+:root[data-theme-id="pixelatte"] .panel-tab-btn:hover,
+[data-theme="pixelatte"] .panel-tab-btn:hover {
+  color: #00f5d4 !important;
+  background: #221356 !important;
+}
+
+:root[data-theme-id="pixelatte"] .panel-tab-btn.active,
+[data-theme="pixelatte"] .panel-tab-btn.active {
+  color: #ffff00 !important;
+  background: #1b0e45 !important;
+  border-bottom: 3px solid #facc15 !important;
+  border-left: 2px solid #facc15 !important;
+  border-right: 2px solid #facc15 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+}
+
+/* Output Console Window */
+:root[data-theme-id="pixelatte"] .output-container,
+[data-theme="pixelatte"] .output-container {
+  background: #0f0728 !important;
+  color: #ffff00 !important;
+}
+
+:root[data-theme-id="pixelatte"] .output-gutter,
+[data-theme="pixelatte"] .output-gutter {
+  background: #170c3d !important;
+  border-right: 2px solid #facc15 !important;
+  color: #7b2cbf !important;
+  font-family: var(--font-mono) !important;
+}
+
+:root[data-theme-id="pixelatte"] .output-toolbar,
+[data-theme="pixelatte"] .output-toolbar {
+  background: #170c3d !important;
+  border-bottom: 2px solid #facc15 !important;
+}
+
+:root[data-theme-id="pixelatte"] .output-stream-btn.active,
+[data-theme="pixelatte"] .output-stream-btn.active {
+  background: #facc15 !important;
+  color: #0f0728 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. SOURCE CONTROL & GIT UI
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .source-control-container,
+[data-theme="pixelatte"] .source-control-container {
+  background: #170c3d !important;
+}
+
+:root[data-theme-id="pixelatte"] .source-control-title,
+[data-theme="pixelatte"] .source-control-title {
+  font-family: var(--font-pixel) !important;
+  color: #ffff00 !important;
+  letter-spacing: 0.05em !important;
+  text-shadow: 1px 1px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .sc-branch-pill,
+[data-theme="pixelatte"] .sc-branch-pill {
+  background: #1b0e45 !important;
+  border: 2px solid #facc15 !important;
+  color: #00f5d4 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+  font-family: var(--font-pixel) !important;
+  letter-spacing: 0.04em !important;
+}
+
+:root[data-theme-id="pixelatte"] .sc-file-item,
+[data-theme="pixelatte"] .sc-file-item {
+  border-bottom: 1px solid rgba(250, 204, 21, 0.2) !important;
+}
+
+:root[data-theme-id="pixelatte"] .sc-file-item:hover,
+[data-theme="pixelatte"] .sc-file-item:hover {
+  background: rgba(250, 204, 21, 0.12) !important;
+  color: #00f5d4 !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. API CLIENT & cURL TESTER
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .api-client-container,
+[data-theme="pixelatte"] .api-client-container {
+  background: #0f0728 !important;
+}
+
+:root[data-theme-id="pixelatte"] .api-brand-text,
+[data-theme="pixelatte"] .api-brand-text {
+  font-family: var(--font-pixel) !important;
+  color: #00f5d4 !important;
+  letter-spacing: 0.05em !important;
+  text-shadow: 1px 1px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .api-tab-btn.active,
+[data-theme="pixelatte"] .api-tab-btn.active {
+  border-bottom: 3px solid #facc15 !important;
+  color: #ffff00 !important;
+}
+
+/* --------------------------------------------------------------------------
+   10. STATUS BAR
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .statusbar,
+[data-theme="pixelatte"] .statusbar {
+  background: #ff007f !important;
+  border-top: 2px solid #000000 !important;
+  color: #ffffff !important;
+  box-shadow: 0 -2px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .statusbar-item,
+[data-theme="pixelatte"] .statusbar-item {
+  font-family: var(--font-pixel) !important;
+  letter-spacing: 0.04em !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme-id="pixelatte"] .statusbar-item:hover,
+[data-theme="pixelatte"] .statusbar-item:hover {
+  background: #facc15 !important;
+  color: #0f0728 !important;
+}
+
+/* --------------------------------------------------------------------------
+   11. MENUS, MODALS & DIALOGS
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .manage-menu,
+[data-theme="pixelatte"] .manage-menu,
+:root[data-theme-id="pixelatte"] .manage-submenu,
+[data-theme="pixelatte"] .manage-submenu,
+:root[data-theme-id="pixelatte"] .context-menu,
+[data-theme="pixelatte"] .context-menu,
+:root[data-theme-id="pixelatte"] .command-palette-modal,
+[data-theme="pixelatte"] .command-palette-modal,
+:root[data-theme-id="pixelatte"] .modal-content,
+[data-theme="pixelatte"] .modal-content {
+  background: #170c3d !important;
+  border: 3px solid #facc15 !important;
+  box-shadow: 6px 6px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .submenu-title,
+[data-theme="pixelatte"] .submenu-title {
+  font-family: var(--font-pixel) !important;
+  color: #ffff00 !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 2px solid #facc15 !important;
+}
+
+:root[data-theme-id="pixelatte"] .submenu-item:hover,
+[data-theme="pixelatte"] .submenu-item:hover,
+:root[data-theme-id="pixelatte"] .palette-item.selected,
+[data-theme="pixelatte"] .palette-item.selected {
+  background: #281566 !important;
+  color: #ffff00 !important;
+  border: 1px solid #00f5d4 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] .submenu-item.selected,
+[data-theme="pixelatte"] .submenu-item.selected {
+  background: #281566 !important;
+  color: #facc15 !important;
+  font-weight: 700 !important;
+}
+
+/* --------------------------------------------------------------------------
+   12. BADGES, CHIPS & TAGS
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] .badge,
+[data-theme="pixelatte"] .badge,
+:root[data-theme-id="pixelatte"] .tag,
+[data-theme="pixelatte"] .tag,
+:root[data-theme-id="pixelatte"] .chip,
+[data-theme="pixelatte"] .chip {
+  border: 1px solid #000000 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+/* --------------------------------------------------------------------------
+   13. 8-BIT ARCADE SCROLLBAR
+   -------------------------------------------------------------------------- */
+:root[data-theme-id="pixelatte"] *::-webkit-scrollbar,
+[data-theme="pixelatte"] *::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+:root[data-theme-id="pixelatte"] *::-webkit-scrollbar-track,
+[data-theme="pixelatte"] *::-webkit-scrollbar-track {
+  background: #140b33 !important;
+  border-left: 1px solid #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] *::-webkit-scrollbar-thumb,
+[data-theme="pixelatte"] *::-webkit-scrollbar-thumb {
+  background: #facc15 !important;
+  border: 2px solid #000000 !important;
+}
+
+:root[data-theme-id="pixelatte"] *::-webkit-scrollbar-thumb:hover,
+[data-theme="pixelatte"] *::-webkit-scrollbar-thumb:hover {
+  background: #00f5d4 !important;
+}
+

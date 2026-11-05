@@ -9,6 +9,7 @@ import { EditorProvider } from "./context/EditorContext";
 import { TerminalProvider } from "./context/TerminalContext";
 
 import "./styles/variables.css";
+import "./styles/pixelatte.css";
 import "./index.css";
 import "./App.css";
 

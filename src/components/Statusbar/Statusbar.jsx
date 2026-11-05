@@ -12,6 +12,7 @@ import {
 import useFile from "../../hooks/useFile";
 import useEditor from "../../hooks/useEditor";
 import useTerminal from "../../hooks/useTerminal";
+import useTheme from "../../hooks/useTheme";
 import { getCurrentBranch, getTrackingInfo, checkIsGitRepo } from "../../services/gitService";
 import { getAiStatus } from "../../services/aiService";
 
@@ -46,6 +47,7 @@ function StatusBar() {
     const { persistedFolderInfo } = useFile();
     const { openView, problems, activeFile, cursorPosition } = useEditor();
     const { createTerminal } = useTerminal();
+    const { currentTheme } = useTheme();
 
     const [branch, setBranch] = useState("main");
     const [tracking, setTracking] = useState({ ahead: 0, behind: 0 });
@@ -200,6 +202,13 @@ function StatusBar() {
                 >
                     <FaRobot style={{ color: "#38bdf8" }} />
                     <span>{aiModel}</span>
+                </div>
+
+                <div
+                    className="status-item clickable"
+                    title={`Color Theme: ${currentTheme?.name || 'Pixelatte'}`}
+                >
+                    <span>🎨 {currentTheme?.name ? currentTheme.name.replace(/\s*\(.*\)/, '') : 'Pixelatte'}</span>
                 </div>
 
                 <div className="status-item" title="Notifications">
