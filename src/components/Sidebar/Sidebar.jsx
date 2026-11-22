@@ -9,7 +9,9 @@ import {
     VscAccount,
     VscSettingsGear
 } from "react-icons/vsc";
-import { FaProjectDiagram, FaChevronRight, FaCheck, FaTimes } from "react-icons/fa";
+import { FaProjectDiagram, FaChevronRight, FaCheck, FaTimes, FaUserSecret } from "react-icons/fa";
+import { BsFillPeopleFill } from "react-icons/bs";
+import { PiSpeedometerFill } from "react-icons/pi";
 import { GiCurledTentacle } from "react-icons/gi";
 import useEditor from "../../hooks/useEditor";
 import useTheme from "../../hooks/useTheme";
@@ -20,7 +22,8 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
         setIsCommandPaletteOpen,
         openTaskPicker,
         openView,
-        openApiClientTab
+        openApiClientTab,
+        openTestingStudioTab
     } = useEditor();
 
     const { themes, currentThemeId, setTheme } = useTheme();
@@ -183,6 +186,21 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
             id: "api-client",
             icon: <GiCurledTentacle />,
             title: "API Client (cURL & Localhost Tester)"
+        },
+        {
+            id: "load-test",
+            icon: <BsFillPeopleFill />,
+            title: "Load Test (npx autocannon)"
+        },
+        {
+            id: "speed-test",
+            icon: <PiSpeedometerFill />,
+            title: "Speed Test (npx lighthouse)"
+        },
+        {
+            id: "secret-test",
+            icon: <FaUserSecret />,
+            title: "Secret Test (gitleaks)"
         }
     ];
 
@@ -236,6 +254,12 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
                         onClick={() => {
                             if (item.id === "api-client") {
                                 openApiClientTab?.();
+                            } else if (item.id === "load-test") {
+                                openTestingStudioTab?.("load");
+                            } else if (item.id === "speed-test") {
+                                openTestingStudioTab?.("speed");
+                            } else if (item.id === "secret-test") {
+                                openTestingStudioTab?.("secret");
                             } else {
                                 onSetActive(item.id);
                             }

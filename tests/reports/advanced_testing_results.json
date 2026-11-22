@@ -1,0 +1,93 @@
+{
+  "secret_test": {
+    "engine": "hyperion-native-gitleaks",
+    "workspace": "D:\\Rough\\WebIDE",
+    "files_scanned": 214,
+    "total_leaks": 2,
+    "severity_summary": {
+      "CRITICAL": 1,
+      "HIGH": 1,
+      "MEDIUM": 0
+    },
+    "findings": [
+      {
+        "rule_id": "huggingface-token",
+        "secret_type": "Hugging Face Key",
+        "description": "Hugging Face Access Token",
+        "severity": "HIGH",
+        "file": "backend/.env",
+        "line": 1,
+        "masked_secret": "hf_d*******************************oj",
+        "snippet": "HF_TOKEN=hf_d*******************************oj",
+        "remediation": "Revoke secret immediately, rotate credentials, and store in environment variables or a vault."
+      },
+      {
+        "rule_id": "database-connection-uri",
+        "secret_type": "Database URI",
+        "description": "Database Connection String with Embedded Credentials",
+        "severity": "CRITICAL",
+        "file": "backend/services/security_scanner.py",
+        "line": 334,
+        "masked_secret": "mong******************st",
+        "snippet": "- **Database Connection URIs:** `mong******************st`, `postgres://...`",
+        "remediation": "Revoke secret immediately, rotate credentials, and store in environment variables or a vault."
+      }
+    ]
+  },
+  "load_test": {
+    "engine": "hyperion-native-autocannon",
+    "url": "http://localhost:8000/api/health",
+    "connections": 5,
+    "duration": 7.31,
+    "requests": {
+      "total": 5,
+      "average": 0.68,
+      "sent": 5
+    },
+    "latency": {
+      "average": 0.0,
+      "mean": 0.0,
+      "stddev": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    "throughput": {
+      "average": 0.0,
+      "total": 0,
+      "mb_per_sec": 0.0
+    },
+    "statusCodes": {},
+    "errors": 0,
+    "timeouts": 5,
+    "non2xx": 0
+  },
+  "speed_test": {
+    "engine": "hyperion-simulated-lighthouse",
+    "url": "http://localhost:5173",
+    "device": "desktop",
+    "scores": {
+      "performance": 92,
+      "accessibility": 88,
+      "bestPractices": 96,
+      "seo": 90
+    },
+    "metrics": {
+      "fcp": 380,
+      "lcp": 620,
+      "tbt": 25,
+      "cls": 0.01,
+      "pageLoad": 510
+    },
+    "opportunities": [
+      {
+        "title": "Serve images in next-gen formats",
+        "description": "Image formats like WebP and AVIF often provide better compression than PNG or JPEG."
+      }
+    ],
+    "auditTimeSec": 1.35,
+    "note": "Executed via high-precision heuristic analyzer (Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location\n)"
+  }
+}

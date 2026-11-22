@@ -780,6 +780,30 @@ export function EditorProvider({ children }) {
     });
   }
 
+  function openTestingStudioTab(initialTab = "load") {
+    const tabId = "hyperion-testing-studio";
+    const title = initialTab === "speed" ? "Speed Test (Lighthouse)" : (initialTab === "secret" ? "Secret Test (Gitleaks)" : "Load Test (Autocannon)");
+
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        const updated = { ...existing, initialTab, name: title };
+        setActiveFile(updated);
+        return prev.map(f => f.id === tabId ? updated : f);
+      }
+      const newTab = {
+        id: tabId,
+        name: title,
+        type: "testing-studio",
+        isPreview: true,
+        isTestingStudio: true,
+        initialTab
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
   function openSettingsTab() {
     const tabId = "hyperion-settings-page";
     const name = "Settings";
@@ -1199,6 +1223,7 @@ export function EditorProvider({ children }) {
         openMongoSchemaTab,
         openBackendRoutesTab,
         openSeleniumStudioTab,
+        openTestingStudioTab,
         openSettingsTab,
         scanWorkspaceFiles,
         isScanningWorkspace,

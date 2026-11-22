@@ -1,6 +1,8 @@
 import React from "react";
 import { VscPlay, VscGear, VscDebugRestart, VscStopCircle } from "react-icons/vsc";
-import { FaPlay, FaTools, FaCheckCircle, FaSpinner, FaRobot, FaExternalLinkAlt } from "react-icons/fa";
+import { FaPlay, FaTools, FaCheckCircle, FaSpinner, FaRobot, FaExternalLinkAlt, FaUserSecret } from "react-icons/fa";
+import { BsFillPeopleFill } from "react-icons/bs";
+import { PiSpeedometerFill } from "react-icons/pi";
 import { SiPython } from "react-icons/si";
 import useTerminal from "../../hooks/useTerminal";
 import useEditor from "../../hooks/useEditor";
@@ -15,7 +17,7 @@ export default function RunDebug() {
     latestExecution
   } = useTerminal();
 
-  const { activeFile, openSeleniumStudioTab } = useEditor();
+  const { activeFile, openSeleniumStudioTab, openTestingStudioTab } = useEditor();
 
   return (
     <div className="rundebug-container">
@@ -146,6 +148,39 @@ export default function RunDebug() {
             >
               <span>Open Full Editor Tab</span>
               <FaExternalLinkAlt className="popout-icon" />
+            </button>
+          </div>
+
+          {/* Quick Testing Studio Launches */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginTop: "12px" }}>
+            <button
+              className="rundebug-secondary-btn"
+              style={{ fontSize: "11px", padding: "8px 6px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}
+              onClick={() => openTestingStudioTab?.("load")}
+              title="Launch Autocannon Load Tester"
+            >
+              <BsFillPeopleFill style={{ fontSize: "16px", color: "var(--accent-color, #38bdf8)" }} />
+              <span>Load Test</span>
+            </button>
+
+            <button
+              className="rundebug-secondary-btn"
+              style={{ fontSize: "11px", padding: "8px 6px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}
+              onClick={() => openTestingStudioTab?.("speed")}
+              title="Launch Lighthouse Speed Tester"
+            >
+              <PiSpeedometerFill style={{ fontSize: "16px", color: "var(--accent-color, #38bdf8)" }} />
+              <span>Speed Test</span>
+            </button>
+
+            <button
+              className="rundebug-secondary-btn"
+              style={{ fontSize: "11px", padding: "8px 6px", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}
+              onClick={() => openTestingStudioTab?.("secret")}
+              title="Launch Gitleaks Secret Sentinel"
+            >
+              <FaUserSecret style={{ fontSize: "16px", color: "var(--accent-color, #38bdf8)" }} />
+              <span>Secret Test</span>
             </button>
           </div>
         </div>

@@ -11,6 +11,7 @@ import SeleniumRunner from "../RunDebug/SeleniumRunner";
 import ApiClient from "../ApiClient/ApiClient";
 import SourceControl from "../SourceControl/SourceControl";
 import SettingsPage from "../../pages/SettingsPage/SettingsPage";
+import TestingSuite from "../TestingSuite/TestingSuite";
 import {
   DocxPreview,
   PptxPreview,
@@ -534,6 +535,15 @@ function Editor() {
     return (
       <div className="editor-container">
         <SettingsPage />
+      </div>
+    );
+  }
+
+  // Performance & Security Testing Studio (Load Test, Speed Test, Secret Test)
+  if (activeFile.type === "testing-studio" || activeFile.isTestingStudio) {
+    return (
+      <div className="editor-container">
+        <TestingSuite initialTab={activeFile.initialTab || "load"} />
       </div>
     );
   }

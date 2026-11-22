@@ -31,7 +31,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import HOST, PORT
-from backend.routers import health, sandbox, ai, selenium
+from backend.routers import health, sandbox, ai, selenium, testing
 from backend.services.selenium_engine import global_selenium_engine
 
 
@@ -67,6 +67,7 @@ app.include_router(health.router)
 app.include_router(sandbox.router)
 app.include_router(ai.router)
 app.include_router(selenium.router)
+app.include_router(testing.router)
 
 
 # Explicit top-level health aliases for direct observability

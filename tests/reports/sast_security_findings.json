@@ -1,0 +1,2040 @@
+{
+  "benchmarks": {
+    "files_scanned": 141,
+    "scanned_bytes": 1652909,
+    "total_duration_ms": 7370.7,
+    "avg_file_duration_ms": 52.274,
+    "throughput_files_per_sec": 19.1
+  },
+  "severity_summary": {
+    "CRITICAL": 40,
+    "HIGH": 22,
+    "MEDIUM": 44,
+    "LOW": 0
+  },
+  "cwe_summary": {
+    "CWE-95 / CWE-78": 30,
+    "CWE-89": 8,
+    "CWE-79": 22,
+    "CWE-798": 2,
+    "CWE-327 / CWE-328": 42,
+    "CWE-1321": 2
+  },
+  "total_findings": 106,
+  "findings": [
+    {
+      "file": "backend/services/local_ai.py",
+      "line": 81,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "mod.eval()",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 379,
+      "rule_id": "SEC-SQLI",
+      "name": "SQL Injection Vulnerability",
+      "cwe": "CWE-89",
+      "severity": "CRITICAL",
+      "snippet": "const query = `SELECT * FROM users WHERE email = '${req.body.email}' AND password = '${req.body.password}'`;",
+      "description": "Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.",
+      "remediation": "Use parameterized queries or prepared statements (e.g., `db.query(\"SELECT * FROM users WHERE id = ?\", [userId])` or an ORM like Prisma/SQLAlchemy)."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 46,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "'name': 'Arbitrary Code Execution / Dangerous eval()',",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 50,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "'description': 'Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).',",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 51,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "'remediation': 'Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.'",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 427,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "eval(userInput);",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 67,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "'pattern': re.compile(r\"dangerouslySetInnerHTML|innerHTML\\s*=|document\\.write\\s*\\(|res\\.send\\s*\\(\\s*['\\\"`]<script\", re.IGNORECASE),",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 403,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div dangerouslySetInnerHTML={{ __html: userBio }} />",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 406,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "document.getElementById('bio').innerHTML = userInput;",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 416,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userBio) }} />",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 334,
+      "rule_id": "SEC-SECRETS",
+      "name": "Hardcoded Secret / API Token / Private Key",
+      "cwe": "CWE-798",
+      "severity": "CRITICAL",
+      "snippet": "- **Database Connection URIs:** `mongodb://user:pass@host`, `postgres://...`",
+      "description": "Hardcoded credentials, API keys, or private keys in source code are vulnerable to exposure in version control and leaks.",
+      "remediation": "Move secrets to environment variables (`process.env.SECRET_NAME` / `os.getenv(\"SECRET_NAME\")`) or secret management vaults."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 91,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "'description': 'Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.',",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "line": 99,
+      "rule_id": "SEC-PROTO",
+      "name": "Prototype Pollution Vulnerability",
+      "cwe": "CWE-1321",
+      "severity": "MEDIUM",
+      "snippet": "'pattern': re.compile(r\"\\[\\s*[\\\"']__proto__[\\\"']\\s*\\]|\\.__proto__|constructor\\.prototype\"),",
+      "description": "Direct assignment to __proto__ or object prototype can pollute global Object prototypes, causing denial of service or remote code execution.",
+      "remediation": "Use `Object.create(null)` for key-value maps, validate object keys with a deny-list for `__proto__`, or use Map."
+    },
+    {
+      "file": "src/components/ApiClient/ApiClient.jsx",
+      "line": 1116,
+      "rule_id": "SEC-SQLI",
+      "name": "SQL Injection Vulnerability",
+      "cwe": "CWE-89",
+      "severity": "CRITICAL",
+      "snippet": "className={`api-method-select method-${method.toLowerCase()}`}",
+      "description": "Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.",
+      "remediation": "Use parameterized queries or prepared statements (e.g., `db.query(\"SELECT * FROM users WHERE id = ?\", [userId])` or an ORM like Prisma/SQLAlchemy)."
+    },
+    {
+      "file": "src/components/Architecture/MermaidRenderer.jsx",
+      "line": 115,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "containerRef.current.innerHTML = svg;",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "src/components/Architecture/MermaidRenderer.jsx",
+      "line": 111,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "const uniqueId = `mmd-${Date.now()}-${Math.floor(Math.random() * 1000)}`;",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/Architecture/ThreeArchitectureDiagram.jsx",
+      "line": 412,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "progress: Math.random() // Stagger initial positions",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/ContextMenu/ContextMenu.jsx",
+      "line": 222,
+      "rule_id": "SEC-SQLI",
+      "name": "SQL Injection Vulnerability",
+      "cwe": "CWE-89",
+      "severity": "CRITICAL",
+      "snippet": "const confirmed = window.confirm(`Are you sure you want to delete '${file.name}'?`);",
+      "description": "Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.",
+      "remediation": "Use parameterized queries or prepared statements (e.g., `db.query(\"SELECT * FROM users WHERE id = ?\", [userId])` or an ORM like Prisma/SQLAlchemy)."
+    },
+    {
+      "file": "src/components/Preview/Preview.jsx",
+      "line": 114,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "document.getElementById('root').innerHTML = '<div style=\"color:#94a3b8;padding:20px;\">Component loaded. Export a React component to preview.</div>';",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "src/components/Previews/DocxPreview.jsx",
+      "line": 100,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "tempDiv.innerHTML = html;",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "src/components/Previews/DocxPreview.jsx",
+      "line": 130,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "tempDiv.innerHTML = htmlContent;",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "src/components/Previews/DocxPreview.jsx",
+      "line": 223,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "dangerouslySetInnerHTML={{ __html: htmlContent }}",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "line": 46,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "const angle = Math.random() * Math.PI * 2;",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "line": 47,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "const orbit = radius + (Math.random() - 0.5) * 30;",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "line": 52,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "size: Math.random() * 1.5 + 0.5, // Smaller particles",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "line": 54,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "speed: speed * (0.02 + Math.random() * 0.03),",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "line": 75,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "const x = Math.random() * size;",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "line": 76,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "const y = Math.random() * size;",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "line": 77,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "const alpha = Math.random() * 0.03; // More subtle",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "line": 80,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "ctx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/services/architectureScanner.js",
+      "line": 539,
+      "rule_id": "SEC-SQLI",
+      "name": "SQL Injection Vulnerability",
+      "cwe": "CWE-89",
+      "severity": "CRITICAL",
+      "snippet": "value: `from ${source}`",
+      "description": "Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.",
+      "remediation": "Use parameterized queries or prepared statements (e.g., `db.query(\"SELECT * FROM users WHERE id = ?\", [userId])` or an ORM like Prisma/SQLAlchemy)."
+    },
+    {
+      "file": "src/services/elementInspector.js",
+      "line": 585,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "this.tooltipBadge.innerHTML = `",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "src/services/sandboxService.js",
+      "line": 296,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "const fn = new Function(code);",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "src/services/seleniumAgent.js",
+      "line": 108,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "id: `th_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/services/seleniumAgent.js",
+      "line": 119,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "id: `find_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "src/services/seleniumEngine.js",
+      "line": 240,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "svgWrap.innerHTML = `",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "src/services/seleniumEngine.js",
+      "line": 134,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "const reqId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 387,
+      "rule_id": "SEC-SQLI",
+      "name": "SQL Injection Vulnerability",
+      "cwe": "CWE-89",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">const query = `SELECT * FROM users WHERE email = &#x27;${req.body.email}&#x27; AND password = &#x27;${req.body.password}&#x27;`;</div>",
+      "description": "Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.",
+      "remediation": "Use parameterized queries or prepared statements (e.g., `db.query(\"SELECT * FROM users WHERE id = ?\", [userId])` or an ORM like Prisma/SQLAlchemy)."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 615,
+      "rule_id": "SEC-SQLI",
+      "name": "SQL Injection Vulnerability",
+      "cwe": "CWE-89",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">className={`api-method-select method-${method.toLowerCase()}`}</div>",
+      "description": "Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.",
+      "remediation": "Use parameterized queries or prepared statements (e.g., `db.query(\"SELECT * FROM users WHERE id = ?\", [userId])` or an ORM like Prisma/SQLAlchemy)."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 691,
+      "rule_id": "SEC-SQLI",
+      "name": "SQL Injection Vulnerability",
+      "cwe": "CWE-89",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">const confirmed = window.confirm(`Are you sure you want to delete &#x27;${file.name}&#x27;?`);</div>",
+      "description": "Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.",
+      "remediation": "Use parameterized queries or prepared statements (e.g., `db.query(\"SELECT * FROM users WHERE id = ?\", [userId])` or an ORM like Prisma/SQLAlchemy)."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 938,
+      "rule_id": "SEC-SQLI",
+      "name": "SQL Injection Vulnerability",
+      "cwe": "CWE-89",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">value: `from ${source}`</div>",
+      "description": "Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.",
+      "remediation": "Use parameterized queries or prepared statements (e.g., `db.query(\"SELECT * FROM users WHERE id = ?\", [userId])` or an ORM like Prisma/SQLAlchemy)."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 360,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<strong>Arbitrary Code Execution / Dangerous eval()</strong><br>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 368,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">mod.eval()</div>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 371,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 372,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#86efac;\"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 398,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<strong>Arbitrary Code Execution / Dangerous eval()</strong><br>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 406,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">&#x27;name&#x27;: &#x27;Arbitrary Code Execution / Dangerous eval()&#x27;,</div>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 409,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 410,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#86efac;\"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 417,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<strong>Arbitrary Code Execution / Dangerous eval()</strong><br>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 425,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">&#x27;description&#x27;: &#x27;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RC",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 428,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 429,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#86efac;\"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 436,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<strong>Arbitrary Code Execution / Dangerous eval()</strong><br>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 444,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">&#x27;remediation&#x27;: &#x27;Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process ex",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 447,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 448,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#86efac;\"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 455,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<strong>Arbitrary Code Execution / Dangerous eval()</strong><br>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 463,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">eval(userInput);</div>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 466,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 467,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#86efac;\"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 968,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<strong>Arbitrary Code Execution / Dangerous eval()</strong><br>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 976,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">const fn = new Function(code);</div>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 979,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 980,
+      "rule_id": "SEC-RCE",
+      "name": "Arbitrary Code Execution / Dangerous eval()",
+      "cwe": "CWE-95 / CWE-78",
+      "severity": "CRITICAL",
+      "snippet": "<p style=\"color:#86efac;\"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi",
+      "description": "Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).",
+      "remediation": "Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 482,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">&#x27;pattern&#x27;: re.compile(r&quot;dangerouslySetInnerHTML|innerHTML\\s*=|document\\.write\\s*\\(|res\\.send\\s*\\(\\s*[&#x27;\\&quot;`]&lt;scr",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 501,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">&lt;div dangerouslySetInnerHTML={{ __html: userBio }} /&gt;</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 520,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">document.getElementById(&#x27;bio&#x27;).innerHTML = userInput;</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 539,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">&lt;div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userBio) }} /&gt;</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 634,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">containerRef.current.innerHTML = svg;</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 710,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">document.getElementById(&#x27;root&#x27;).innerHTML = &#x27;&lt;div style=&quot;color:#94a3b8;padding:20px;&quot;&gt;Component loaded. Exp",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 729,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">tempDiv.innerHTML = html;</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 748,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">tempDiv.innerHTML = htmlContent;</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 767,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">dangerouslySetInnerHTML={{ __html: htmlContent }}</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 957,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">this.tooltipBadge.innerHTML = `</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 1033,
+      "rule_id": "SEC-XSS",
+      "name": "Cross-Site Scripting (XSS)",
+      "cwe": "CWE-79",
+      "severity": "HIGH",
+      "snippet": "<div class=\"code-box\">svgWrap.innerHTML = `</div>",
+      "description": "Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).",
+      "remediation": "Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 558,
+      "rule_id": "SEC-SECRETS",
+      "name": "Hardcoded Secret / API Token / Private Key",
+      "cwe": "CWE-798",
+      "severity": "CRITICAL",
+      "snippet": "<div class=\"code-box\">- **Database Connection URIs:** `mongodb://user:pass@host`, `postgres://...`</div>",
+      "description": "Hardcoded credentials, API keys, or private keys in source code are vulnerable to exposure in version control and leaks.",
+      "remediation": "Move secrets to environment variables (`process.env.SECRET_NAME` / `os.getenv(\"SECRET_NAME\")`) or secret management vaults."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 577,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">&#x27;description&#x27;: &#x27;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and suscepti",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 580,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 653,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">const uniqueId = `mmd-${Date.now()}-${Math.floor(Math.random() * 1000)}`;</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 656,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 672,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">progress: Math.random() // Stagger initial positions</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 675,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 786,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">const angle = Math.random() * Math.PI * 2;</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 789,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 805,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">const orbit = radius + (Math.random() - 0.5) * 30;</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 808,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 824,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">size: Math.random() * 1.5 + 0.5, // Smaller particles</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 827,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 843,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">speed: speed * (0.02 + Math.random() * 0.03),</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 846,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 862,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">const x = Math.random() * size;</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 865,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 881,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">const y = Math.random() * size;</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 884,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 900,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">const alpha = Math.random() * 0.03; // More subtle</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 903,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 919,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">ctx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 922,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 995,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">id: `th_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 998,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 1014,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">id: `find_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 1017,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 1052,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">const reqId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;</div>",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 1055,
+      "rule_id": "SEC-CRYPTO",
+      "name": "Weak Cryptographic Algorithm",
+      "cwe": "CWE-327 / CWE-328",
+      "severity": "MEDIUM",
+      "snippet": "<p style=\"color:#e2e8f0; margin-bottom:4px;\">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c",
+      "description": "Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.",
+      "remediation": "Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens."
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "line": 596,
+      "rule_id": "SEC-PROTO",
+      "name": "Prototype Pollution Vulnerability",
+      "cwe": "CWE-1321",
+      "severity": "MEDIUM",
+      "snippet": "<div class=\"code-box\">&#x27;pattern&#x27;: re.compile(r&quot;\\[\\s*[\\&quot;&#x27;]__proto__[\\&quot;&#x27;]\\s*\\]|\\.__proto__|constructor\\.prototype&quot;),</div>",
+      "description": "Direct assignment to __proto__ or object prototype can pollute global Object prototypes, causing denial of service or remote code execution.",
+      "remediation": "Use `Object.create(null)` for key-value maps, validate object keys with a deny-list for `__proto__`, or use Map."
+    }
+  ],
+  "file_details": [
+    {
+      "file": "backend/__init__.py",
+      "lines": 4,
+      "duration_ms": 0.08,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/config.py",
+      "lines": 41,
+      "duration_ms": 0.671,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/main.py",
+      "lines": 101,
+      "duration_ms": 1.099,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/routers/__init__.py",
+      "lines": 3,
+      "duration_ms": 0.03,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/routers/ai.py",
+      "lines": 440,
+      "duration_ms": 11.122,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/routers/health.py",
+      "lines": 76,
+      "duration_ms": 1.156,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/routers/sandbox.py",
+      "lines": 642,
+      "duration_ms": 16.956,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/routers/selenium.py",
+      "lines": 191,
+      "duration_ms": 5.001,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/routers/testing.py",
+      "lines": 98,
+      "duration_ms": 2.106,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/__init__.py",
+      "lines": 3,
+      "duration_ms": 0.092,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/load_test_engine.py",
+      "lines": 142,
+      "duration_ms": 2.011,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/local_ai.py",
+      "lines": 130,
+      "duration_ms": 2.341,
+      "findings_count": 1
+    },
+    {
+      "file": "backend/services/qa_agent.py",
+      "lines": 112,
+      "duration_ms": 2.554,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/repl_engine.py",
+      "lines": 420,
+      "duration_ms": 8.992,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/sandbox_engine.py",
+      "lines": 851,
+      "duration_ms": 14.512,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/secret_test_engine.py",
+      "lines": 193,
+      "duration_ms": 3.786,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/security_scanner.py",
+      "lines": 480,
+      "duration_ms": 16.718,
+      "findings_count": 12
+    },
+    {
+      "file": "backend/services/selenium_engine.py",
+      "lines": 251,
+      "duration_ms": 5.288,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/speed_test_engine.py",
+      "lines": 212,
+      "duration_ms": 3.345,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/stream_engine.py",
+      "lines": 202,
+      "duration_ms": 4.273,
+      "findings_count": 0
+    },
+    {
+      "file": "backend/services/test_runner.py",
+      "lines": 179,
+      "duration_ms": 3.384,
+      "findings_count": 0
+    },
+    {
+      "file": "eslint.config.js",
+      "lines": 29,
+      "duration_ms": 0.562,
+      "findings_count": 0
+    },
+    {
+      "file": "index.html",
+      "lines": 16,
+      "duration_ms": 0.472,
+      "findings_count": 0
+    },
+    {
+      "file": "src/App.jsx",
+      "lines": 15,
+      "duration_ms": 0.194,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/ApiClient/ApiClient.jsx",
+      "lines": 2083,
+      "duration_ms": 31.56,
+      "findings_count": 1
+    },
+    {
+      "file": "src/components/Architecture/ArchitectureCanvas.jsx",
+      "lines": 910,
+      "duration_ms": 26.353,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Architecture/ArchitecturePanel.jsx",
+      "lines": 242,
+      "duration_ms": 4.654,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Architecture/BackendApiRoutes.jsx",
+      "lines": 513,
+      "duration_ms": 8.426,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Architecture/MermaidRenderer.jsx",
+      "lines": 375,
+      "duration_ms": 5.31,
+      "findings_count": 2
+    },
+    {
+      "file": "src/components/Architecture/MongoSchemaERD.jsx",
+      "lines": 1100,
+      "duration_ms": 16.381,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Architecture/ProjectFileTree.jsx",
+      "lines": 454,
+      "duration_ms": 6.749,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Architecture/SequenceVisualizer.jsx",
+      "lines": 244,
+      "duration_ms": 5.187,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Architecture/ThreeArchitectureDiagram.jsx",
+      "lines": 840,
+      "duration_ms": 15.998,
+      "findings_count": 1
+    },
+    {
+      "file": "src/components/Architecture/ThreeExecutionFlow.jsx",
+      "lines": 855,
+      "duration_ms": 18.868,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/BottomPanel/BottomPanel.jsx",
+      "lines": 567,
+      "duration_ms": 9.838,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/BottomPanel/index.js",
+      "lines": 1,
+      "duration_ms": 0.028,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Breadcrumb/Breadcrumb.jsx",
+      "lines": 90,
+      "duration_ms": 0.958,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Breadcrumb/index.js",
+      "lines": 1,
+      "duration_ms": 0.033,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Button/Button.jsx",
+      "lines": 10,
+      "duration_ms": 0.141,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Button/index.js",
+      "lines": 1,
+      "duration_ms": 0.029,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Chat/Chat.jsx",
+      "lines": 1053,
+      "duration_ms": 15.067,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Chat/index.js",
+      "lines": 1,
+      "duration_ms": 0.063,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/CommandPalette/CommandPalette.jsx",
+      "lines": 137,
+      "duration_ms": 1.729,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/ContextMenu/ContextMenu.jsx",
+      "lines": 503,
+      "duration_ms": 6.202,
+      "findings_count": 1
+    },
+    {
+      "file": "src/components/ContextMenu/index.js",
+      "lines": 1,
+      "duration_ms": 0.027,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/DropdownMenu/DropdownMenu.jsx",
+      "lines": 95,
+      "duration_ms": 1.325,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/DropdownMenu/index.js",
+      "lines": 2,
+      "duration_ms": 0.05,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Editor/Editor.jsx",
+      "lines": 655,
+      "duration_ms": 8.194,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Editor/index.js",
+      "lines": 1,
+      "duration_ms": 0.036,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Explorer/Explorer.jsx",
+      "lines": 313,
+      "duration_ms": 3.565,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Explorer/index.js",
+      "lines": 1,
+      "duration_ms": 0.034,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Extensions/Extensions.jsx",
+      "lines": 611,
+      "duration_ms": 8.377,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Extensions/index.js",
+      "lines": 1,
+      "duration_ms": 0.054,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/LiveBrowser/LiveBrowser.jsx",
+      "lines": 245,
+      "duration_ms": 4.457,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Modal/index.js",
+      "lines": 1,
+      "duration_ms": 0.044,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Modal/Modal.jsx",
+      "lines": 60,
+      "duration_ms": 0.398,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Navbar/index.js",
+      "lines": 1,
+      "duration_ms": 0.037,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Navbar/Navbar.jsx",
+      "lines": 1433,
+      "duration_ms": 21.996,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Output/index.js",
+      "lines": 0,
+      "duration_ms": 0.007,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Output/Output.jsx",
+      "lines": 316,
+      "duration_ms": 6.148,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Preview/index.js",
+      "lines": 1,
+      "duration_ms": 0.058,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Preview/Preview.jsx",
+      "lines": 290,
+      "duration_ms": 4.589,
+      "findings_count": 1
+    },
+    {
+      "file": "src/components/Previews/CsvPreview.jsx",
+      "lines": 325,
+      "duration_ms": 5.424,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Previews/DocxPreview.jsx",
+      "lines": 232,
+      "duration_ms": 3.716,
+      "findings_count": 3
+    },
+    {
+      "file": "src/components/Previews/ImagePreview.jsx",
+      "lines": 178,
+      "duration_ms": 2.108,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Previews/index.js",
+      "lines": 7,
+      "duration_ms": 0.214,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Previews/MarkdownPreview.jsx",
+      "lines": 225,
+      "duration_ms": 3.519,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Previews/PptxPreview.jsx",
+      "lines": 358,
+      "duration_ms": 4.36,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Previews/XlsxPreview.jsx",
+      "lines": 298,
+      "duration_ms": 6.157,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Repl/Repl.jsx",
+      "lines": 443,
+      "duration_ms": 6.016,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/RunDebug/RunDebug.jsx",
+      "lines": 190,
+      "duration_ms": 3.035,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/RunDebug/SeleniumRunner.jsx",
+      "lines": 1825,
+      "duration_ms": 32.383,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Search/Search.jsx",
+      "lines": 399,
+      "duration_ms": 5.363,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Sidebar/index.js",
+      "lines": 1,
+      "duration_ms": 0.029,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Sidebar/Sidebar.jsx",
+      "lines": 598,
+      "duration_ms": 11.395,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/SourceControl/SourceControl.jsx",
+      "lines": 1468,
+      "duration_ms": 19.775,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/SplashScreen/index.js",
+      "lines": 1,
+      "duration_ms": 0.043,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/SplashScreen/SplashScreen.jsx",
+      "lines": 252,
+      "duration_ms": 4.461,
+      "findings_count": 8
+    },
+    {
+      "file": "src/components/Statusbar/index.js",
+      "lines": 1,
+      "duration_ms": 0.046,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Statusbar/Statusbar.jsx",
+      "lines": 222,
+      "duration_ms": 4.733,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Tabs/index.js",
+      "lines": 1,
+      "duration_ms": 0.03,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Tabs/Tabs.jsx",
+      "lines": 64,
+      "duration_ms": 1.089,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/TaskPicker/TaskPicker.jsx",
+      "lines": 155,
+      "duration_ms": 2.722,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Terminal/index.js",
+      "lines": 1,
+      "duration_ms": 0.066,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Terminal/Terminal.jsx",
+      "lines": 1283,
+      "duration_ms": 29.831,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/Terminal/TerminalDropdownMenu.jsx",
+      "lines": 385,
+      "duration_ms": 7.353,
+      "findings_count": 0
+    },
+    {
+      "file": "src/components/TestingSuite/TestingSuite.jsx",
+      "lines": 487,
+      "duration_ms": 10.233,
+      "findings_count": 0
+    },
+    {
+      "file": "src/context/AppContext.jsx",
+      "lines": 0,
+      "duration_ms": 0.007,
+      "findings_count": 0
+    },
+    {
+      "file": "src/context/EditorContext.jsx",
+      "lines": 1268,
+      "duration_ms": 20.445,
+      "findings_count": 0
+    },
+    {
+      "file": "src/context/FileContext.jsx",
+      "lines": 596,
+      "duration_ms": 11.322,
+      "findings_count": 0
+    },
+    {
+      "file": "src/context/TerminalContext.jsx",
+      "lines": 1394,
+      "duration_ms": 36.088,
+      "findings_count": 0
+    },
+    {
+      "file": "src/context/ThemeContext.jsx",
+      "lines": 88,
+      "duration_ms": 1.253,
+      "findings_count": 0
+    },
+    {
+      "file": "src/data/fileTree.js",
+      "lines": 272,
+      "duration_ms": 3.5,
+      "findings_count": 0
+    },
+    {
+      "file": "src/data/helpTopics.jsx",
+      "lines": 392,
+      "duration_ms": 8.101,
+      "findings_count": 0
+    },
+    {
+      "file": "src/data/menu.jsx",
+      "lines": 752,
+      "duration_ms": 8.124,
+      "findings_count": 0
+    },
+    {
+      "file": "src/hooks/useEditor.js",
+      "lines": 9,
+      "duration_ms": 0.189,
+      "findings_count": 0
+    },
+    {
+      "file": "src/hooks/useFile.js",
+      "lines": 6,
+      "duration_ms": 0.15,
+      "findings_count": 0
+    },
+    {
+      "file": "src/hooks/useLocalStorage.js",
+      "lines": 0,
+      "duration_ms": 0.004,
+      "findings_count": 0
+    },
+    {
+      "file": "src/hooks/useTerminal.js",
+      "lines": 9,
+      "duration_ms": 0.127,
+      "findings_count": 0
+    },
+    {
+      "file": "src/hooks/useTheme.js",
+      "lines": 17,
+      "duration_ms": 0.242,
+      "findings_count": 0
+    },
+    {
+      "file": "src/layouts/index.js",
+      "lines": 1,
+      "duration_ms": 0.041,
+      "findings_count": 0
+    },
+    {
+      "file": "src/layouts/MainLayouts.jsx",
+      "lines": 263,
+      "duration_ms": 7.252,
+      "findings_count": 0
+    },
+    {
+      "file": "src/main.jsx",
+      "lines": 28,
+      "duration_ms": 0.473,
+      "findings_count": 0
+    },
+    {
+      "file": "src/pages/AboutPage/AboutPage.jsx",
+      "lines": 0,
+      "duration_ms": 0.006,
+      "findings_count": 0
+    },
+    {
+      "file": "src/pages/AboutPage/index.js",
+      "lines": 0,
+      "duration_ms": 0.004,
+      "findings_count": 0
+    },
+    {
+      "file": "src/pages/HomePage/HomePage.jsx",
+      "lines": 0,
+      "duration_ms": 0.004,
+      "findings_count": 0
+    },
+    {
+      "file": "src/pages/HomePage/index.js",
+      "lines": 0,
+      "duration_ms": 0.004,
+      "findings_count": 0
+    },
+    {
+      "file": "src/pages/NotFoundPage/index.js",
+      "lines": 0,
+      "duration_ms": 0.003,
+      "findings_count": 0
+    },
+    {
+      "file": "src/pages/NotFoundPage/NotFoundPage.jsx",
+      "lines": 0,
+      "duration_ms": 0.003,
+      "findings_count": 0
+    },
+    {
+      "file": "src/pages/SettingsPage/index.js",
+      "lines": 0,
+      "duration_ms": 0.002,
+      "findings_count": 0
+    },
+    {
+      "file": "src/pages/SettingsPage/SettingsPage.jsx",
+      "lines": 471,
+      "duration_ms": 13.881,
+      "findings_count": 0
+    },
+    {
+      "file": "src/routes/Routes.jsx",
+      "lines": 0,
+      "duration_ms": 0.006,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/aiService.js",
+      "lines": 174,
+      "duration_ms": 3.77,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/api.js",
+      "lines": 0,
+      "duration_ms": 0.009,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/architectureScanner.js",
+      "lines": 985,
+      "duration_ms": 19.541,
+      "findings_count": 1
+    },
+    {
+      "file": "src/services/authService.js",
+      "lines": 0,
+      "duration_ms": 0.003,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/backendRouteParser.js",
+      "lines": 193,
+      "duration_ms": 2.395,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/cypherCliService.js",
+      "lines": 423,
+      "duration_ms": 8.104,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/editorService.js",
+      "lines": 41,
+      "duration_ms": 0.441,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/elementInspector.js",
+      "lines": 629,
+      "duration_ms": 8.6,
+      "findings_count": 1
+    },
+    {
+      "file": "src/services/fileService.js",
+      "lines": 182,
+      "duration_ms": 2.009,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/gitService.js",
+      "lines": 456,
+      "duration_ms": 4.149,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/lifecycleTracer.js",
+      "lines": 214,
+      "duration_ms": 3.153,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/mermaidGenerator.js",
+      "lines": 306,
+      "duration_ms": 8.121,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/mongoSchemaParser.js",
+      "lines": 588,
+      "duration_ms": 10.523,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/sandboxService.js",
+      "lines": 501,
+      "duration_ms": 6.433,
+      "findings_count": 1
+    },
+    {
+      "file": "src/services/seleniumAgent.js",
+      "lines": 623,
+      "duration_ms": 16.528,
+      "findings_count": 2
+    },
+    {
+      "file": "src/services/seleniumEngine.js",
+      "lines": 1677,
+      "duration_ms": 23.015,
+      "findings_count": 2
+    },
+    {
+      "file": "src/services/testingService.js",
+      "lines": 54,
+      "duration_ms": 0.815,
+      "findings_count": 0
+    },
+    {
+      "file": "src/services/workspacePersistence.js",
+      "lines": 231,
+      "duration_ms": 2.097,
+      "findings_count": 0
+    },
+    {
+      "file": "src/utils/codeDiagnostics.js",
+      "lines": 241,
+      "duration_ms": 5.26,
+      "findings_count": 0
+    },
+    {
+      "file": "src/utils/constants.js",
+      "lines": 0,
+      "duration_ms": 0.005,
+      "findings_count": 0
+    },
+    {
+      "file": "src/utils/emmetHelper.js",
+      "lines": 154,
+      "duration_ms": 2.353,
+      "findings_count": 0
+    },
+    {
+      "file": "src/utils/fileIcons.jsx",
+      "lines": 271,
+      "duration_ms": 3.109,
+      "findings_count": 0
+    },
+    {
+      "file": "src/utils/formatter.js",
+      "lines": 0,
+      "duration_ms": 0.005,
+      "findings_count": 0
+    },
+    {
+      "file": "src/utils/helper.js",
+      "lines": 0,
+      "duration_ms": 0.015,
+      "findings_count": 0
+    },
+    {
+      "file": "src/utils/storage.js",
+      "lines": 0,
+      "duration_ms": 0.003,
+      "findings_count": 0
+    },
+    {
+      "file": "src/utils/validator.js",
+      "lines": 0,
+      "duration_ms": 0.003,
+      "findings_count": 0
+    },
+    {
+      "file": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
+      "lines": 1727,
+      "duration_ms": 41.829,
+      "findings_count": 69
+    },
+    {
+      "file": "tests/static_analysis/run_analysis.py",
+      "lines": 1439,
+      "duration_ms": 29.281,
+      "findings_count": 0
+    },
+    {
+      "file": "vite.config.js",
+      "lines": 18,
+      "duration_ms": 0.131,
+      "findings_count": 0
+    }
+  ]
+}
