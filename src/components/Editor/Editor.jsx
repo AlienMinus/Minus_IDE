@@ -539,11 +539,36 @@ function Editor() {
     );
   }
 
-  // Performance & Security Testing Studio (Load Test, Speed Test, Secret Test)
+  // Individual Testing Suite Tabs: Load Test, Speed Test, Secret Test
+  if (activeFile.type === "load-test" || activeFile.isLoadTest) {
+    return (
+      <div className="editor-container">
+        <TestingSuite mode="load" />
+      </div>
+    );
+  }
+
+  if (activeFile.type === "speed-test" || activeFile.isSpeedTest) {
+    return (
+      <div className="editor-container">
+        <TestingSuite mode="speed" />
+      </div>
+    );
+  }
+
+  if (activeFile.type === "secret-test" || activeFile.isSecretTest) {
+    return (
+      <div className="editor-container">
+        <TestingSuite mode="secret" />
+      </div>
+    );
+  }
+
+  // Unified Testing Studio fallback
   if (activeFile.type === "testing-studio" || activeFile.isTestingStudio) {
     return (
       <div className="editor-container">
-        <TestingSuite initialTab={activeFile.initialTab || "load"} />
+        <TestingSuite mode={activeFile.initialTab || "all"} />
       </div>
     );
   }

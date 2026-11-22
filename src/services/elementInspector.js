@@ -4,6 +4,7 @@
  * over the builtin previewer iframe for the Agentic Tester & Selenium QA Studio.
  */
 
+import DOMPurify from "dompurify";
 import { getActivePreviewerIframe, getSafeIframeDocument } from "./seleniumEngine.js";
 
 /**
@@ -582,12 +583,12 @@ export class ChromiumElementInspector {
     const { role, name } = getAriaRoleAndName(el);
     const a11yText = role ? `<div style="font-size: 10px; color: #94a3b8; margin-top: 2px;">role: <span style="color:#00f2fe;">${role}</span>${name ? ` | "${name.slice(0, 24)}"` : ""}</div>` : "";
 
-    this.tooltipBadge.innerHTML = `
+    this.tooltipBadge.innerHTML = DOMPurify.sanitize(`
       <div style="display: flex; align-items: center; gap: 2px;">
         <span style="color:#c084fc; font-weight: bold;">${tag}</span>${id}${primaryClass}${dimText}
       </div>
       ${a11yText}
-    `;
+    `);
     this.tooltipBadge.style.display = "block";
 
     // Position tooltip: above element if space allows, otherwise below

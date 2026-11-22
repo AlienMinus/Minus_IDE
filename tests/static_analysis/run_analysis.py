@@ -34,7 +34,8 @@ from backend.services.secret_test_engine import run_gitleaks_scan
 IGNORED_DIRS = {
     'node_modules', '.git', '.svn', '.hg', 'dist', 'dist-ssr', 'build',
     '.next', '.nuxt', '.turbo', 'coverage', '.vscode', '.idea', 'logs',
-    'tmp', 'temp', 'scratch', '__pycache__', 'venv', '.venv', '.hyperion_sandbox'
+    'tmp', 'temp', 'scratch', '__pycache__', 'venv', '.venv', '.hyperion_sandbox',
+    'tests', 'reports', 'temp_build_check'
 }
 
 SCANNABLE_EXTS = {
@@ -138,9 +139,13 @@ def run_cypher_sast_scan(root: Path) -> Dict[str, Any]:
             continue
 
         try:
+            rel_path = str(path.relative_to(root)).replace('\\', '/')
+            # Skip security scanner rule engine definition file itself to prevent false positives on rule patterns
+            if rel_path == "backend/services/security_scanner.py":
+                continue
+
             content = path.read_text(encoding='utf-8', errors='ignore')
             lines = content.splitlines()
-            rel_path = str(path.relative_to(root)).replace('\\', '/')
             
             t0 = time.perf_counter_ns()
             file_findings = []

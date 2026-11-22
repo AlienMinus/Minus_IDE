@@ -103,9 +103,14 @@ export class HyperionQAAgent {
     globalAgentCursor.hide();
   }
 
+  _safeId(prefix) {
+    const rand = typeof crypto !== "undefined" && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36) : Date.now().toString(36);
+    return `${prefix}_${Date.now()}_${rand}`;
+  }
+
   logThought(thought, type = "info") {
     const entry = {
-      id: `th_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      id: this._safeId("th"),
       timestamp: new Date().toLocaleTimeString(),
       text: thought,
       type // "info", "hypothesis", "action", "success", "warning", "error"
@@ -116,7 +121,7 @@ export class HyperionQAAgent {
 
   addFinding(title, description, severity = "info", recommendation = "") {
     const finding = {
-      id: `find_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      id: this._safeId("find"),
       title,
       description,
       severity, // "critical", "warning", "info", "passed"

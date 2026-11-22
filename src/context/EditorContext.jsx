@@ -780,28 +780,74 @@ export function EditorProvider({ children }) {
     });
   }
 
-  function openTestingStudioTab(initialTab = "load") {
-    const tabId = "hyperion-testing-studio";
-    const title = initialTab === "speed" ? "Speed Test (Lighthouse)" : (initialTab === "secret" ? "Secret Test (Gitleaks)" : "Load Test (Autocannon)");
-
+  function openLoadTestTab() {
+    const tabId = "hyperion-load-test";
     setOpenFiles((prev) => {
       const existing = prev.find((f) => f.id === tabId);
       if (existing) {
-        const updated = { ...existing, initialTab, name: title };
-        setActiveFile(updated);
-        return prev.map(f => f.id === tabId ? updated : f);
+        setActiveFile(existing);
+        return prev;
       }
       const newTab = {
         id: tabId,
-        name: title,
-        type: "testing-studio",
+        name: "Load Test (Autocannon)",
+        type: "load-test",
         isPreview: true,
-        isTestingStudio: true,
-        initialTab
+        isLoadTest: true
       };
       setActiveFile(newTab);
       return [...prev, newTab];
     });
+  }
+
+  function openSpeedTestTab() {
+    const tabId = "hyperion-speed-test";
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name: "Speed Test (Lighthouse)",
+        type: "speed-test",
+        isPreview: true,
+        isSpeedTest: true
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
+  function openSecretTestTab() {
+    const tabId = "hyperion-secret-test";
+    setOpenFiles((prev) => {
+      const existing = prev.find((f) => f.id === tabId);
+      if (existing) {
+        setActiveFile(existing);
+        return prev;
+      }
+      const newTab = {
+        id: tabId,
+        name: "Secret Test (Gitleaks)",
+        type: "secret-test",
+        isPreview: true,
+        isSecretTest: true
+      };
+      setActiveFile(newTab);
+      return [...prev, newTab];
+    });
+  }
+
+  function openTestingStudioTab(initialTab = "load") {
+    if (initialTab === "speed") {
+      openSpeedTestTab();
+    } else if (initialTab === "secret") {
+      openSecretTestTab();
+    } else {
+      openLoadTestTab();
+    }
   }
 
   function openSettingsTab() {
@@ -1224,6 +1270,9 @@ export function EditorProvider({ children }) {
         openBackendRoutesTab,
         openSeleniumStudioTab,
         openTestingStudioTab,
+        openLoadTestTab,
+        openSpeedTestTab,
+        openSecretTestTab,
         openSettingsTab,
         scanWorkspaceFiles,
         isScanningWorkspace,

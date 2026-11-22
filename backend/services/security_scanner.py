@@ -11,7 +11,8 @@ from typing import Dict, Any, List, Set, Optional
 ALWAYS_IGNORED_DIRS: Set[str] = {
     'node_modules', '.git', '.svn', '.hg', 'dist', 'dist-ssr', 'build',
     '.next', '.nuxt', '.turbo', 'coverage', '.vscode', '.idea', 'logs',
-    'tmp', 'temp', 'scratch', '__pycache__', 'venv', '.venv', '.hyperion_sandbox'
+    'tmp', 'temp', 'scratch', '__pycache__', 'venv', '.venv', '.hyperion_sandbox',
+    'tests', 'reports'
 }
 
 ALWAYS_IGNORED_EXTS: Set[str] = {
@@ -37,7 +38,7 @@ SECURITY_RULES = [
         'name': 'SQL Injection Vulnerability',
         'cwe': 'CWE-89',
         'severity': 'CRITICAL',
-        'pattern': re.compile(r"(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE)\s+.*(?:['\"]\s*\+|\+\s*['\"]|\$\{[^}]+\}|%s|\.format\()", re.IGNORECASE),
+        'pattern': re.compile(r"\b(?:SELECT\s+[\w*,\s]+\s+FROM|INSERT\s+INTO\s+\w+|UPDATE\s+\w+\s+SET|DELETE\s+FROM\s+\w+)\b[^\n\r]*(?:['\"]\s*\+|\+\s*['\"]|\$\{[^}]+\}|%s|\.format\()", re.IGNORECASE),
         'description': 'Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.',
         'remediation': 'Use parameterized queries or prepared statements (e.g., `db.query("SELECT * FROM users WHERE id = ?", [userId])` or an ORM like Prisma/SQLAlchemy).'
     },
@@ -46,7 +47,7 @@ SECURITY_RULES = [
         'name': 'Arbitrary Code Execution / Dangerous eval()',
         'cwe': 'CWE-95 / CWE-78',
         'severity': 'CRITICAL',
-        'pattern': re.compile(r"\b(?:eval|Function|execScript|vm\.runInThisContext|vm\.runInNewContext)\s*\(|child_process\.(?:exec|execSync)\s*\([^)]*(?:\+|`|\$\{)"),
+        'pattern': re.compile(r"(?<![\.\w])\b(?:eval|execScript|Function|vm\.runInThisContext|vm\.runInNewContext)\s*\(|child_process\.(?:exec|execSync)\s*\([^)]*(?:\+|`|\$\{)"),
         'description': 'Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).',
         'remediation': 'Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.'
     },

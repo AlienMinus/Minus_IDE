@@ -9,7 +9,9 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, Any, List, Set
+from typing import Dict, Any, List, Set, Optional
+
+from backend.config import PROJECT_ROOT
 
 GITLEAKS_RULES = [
     {
@@ -104,10 +106,12 @@ def mask_secret(secret: str) -> str:
     return secret[:4] + "*" * (len(secret) - 6) + secret[-2:]
 
 def run_gitleaks_scan(
-    workspace_path: str,
+    workspace_path: Optional[str] = None,
     scan_git_history: bool = False
 ) -> Dict[str, Any]:
     """Execute secret detection using gitleaks CLI or native Gitleaks-compatible scanner."""
+    if not workspace_path:
+        workspace_path = str(PROJECT_ROOT)
     root = Path(workspace_path).resolve()
 
     # 1. Try native gitleaks CLI if installed

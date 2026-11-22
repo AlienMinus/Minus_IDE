@@ -1,5 +1,6 @@
 // src/components/Architecture/MermaidRenderer.jsx
 import { useEffect, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 import "./MermaidRenderer.css";
 import {
   FaSearchPlus,
@@ -107,12 +108,18 @@ export default function MermaidRenderer({ code, title = "Diagram", onSwitchTo3D 
           }
         });
 
-        // 3. Render SVG
-        const uniqueId = `mmd-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        // 3. Render SVG safely
+        const randBuf = new Uint32Array(1);
+        if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+          crypto.getRandomValues(randBuf);
+        } else {
+          randBuf[0] = Math.floor(Date.now() % 100000);
+        }
+        const uniqueId = `mmd-${Date.now()}-${randBuf[0].toString(36)}`;
         const { svg } = await window.mermaid.render(uniqueId, code);
 
         if (!isCancelled && containerRef.current) {
-          containerRef.current.innerHTML = svg;
+          containerRef.current.innerHTML = DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } });
           const svgEl = containerRef.current.querySelector("svg");
           if (svgEl) {
             let natW = 1000;

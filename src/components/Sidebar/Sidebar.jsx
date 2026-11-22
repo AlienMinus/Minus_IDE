@@ -23,7 +23,10 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
         openTaskPicker,
         openView,
         openApiClientTab,
-        openTestingStudioTab
+        openTestingStudioTab,
+        openLoadTestTab,
+        openSpeedTestTab,
+        openSecretTestTab
     } = useEditor();
 
     const { themes, currentThemeId, setTheme } = useTheme();
@@ -255,11 +258,11 @@ function Sidebar({ active = "explorer", onSetActive = () => {} }) {
                             if (item.id === "api-client") {
                                 openApiClientTab?.();
                             } else if (item.id === "load-test") {
-                                openTestingStudioTab?.("load");
+                                openLoadTestTab ? openLoadTestTab() : openTestingStudioTab?.("load");
                             } else if (item.id === "speed-test") {
-                                openTestingStudioTab?.("speed");
+                                openSpeedTestTab ? openSpeedTestTab() : openTestingStudioTab?.("speed");
                             } else if (item.id === "secret-test") {
-                                openTestingStudioTab?.("secret");
+                                openSecretTestTab ? openSecretTestTab() : openTestingStudioTab?.("secret");
                             } else {
                                 onSetActive(item.id);
                             }

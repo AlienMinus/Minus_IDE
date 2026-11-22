@@ -1,6 +1,8 @@
 import "./Tabs.css";
 
-import { FaTimes, FaProjectDiagram, FaDatabase, FaNetworkWired } from "react-icons/fa";
+import { FaTimes, FaProjectDiagram, FaDatabase, FaNetworkWired, FaUserSecret } from "react-icons/fa";
+import { BsFillPeopleFill } from "react-icons/bs";
+import { PiSpeedometerFill } from "react-icons/pi";
 import { GiCurledTentacle } from "react-icons/gi";
 import useEditor from "../../hooks/useEditor";
 import { getFileIcon } from "../../utils/fileIcons";
@@ -16,12 +18,21 @@ function Tabs() {
   return (
     <div className="tabs">
       {openFiles.map((tab) => {
+        const isLoadTest = tab.type === "load-test" || tab.isLoadTest;
+        const isSpeedTest = tab.type === "speed-test" || tab.isSpeedTest;
+        const isSecretTest = tab.type === "secret-test" || tab.isSecretTest;
         const isArch = tab.type === "architecture" || tab.isArchitecture;
         const isApiClient = tab.type === "api-client" || tab.isApiClient;
         const isMongo = tab.type === "mongoschema" || tab.isMongoSchema;
         const isRoutes = tab.type === "backend-routes" || tab.isBackendRoutes;
         const isPreview = tab.type === "preview" || tab.isPreview;
-        const icon = isArch ? (
+        const icon = isLoadTest ? (
+          <BsFillPeopleFill style={{ color: "var(--accent-color, #38bdf8)" }} />
+        ) : isSpeedTest ? (
+          <PiSpeedometerFill style={{ color: "#eab308" }} />
+        ) : isSecretTest ? (
+          <FaUserSecret style={{ color: "#ef4444" }} />
+        ) : isArch ? (
           <FaProjectDiagram style={{ color: "#58a6ff" }} />
         ) : isApiClient ? (
           <GiCurledTentacle style={{ color: "#38bdf8" }} />

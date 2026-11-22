@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import mammoth from "mammoth";
+import DOMPurify from "dompurify";
 import JSZip from "jszip";
 import {
   FaFileWord,
@@ -95,15 +96,16 @@ export function DocxPreview({ file }) {
 
         if (isCancelled) return;
 
-        // Compute word/char stats
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = html;
-        const textOnly = tempDiv.textContent || tempDiv.innerText || "";
+        // Compute word/char stats with sanitized DOM parser
+        const sanitized = DOMPurify.sanitize(html || "");
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sanitized, "text/html");
+        const textOnly = doc.body.textContent || "";
         const words = textOnly.trim().split(/\s+/).filter(Boolean).length;
         const characters = textOnly.length;
 
         setStats({ words, characters });
-        setHtmlContent(html || "<p><em>This document is empty.</em></p>");
+        setHtmlContent(sanitized || "<p><em>This document is empty.</em></p>");
       } catch (err) {
         if (!isCancelled) {
           console.error("Error loading DOCX:", err);
@@ -126,9 +128,7 @@ export function DocxPreview({ file }) {
   }, [file]);
 
   const handleCopy = () => {
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = htmlContent;
-    const plainText = tempDiv.textContent || tempDiv.innerText || "";
+    const plainText = (htmlContent || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     navigator.clipboard.writeText(plainText).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

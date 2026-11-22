@@ -111,7 +111,10 @@ function generateReactPreviewHtml(jsxCode, fileName) {
         var root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<Target />);
       } else {
-        document.getElementById('root').innerHTML = '<div style="color:#94a3b8;padding:20px;">Component loaded. Export a React component to preview.</div>';
+        var rootEl = document.getElementById('root');
+        rootEl.textContent = 'Component loaded. Export a React component to preview.';
+        rootEl.style.color = '#94a3b8';
+        rootEl.style.padding = '20px';
       }
     } catch (e) {
       var box = document.getElementById('error-box');

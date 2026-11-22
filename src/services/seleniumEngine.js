@@ -1,4 +1,5 @@
 import { queries, waitFor, fireEvent } from "@testing-library/dom";
+import DOMPurify from "dompurify";
 
 /**
  * Hyperion Selenium Engine
@@ -131,7 +132,8 @@ export class HyperionBridgeClient {
       if (!iframe || !iframe.contentWindow) {
         return reject(new Error("Preview iframe not found"));
       }
-      const reqId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      const rand = typeof crypto !== "undefined" && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0].toString(36) : Date.now().toString(36);
+      const reqId = `req_${Date.now()}_${rand}`;
       const timeout = setTimeout(() => {
         if (this.pendingRequests.has(reqId)) {
           this.pendingRequests.delete(reqId);
@@ -237,12 +239,12 @@ export class AgenticMouseCursor {
     const svgWrap = document.createElement("div");
     svgWrap.id = "__hyperion_agent_svg__";
     svgWrap.style.transition = "transform 0.2s ease";
-    svgWrap.innerHTML = `
+    svgWrap.innerHTML = DOMPurify.sanitize(`
       <svg width="34" height="34" viewBox="0 0 24 24" fill="none" style="filter: drop-shadow(0 2px 10px rgba(0, 242, 254, 0.95));">
         <path d="M3 3l7 18 3-7 7-3L3 3z" fill="#00f2fe" stroke="#091428" stroke-width="1.8" stroke-linejoin="round"/>
         <circle cx="10" cy="14" r="2.2" fill="#ffffff" />
       </svg>
-    `;
+    `, { USE_PROFILES: { svg: true, svgFilters: true } });
 
     // Agent Action Badge
     const badge = document.createElement("div");
