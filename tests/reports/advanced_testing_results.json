@@ -27,7 +27,7 @@
         "description": "Database Connection String with Embedded Credentials",
         "severity": "CRITICAL",
         "file": "backend/services/security_scanner.py",
-        "line": 334,
+        "line": 335,
         "masked_secret": "mong******************st",
         "snippet": "- **Database Connection URIs:** `mong******************st`, `postgres://...`",
         "remediation": "Revoke secret immediately, rotate credentials, and store in environment variables or a vault."
@@ -38,7 +38,7 @@
     "engine": "hyperion-native-autocannon",
     "url": "http://localhost:8000/api/health",
     "connections": 5,
-    "duration": 7.31,
+    "duration": 7.34,
     "requests": {
       "total": 5,
       "average": 0.68,
@@ -87,7 +87,7 @@
         "description": "Image formats like WebP and AVIF often provide better compression than PNG or JPEG."
       }
     ],
-    "auditTimeSec": 1.35,
+    "auditTimeSec": 0.36,
     "note": "Executed via high-precision heuristic analyzer (Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location\n)"
   }
 }

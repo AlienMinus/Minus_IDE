@@ -1281,7 +1281,7 @@ Provide the exact corrected cURL command and payload.`;
                       className="api-btn-xs"
                       onClick={() => handleAddHeader("Authorization", "Bearer {{token}}")}
                     >
-                      + Bearer {{token}}
+                      {"+ Bearer {{token}}"}
                     </button>
                     <button
                       className="api-btn-xs"

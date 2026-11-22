@@ -72,7 +72,7 @@ export function MarkdownPreview({ file, onContentChange, onMount }) {
           const rawFile = await file.handle.getFile();
           text = await rawFile.text();
         } else if (file?.rawFile && typeof file.rawFile.text === "function") {
-          text = await rawFile.text();
+          text = await file.rawFile.text();
         }
 
         if (!isCancelled) {

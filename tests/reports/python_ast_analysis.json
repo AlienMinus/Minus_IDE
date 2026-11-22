@@ -6,7 +6,7 @@
     "total_functions": 76,
     "total_async_functions": 50,
     "total_classes": 39,
-    "total_imports": 147,
+    "total_imports": 148,
     "code_smells_count": 0
   },
   "code_smells": [],
@@ -200,8 +200,8 @@
       "functions": 2,
       "async_functions": 0,
       "classes": 0,
-      "imports": 7,
-      "loc": 193
+      "imports": 8,
+      "loc": 197
     },
     {
       "file": "backend/services/security_scanner.py",
@@ -213,7 +213,7 @@
       "async_functions": 0,
       "classes": 0,
       "imports": 4,
-      "loc": 480
+      "loc": 481
     },
     {
       "file": "backend/services/selenium_engine.py",

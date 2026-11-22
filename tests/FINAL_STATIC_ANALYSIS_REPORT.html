@@ -409,22 +409,22 @@
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">Total Files Analyzed</div>
-        <div class="kpi-value">220</div>
+        <div class="kpi-value">212</div>
         <div class="kpi-sub pine">✔ Monorepo Verified</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Lines of Code (LOC)</div>
-        <div class="kpi-value">75,475</div>
-        <div class="kpi-sub">66,688 executable code</div>
+        <div class="kpi-value">68,865</div>
+        <div class="kpi-sub">60,373 executable code</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">SAST Scan Latency</div>
-        <div class="kpi-value">52.274 <span style="font-size:16px;">ms/file</span></div>
+        <div class="kpi-value">48.612 <span style="font-size:16px;">ms/file</span></div>
         <div class="kpi-sub green">✔ Target &lt;100ms: PASSED</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Scan Throughput</div>
-        <div class="kpi-value">19.1 <span style="font-size:16px;">files/s</span></div>
+        <div class="kpi-value">20.6 <span style="font-size:16px;">files/s</span></div>
         <div class="kpi-sub green">✔ High-Speed Realtime</div>
       </div>
       <div class="kpi-card">
@@ -434,7 +434,7 @@
       </div>
       <div class="kpi-card">
         <div class="kpi-label">SAST Security Hits</div>
-        <div class="kpi-value">106</div>
+        <div class="kpi-value">10</div>
         <div class="kpi-sub gold">CWE & OWASP Mapped</div>
       </div>
     </div>
@@ -443,7 +443,7 @@
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('overview')">📊 Overview & Objectives</button>
       <button class="tab-btn" onclick="switchTab('advanced-tests')">⚡ Advanced Testing Engines</button>
-      <button class="tab-btn" onclick="switchTab('security')">🛡️ Cypher SAST Audit (106)</button>
+      <button class="tab-btn" onclick="switchTab('security')">🛡️ Cypher SAST Audit (10)</button>
       <button class="tab-btn" onclick="switchTab('codebase')">📁 Codebase SLOC</button>
       <button class="tab-btn" onclick="switchTab('python')">🐍 Python Backend AST</button>
       <button class="tab-btn" onclick="switchTab('eslint')">⚛️ Frontend ESLint 9</button>
@@ -472,13 +472,13 @@
               <tr>
                 <td><strong>Analysis Latency</strong></td>
                 <td>&lt; 1.0 second per file scan</td>
-                <td><strong style="color:var(--accent-green);">52.274 ms/file</strong> (7370.7 ms total for 141 files)</td>
+                <td><strong style="color:var(--accent-green);">48.612 ms/file</strong> (6708.49 ms total for 138 files)</td>
                 <td><span class="badge badge-pass">PASSED (EXCEEDED)</span></td>
               </tr>
               <tr>
                 <td><strong>Scan Throughput</strong></td>
                 <td>High-speed IDE continuous scan (&gt;50 files/s)</td>
-                <td><strong style="color:var(--accent-green);">19.1 files/second</strong></td>
+                <td><strong style="color:var(--accent-green);">20.6 files/second</strong></td>
                 <td><span class="badge badge-pass">PASSED</span></td>
               </tr>
               <tr>
@@ -582,10 +582,10 @@
 
         <div class="controls-row">
           <input type="text" id="sastSearch" class="search-input" placeholder="Search by file name, rule name, snippet, or CWE..." oninput="filterSecurityTable()">
-          <button class="filter-btn active" onclick="filterSeverity('ALL')">All (106)</button>
-          <button class="filter-btn" onclick="filterSeverity('CRITICAL')">Critical (40)</button>
-          <button class="filter-btn" onclick="filterSeverity('HIGH')">High (22)</button>
-          <button class="filter-btn" onclick="filterSeverity('MEDIUM')">Medium (44)</button>
+          <button class="filter-btn active" onclick="filterSeverity('ALL')">All (10)</button>
+          <button class="filter-btn" onclick="filterSeverity('CRITICAL')">Critical (0)</button>
+          <button class="filter-btn" onclick="filterSeverity('HIGH')">High (1)</button>
+          <button class="filter-btn" onclick="filterSeverity('MEDIUM')">Medium (9)</button>
         </div>
 
         <div class="table-responsive">
@@ -600,310 +600,6 @@
               </tr>
             </thead>
             <tbody id="sastTableBody">
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/local_ai.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 81</span>
-                </td>
-                <td>
-                  <div class="code-box">mod.eval()</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>SQL Injection Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-89</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 379</span>
-                </td>
-                <td>
-                  <div class="code-box">const query = `SELECT * FROM users WHERE email = &#x27;${req.body.email}&#x27; AND password = &#x27;${req.body.password}&#x27;`;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use parameterized queries or prepared statements (e.g., `db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [userId])` or an ORM like Prisma/SQLAlchemy).</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 46</span>
-                </td>
-                <td>
-                  <div class="code-box">&#x27;name&#x27;: &#x27;Arbitrary Code Execution / Dangerous eval()&#x27;,</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 50</span>
-                </td>
-                <td>
-                  <div class="code-box">&#x27;description&#x27;: &#x27;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).&#x27;,</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 51</span>
-                </td>
-                <td>
-                  <div class="code-box">&#x27;remediation&#x27;: &#x27;Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.&#x27;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 427</span>
-                </td>
-                <td>
-                  <div class="code-box">eval(userInput);</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 67</span>
-                </td>
-                <td>
-                  <div class="code-box">&#x27;pattern&#x27;: re.compile(r&quot;dangerouslySetInnerHTML|innerHTML\s*=|document\.write\s*\(|res\.send\s*\(\s*[&#x27;\&quot;`]&lt;script&quot;, re.IGNORECASE),</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 403</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div dangerouslySetInnerHTML={{ __html: userBio }} /&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 406</span>
-                </td>
-                <td>
-                  <div class="code-box">document.getElementById(&#x27;bio&#x27;).innerHTML = userInput;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 416</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userBio) }} /&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Hardcoded Secret / API Token / Private Key</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-798</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 334</span>
-                </td>
-                <td>
-                  <div class="code-box">- **Database Connection URIs:** `mongodb://user:pass@host`, `postgres://...`</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Hardcoded credentials, API keys, or private keys in source code are vulnerable to exposure in version control and leaks.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Move secrets to environment variables (`process.env.SECRET_NAME` / `os.getenv(&quot;SECRET_NAME&quot;)`) or secret management vaults.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 91</span>
-                </td>
-                <td>
-                  <div class="code-box">&#x27;description&#x27;: &#x27;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.&#x27;,</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Prototype Pollution Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-1321</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">backend/services/security_scanner.py</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 99</span>
-                </td>
-                <td>
-                  <div class="code-box">&#x27;pattern&#x27;: re.compile(r&quot;\[\s*[\&quot;&#x27;]__proto__[\&quot;&#x27;]\s*\]|\.__proto__|constructor\.prototype&quot;),</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct assignment to __proto__ or object prototype can pollute global Object prototypes, causing denial of service or remote code execution.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use `Object.create(null)` for key-value maps, validate object keys with a deny-list for `__proto__`, or use Map.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>SQL Injection Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-89</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/components/ApiClient/ApiClient.jsx</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 1116</span>
-                </td>
-                <td>
-                  <div class="code-box">className={`api-method-select method-${method.toLowerCase()}`}</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use parameterized queries or prepared statements (e.g., `db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [userId])` or an ORM like Prisma/SQLAlchemy).</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/components/Architecture/MermaidRenderer.jsx</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 115</span>
-                </td>
-                <td>
-                  <div class="code-box">containerRef.current.innerHTML = svg;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/components/Architecture/MermaidRenderer.jsx</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 111</span>
-                </td>
-                <td>
-                  <div class="code-box">const uniqueId = `mmd-${Date.now()}-${Math.floor(Math.random() * 1000)}`;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
 
               <tr data-severity="MEDIUM">
                 <td><span class="badge badge-medium">MEDIUM</span></td>
@@ -921,82 +617,6 @@
                 <td style="font-size:12px;">
                   <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
                   <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>SQL Injection Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-89</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/components/ContextMenu/ContextMenu.jsx</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 222</span>
-                </td>
-                <td>
-                  <div class="code-box">const confirmed = window.confirm(`Are you sure you want to delete &#x27;${file.name}&#x27;?`);</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use parameterized queries or prepared statements (e.g., `db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [userId])` or an ORM like Prisma/SQLAlchemy).</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/components/Preview/Preview.jsx</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 114</span>
-                </td>
-                <td>
-                  <div class="code-box">document.getElementById(&#x27;root&#x27;).innerHTML = &#x27;&lt;div style=&quot;color:#94a3b8;padding:20px;&quot;&gt;Component loaded. Export a React component to preview.&lt;/div&gt;&#x27;;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/components/Previews/DocxPreview.jsx</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 100</span>
-                </td>
-                <td>
-                  <div class="code-box">tempDiv.innerHTML = html;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/components/Previews/DocxPreview.jsx</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 130</span>
-                </td>
-                <td>
-                  <div class="code-box">tempDiv.innerHTML = htmlContent;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
                 </td>
               </tr>
 
@@ -1171,1450 +791,6 @@
                 </td>
               </tr>
 
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>SQL Injection Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-89</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/services/architectureScanner.js</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 539</span>
-                </td>
-                <td>
-                  <div class="code-box">value: `from ${source}`</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use parameterized queries or prepared statements (e.g., `db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [userId])` or an ORM like Prisma/SQLAlchemy).</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/services/elementInspector.js</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 585</span>
-                </td>
-                <td>
-                  <div class="code-box">this.tooltipBadge.innerHTML = `</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/services/sandboxService.js</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 296</span>
-                </td>
-                <td>
-                  <div class="code-box">const fn = new Function(code);</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/services/seleniumAgent.js</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 108</span>
-                </td>
-                <td>
-                  <div class="code-box">id: `th_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/services/seleniumAgent.js</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 119</span>
-                </td>
-                <td>
-                  <div class="code-box">id: `find_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/services/seleniumEngine.js</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 240</span>
-                </td>
-                <td>
-                  <div class="code-box">svgWrap.innerHTML = `</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">src/services/seleniumEngine.js</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 134</span>
-                </td>
-                <td>
-                  <div class="code-box">const reqId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>SQL Injection Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-89</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 387</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const query = `SELECT * FROM users WHERE email = &amp;#x27;${req.body.email}&amp;#x27; AND password = &amp;#x27;${req.body.password}&amp;#x27;`;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use parameterized queries or prepared statements (e.g., `db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [userId])` or an ORM like Prisma/SQLAlchemy).</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>SQL Injection Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-89</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 615</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;className={`api-method-select method-${method.toLowerCase()}`}&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use parameterized queries or prepared statements (e.g., `db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [userId])` or an ORM like Prisma/SQLAlchemy).</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>SQL Injection Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-89</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 691</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const confirmed = window.confirm(`Are you sure you want to delete &amp;#x27;${file.name}&amp;#x27;?`);&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use parameterized queries or prepared statements (e.g., `db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [userId])` or an ORM like Prisma/SQLAlchemy).</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>SQL Injection Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-89</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 938</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;value: `from ${source}`&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Dynamic SQL query constructed via string concatenation or interpolation allows attackers to execute arbitrary SQL commands.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use parameterized queries or prepared statements (e.g., `db.query(&quot;SELECT * FROM users WHERE id = ?&quot;, [userId])` or an ORM like Prisma/SQLAlchemy).</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 360</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;strong&gt;Arbitrary Code Execution / Dangerous eval()&lt;/strong&gt;&lt;br&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 368</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;mod.eval()&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 371</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).&lt;/p&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 372</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#86efac;&quot;&gt;&lt;strong&gt;Fix:&lt;/strong&gt; Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 398</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;strong&gt;Arbitrary Code Execution / Dangerous eval()&lt;/strong&gt;&lt;br&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 406</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;&amp;#x27;name&amp;#x27;: &amp;#x27;Arbitrary Code Execution / Dangerous eval()&amp;#x27;,&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 409</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).&lt;/p&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 410</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#86efac;&quot;&gt;&lt;strong&gt;Fix:&lt;/strong&gt; Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 417</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;strong&gt;Arbitrary Code Execution / Dangerous eval()&lt;/strong&gt;&lt;br&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 425</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;&amp;#x27;description&amp;#x27;: &amp;#x27;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RC</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 428</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).&lt;/p&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 429</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#86efac;&quot;&gt;&lt;strong&gt;Fix:&lt;/strong&gt; Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 436</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;strong&gt;Arbitrary Code Execution / Dangerous eval()&lt;/strong&gt;&lt;br&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 444</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;&amp;#x27;remediation&amp;#x27;: &amp;#x27;Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process ex</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 447</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).&lt;/p&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 448</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#86efac;&quot;&gt;&lt;strong&gt;Fix:&lt;/strong&gt; Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 455</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;strong&gt;Arbitrary Code Execution / Dangerous eval()&lt;/strong&gt;&lt;br&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 463</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;eval(userInput);&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 466</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).&lt;/p&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 467</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#86efac;&quot;&gt;&lt;strong&gt;Fix:&lt;/strong&gt; Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 968</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;strong&gt;Arbitrary Code Execution / Dangerous eval()&lt;/strong&gt;&lt;br&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 976</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const fn = new Function(code);&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 979</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).&lt;/p&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Arbitrary Code Execution / Dangerous eval()</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-95 / CWE-78</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 980</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#86efac;&quot;&gt;&lt;strong&gt;Fix:&lt;/strong&gt; Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process executi</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of eval() or dynamic execution functions with external input allows arbitrary Remote Code Execution (RCE).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Eliminate eval() or shell execution. Use safe JSON parsing (`JSON.parse` / `json.loads`) or safe process execution with argument lists.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 482</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;&amp;#x27;pattern&amp;#x27;: re.compile(r&amp;quot;dangerouslySetInnerHTML|innerHTML\s*=|document\.write\s*\(|res\.send\s*\(\s*[&amp;#x27;\&amp;quot;`]&amp;lt;scr</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 501</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;&amp;lt;div dangerouslySetInnerHTML={{ __html: userBio }} /&amp;gt;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 520</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;document.getElementById(&amp;#x27;bio&amp;#x27;).innerHTML = userInput;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 539</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;&amp;lt;div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userBio) }} /&amp;gt;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 634</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;containerRef.current.innerHTML = svg;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 710</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;document.getElementById(&amp;#x27;root&amp;#x27;).innerHTML = &amp;#x27;&amp;lt;div style=&amp;quot;color:#94a3b8;padding:20px;&amp;quot;&amp;gt;Component loaded. Exp</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 729</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;tempDiv.innerHTML = html;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 748</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;tempDiv.innerHTML = htmlContent;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 767</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;dangerouslySetInnerHTML={{ __html: htmlContent }}&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 957</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;this.tooltipBadge.innerHTML = `&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="HIGH">
-                <td><span class="badge badge-high">HIGH</span></td>
-                <td>
-                  <strong>Cross-Site Scripting (XSS)</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-79</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 1033</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;svgWrap.innerHTML = `&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="CRITICAL">
-                <td><span class="badge badge-critical">CRITICAL</span></td>
-                <td>
-                  <strong>Hardcoded Secret / API Token / Private Key</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-798</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 558</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;- **Database Connection URIs:** `mongodb://user:pass@host`, `postgres://...`&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Hardcoded credentials, API keys, or private keys in source code are vulnerable to exposure in version control and leaks.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Move secrets to environment variables (`process.env.SECRET_NAME` / `os.getenv(&quot;SECRET_NAME&quot;)`) or secret management vaults.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 577</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;&amp;#x27;description&amp;#x27;: &amp;#x27;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and suscepti</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 580</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 653</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const uniqueId = `mmd-${Date.now()}-${Math.floor(Math.random() * 1000)}`;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 656</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 672</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;progress: Math.random() // Stagger initial positions&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 675</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 786</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const angle = Math.random() * Math.PI * 2;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 789</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 805</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const orbit = radius + (Math.random() - 0.5) * 30;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 808</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 824</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;size: Math.random() * 1.5 + 0.5, // Smaller particles&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 827</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 843</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;speed: speed * (0.02 + Math.random() * 0.03),&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 846</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 862</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const x = Math.random() * size;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 865</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 881</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const y = Math.random() * size;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 884</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 900</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const alpha = Math.random() * 0.03; // More subtle&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 903</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 919</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;ctx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 922</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 995</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;id: `th_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 998</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 1014</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;id: `find_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 1017</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 1052</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;const reqId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Weak Cryptographic Algorithm</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-327 / CWE-328</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 1055</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;p style=&quot;color:#e2e8f0; margin-bottom:4px;&quot;&gt;Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to c</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.</p>
-                </td>
-              </tr>
-
-              <tr data-severity="MEDIUM">
-                <td><span class="badge badge-medium">MEDIUM</span></td>
-                <td>
-                  <strong>Prototype Pollution Vulnerability</strong><br>
-                  <span style="color:var(--text-pine); font-size:11px; font-weight:700;">CWE-1321</span>
-                </td>
-                <td>
-                  <span style="font-size:12px; font-weight:600;">tests/FINAL_STATIC_ANALYSIS_REPORT.html</span><br>
-                  <span style="color:var(--text-muted); font-size:11px;">Line 596</span>
-                </td>
-                <td>
-                  <div class="code-box">&lt;div class=&quot;code-box&quot;&gt;&amp;#x27;pattern&amp;#x27;: re.compile(r&amp;quot;\[\s*[\&amp;quot;&amp;#x27;]__proto__[\&amp;quot;&amp;#x27;]\s*\]|\.__proto__|constructor\.prototype&amp;quot;),&lt;/div&gt;</div>
-                </td>
-                <td style="font-size:12px;">
-                  <p style="margin-bottom:4px;">Direct assignment to __proto__ or object prototype can pollute global Object prototypes, causing denial of service or remote code execution.</p>
-                  <p style="color:var(--accent-green); font-weight:600;"><strong>Fix:</strong> Use `Object.create(null)` for key-value maps, validate object keys with a deny-list for `__proto__`, or use Map.</p>
-                </td>
-              </tr>
-
             </tbody>
           </table>
         </div>
@@ -2649,17 +825,17 @@
               <tr>
                 <td><strong style="color:var(--text-pine);">.jsx</strong></td>
                 <td>60</td>
-                <td>28,919</td>
-                <td><strong>25,839</strong></td>
-                <td>576</td>
-                <td>2,504</td>
-                <td>1014.9 KB</td>
+                <td>29,063</td>
+                <td><strong>25,973</strong></td>
+                <td>579</td>
+                <td>2,511</td>
+                <td>1020.6 KB</td>
                 <td>
                   <div style="display:flex; align-items:center; gap:8px;">
                     <div class="progress-bar-bg" style="flex-grow:1;">
-                      <div class="progress-bar-fill" style="width: 38.7%;"></div>
+                      <div class="progress-bar-fill" style="width: 43.0%;"></div>
                     </div>
-                    <span style="font-size:11px; min-width:35px; font-weight:700;">38.7%</span>
+                    <span style="font-size:11px; min-width:35px; font-weight:700;">43.0%</span>
                   </div>
                 </td>
               </tr>
@@ -2675,27 +851,9 @@
                 <td>
                   <div style="display:flex; align-items:center; gap:8px;">
                     <div class="progress-bar-bg" style="flex-grow:1;">
-                      <div class="progress-bar-fill" style="width: 24.8%;"></div>
+                      <div class="progress-bar-fill" style="width: 27.4%;"></div>
                     </div>
-                    <span style="font-size:11px; min-width:35px; font-weight:700;">24.8%</span>
-                  </div>
-                </td>
-              </tr>
-
-              <tr>
-                <td><strong style="color:var(--text-pine);">.json</strong></td>
-                <td>15</td>
-                <td>9,395</td>
-                <td><strong>9,394</strong></td>
-                <td>0</td>
-                <td>1</td>
-                <td>1500.4 KB</td>
-                <td>
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <div class="progress-bar-bg" style="flex-grow:1;">
-                      <div class="progress-bar-fill" style="width: 14.1%;"></div>
-                    </div>
-                    <span style="font-size:11px; min-width:35px; font-weight:700;">14.1%</span>
+                    <span style="font-size:11px; min-width:35px; font-weight:700;">27.4%</span>
                   </div>
                 </td>
               </tr>
@@ -2703,83 +861,101 @@
               <tr>
                 <td><strong style="color:var(--text-pine);">.js</strong></td>
                 <td>57</td>
-                <td>8,058</td>
-                <td><strong>6,504</strong></td>
-                <td>698</td>
-                <td>856</td>
-                <td>271.7 KB</td>
+                <td>8,321</td>
+                <td><strong>6,723</strong></td>
+                <td>725</td>
+                <td>873</td>
+                <td>279.7 KB</td>
                 <td>
                   <div style="display:flex; align-items:center; gap:8px;">
                     <div class="progress-bar-bg" style="flex-grow:1;">
-                      <div class="progress-bar-fill" style="width: 9.8%;"></div>
+                      <div class="progress-bar-fill" style="width: 11.1%;"></div>
                     </div>
-                    <span style="font-size:11px; min-width:35px; font-weight:700;">9.8%</span>
+                    <span style="font-size:11px; min-width:35px; font-weight:700;">11.1%</span>
+                  </div>
+                </td>
+              </tr>
+
+              <tr>
+                <td><strong style="color:var(--text-pine);">.json</strong></td>
+                <td>10</td>
+                <td>5,813</td>
+                <td><strong>5,812</strong></td>
+                <td>0</td>
+                <td>1</td>
+                <td>197.4 KB</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="progress-bar-bg" style="flex-grow:1;">
+                      <div class="progress-bar-fill" style="width: 9.6%;"></div>
+                    </div>
+                    <span style="font-size:11px; min-width:35px; font-weight:700;">9.6%</span>
                   </div>
                 </td>
               </tr>
 
               <tr>
                 <td><strong style="color:var(--text-pine);">.py</strong></td>
-                <td>22</td>
-                <td>6,210</td>
-                <td><strong>5,301</strong></td>
-                <td>162</td>
-                <td>747</td>
-                <td>239.5 KB</td>
+                <td>21</td>
+                <td>4,776</td>
+                <td><strong>4,030</strong></td>
+                <td>147</td>
+                <td>599</td>
+                <td>182.1 KB</td>
                 <td>
                   <div style="display:flex; align-items:center; gap:8px;">
                     <div class="progress-bar-bg" style="flex-grow:1;">
-                      <div class="progress-bar-fill" style="width: 7.9%;"></div>
+                      <div class="progress-bar-fill" style="width: 6.7%;"></div>
                     </div>
-                    <span style="font-size:11px; min-width:35px; font-weight:700;">7.9%</span>
-                  </div>
-                </td>
-              </tr>
-
-              <tr>
-                <td><strong style="color:var(--text-pine);">.html</strong></td>
-                <td>2</td>
-                <td>1,743</td>
-                <td><strong>1,609</strong></td>
-                <td>9</td>
-                <td>125</td>
-                <td>88.1 KB</td>
-                <td>
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <div class="progress-bar-bg" style="flex-grow:1;">
-                      <div class="progress-bar-fill" style="width: 2.4%;"></div>
-                    </div>
-                    <span style="font-size:11px; min-width:35px; font-weight:700;">2.4%</span>
+                    <span style="font-size:11px; min-width:35px; font-weight:700;">6.7%</span>
                   </div>
                 </td>
               </tr>
 
               <tr>
                 <td><strong style="color:var(--text-pine);">.md</strong></td>
-                <td>8</td>
-                <td>1,846</td>
-                <td><strong>1,483</strong></td>
+                <td>7</td>
+                <td>1,572</td>
+                <td><strong>1,261</strong></td>
                 <td>0</td>
-                <td>363</td>
-                <td>111.3 KB</td>
+                <td>311</td>
+                <td>91.8 KB</td>
                 <td>
                   <div style="display:flex; align-items:center; gap:8px;">
                     <div class="progress-bar-bg" style="flex-grow:1;">
-                      <div class="progress-bar-fill" style="width: 2.2%;"></div>
+                      <div class="progress-bar-fill" style="width: 2.1%;"></div>
                     </div>
-                    <span style="font-size:11px; min-width:35px; font-weight:700;">2.2%</span>
+                    <span style="font-size:11px; min-width:35px; font-weight:700;">2.1%</span>
+                  </div>
+                </td>
+              </tr>
+
+              <tr>
+                <td><strong style="color:var(--text-pine);">.html</strong></td>
+                <td>1</td>
+                <td>16</td>
+                <td><strong>16</strong></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.7 KB</td>
+                <td>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="progress-bar-bg" style="flex-grow:1;">
+                      <div class="progress-bar-fill" style="width: 0.0%;"></div>
+                    </div>
+                    <span style="font-size:11px; min-width:35px; font-weight:700;">0.0%</span>
                   </div>
                 </td>
               </tr>
 
               <tr style="background: #ded9c8; font-weight:700;">
                 <td>TOTAL</td>
-                <td>220</td>
-                <td>75,475</td>
-                <td>66,688</td>
-                <td>1,749</td>
-                <td>7,038</td>
-                <td>3602.5 KB</td>
+                <td>212</td>
+                <td>68,865</td>
+                <td>60,373</td>
+                <td>1,755</td>
+                <td>6,737</td>
+                <td>2148.9 KB</td>
                 <td>100.0%</td>
               </tr>
             </tbody>
@@ -2983,18 +1159,18 @@
 
               <tr>
                 <td style="font-weight:600;">backend/services/secret_test_engine.py</td>
-                <td>193</td>
+                <td>197</td>
                 <td>2</td>
                 <td><strong style="color:var(--text-pine);">0</strong></td>
                 <td>0</td>
-                <td>7</td>
+                <td>8</td>
                 <td><span class="badge badge-pass">✔ PASSED</span></td>
                 <td><span class="badge badge-pass">✔ VALID</span></td>
               </tr>
 
               <tr>
                 <td style="font-weight:600;">backend/services/security_scanner.py</td>
-                <td>480</td>
+                <td>481</td>
                 <td>6</td>
                 <td><strong style="color:var(--text-pine);">0</strong></td>
                 <td>0</td>
@@ -3059,10 +1235,10 @@
         <div class="panel-header">
           <div>
             <h2>Frontend ESLint 9 Code Hygiene & Linting Diagnostics</h2>
-            <p>Auditing 113 React 19 / JSX / JS files across <code>src/</code></p>
+            <p>Auditing 115 React 19 / JSX / JS files across <code>src/</code></p>
           </div>
           <div>
-            <span class="badge badge-pine">191 errors • 32 warnings</span>
+            <span class="badge badge-pine">0 errors • 117 warnings</span>
           </div>
         </div>
 
@@ -3082,73 +1258,45 @@
                 <tbody>
 
                   <tr>
-                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">no-empty</td>
-                    <td>90</td>
-                    <td>0</td>
-                    <td><strong>90</strong></td>
-                  </tr>
-
-                  <tr>
                     <td style="color:var(--text-pine); font-size:12px; font-weight:600;">no-unused-vars</td>
-                    <td>49</td>
                     <td>0</td>
-                    <td><strong>49</strong></td>
+                    <td>46</td>
+                    <td><strong>46</strong></td>
                   </tr>
 
                   <tr>
                     <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-hooks/exhaustive-deps</td>
                     <td>0</td>
-                    <td>32</td>
-                    <td><strong>32</strong></td>
+                    <td>33</td>
+                    <td><strong>33</strong></td>
                   </tr>
 
                   <tr>
                     <td style="color:var(--text-pine); font-size:12px; font-weight:600;">no-useless-escape</td>
-                    <td>10</td>
                     <td>0</td>
+                    <td>10</td>
                     <td><strong>10</strong></td>
                   </tr>
 
                   <tr>
                     <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-hooks/set-state-in-effect</td>
-                    <td>10</td>
                     <td>0</td>
+                    <td>10</td>
                     <td><strong>10</strong></td>
                   </tr>
 
                   <tr>
                     <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-hooks/refs</td>
-                    <td>10</td>
                     <td>0</td>
+                    <td>10</td>
                     <td><strong>10</strong></td>
                   </tr>
 
                   <tr>
                     <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-refresh/only-export-components</td>
+                    <td>0</td>
                     <td>8</td>
-                    <td>0</td>
                     <td><strong>8</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">no-control-regex</td>
-                    <td>7</td>
-                    <td>0</td>
-                    <td><strong>7</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">no-undef</td>
-                    <td>4</td>
-                    <td>0</td>
-                    <td><strong>4</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-hooks/rules-of-hooks</td>
-                    <td>2</td>
-                    <td>0</td>
-                    <td><strong>2</strong></td>
                   </tr>
 
                 </tbody>
@@ -3171,108 +1319,108 @@
                 <tbody>
 
                   <tr>
-                    <td style="font-size:11px; font-weight:600;">src/components/Terminal/Terminal.jsx</td>
-                    <td>29</td>
-                    <td>2</td>
-                    <td><strong style="color:var(--accent-amber);">31</strong></td>
-                  </tr>
-
-                  <tr>
                     <td style="font-size:11px; font-weight:600;">src/context/TerminalContext.jsx</td>
-                    <td>17</td>
-                    <td>8</td>
-                    <td><strong style="color:var(--accent-amber);">25</strong></td>
+                    <td>0</td>
+                    <td>15</td>
+                    <td><strong style="color:var(--accent-amber);">15</strong></td>
                   </tr>
 
                   <tr>
-                    <td style="font-size:11px; font-weight:600;">src/services/seleniumEngine.js</td>
-                    <td>24</td>
+                    <td style="font-size:11px; font-weight:600;">src/components/Terminal/Terminal.jsx</td>
                     <td>0</td>
-                    <td><strong style="color:var(--accent-amber);">24</strong></td>
+                    <td>13</td>
+                    <td><strong style="color:var(--accent-amber);">13</strong></td>
                   </tr>
 
                   <tr>
                     <td style="font-size:11px; font-weight:600;">src/components/RunDebug/SeleniumRunner.jsx</td>
-                    <td>7</td>
-                    <td>3</td>
-                    <td><strong style="color:var(--accent-amber);">10</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="font-size:11px; font-weight:600;">src/services/seleniumAgent.js</td>
-                    <td>10</td>
                     <td>0</td>
-                    <td><strong style="color:var(--accent-amber);">10</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="font-size:11px; font-weight:600;">src/components/Chat/Chat.jsx</td>
                     <td>6</td>
-                    <td>2</td>
-                    <td><strong style="color:var(--accent-amber);">8</strong></td>
+                    <td><strong style="color:var(--accent-amber);">6</strong></td>
                   </tr>
 
                   <tr>
                     <td style="font-size:11px; font-weight:600;">src/components/Navbar/Navbar.jsx</td>
-                    <td>7</td>
                     <td>0</td>
-                    <td><strong style="color:var(--accent-amber);">7</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="font-size:11px; font-weight:600;">src/components/Architecture/ProjectFileTree.jsx</td>
                     <td>5</td>
-                    <td>1</td>
-                    <td><strong style="color:var(--accent-amber);">6</strong></td>
+                    <td><strong style="color:var(--accent-amber);">5</strong></td>
                   </tr>
 
                   <tr>
-                    <td style="font-size:11px; font-weight:600;">src/services/elementInspector.js</td>
-                    <td>6</td>
+                    <td style="font-size:11px; font-weight:600;">src/services/seleniumEngine.js</td>
                     <td>0</td>
-                    <td><strong style="color:var(--accent-amber);">6</strong></td>
+                    <td>5</td>
+                    <td><strong style="color:var(--accent-amber);">5</strong></td>
                   </tr>
 
                   <tr>
                     <td style="font-size:11px; font-weight:600;">src/components/ApiClient/ApiClient.jsx</td>
-                    <td>5</td>
                     <td>0</td>
-                    <td><strong style="color:var(--accent-amber);">5</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="font-size:11px; font-weight:600;">src/components/BottomPanel/BottomPanel.jsx</td>
-                    <td>5</td>
-                    <td>0</td>
-                    <td><strong style="color:var(--accent-amber);">5</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="font-size:11px; font-weight:600;">src/context/EditorContext.jsx</td>
-                    <td>3</td>
-                    <td>2</td>
-                    <td><strong style="color:var(--accent-amber);">5</strong></td>
-                  </tr>
-
-                  <tr>
-                    <td style="font-size:11px; font-weight:600;">src/context/FileContext.jsx</td>
                     <td>4</td>
-                    <td>1</td>
-                    <td><strong style="color:var(--accent-amber);">5</strong></td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
                   </tr>
 
                   <tr>
-                    <td style="font-size:11px; font-weight:600;">src/components/Editor/Editor.jsx</td>
-                    <td>2</td>
-                    <td>2</td>
+                    <td style="font-size:11px; font-weight:600;">src/components/Architecture/ProjectFileTree.jsx</td>
+                    <td>0</td>
+                    <td>4</td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/Chat/Chat.jsx</td>
+                    <td>0</td>
+                    <td>4</td>
                     <td><strong style="color:var(--accent-amber);">4</strong></td>
                   </tr>
 
                   <tr>
                     <td style="font-size:11px; font-weight:600;">src/components/Sidebar/Sidebar.jsx</td>
-                    <td>4</td>
                     <td>0</td>
+                    <td>4</td>
                     <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/services/workspacePersistence.js</td>
+                    <td>0</td>
+                    <td>4</td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/Editor/Editor.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/SourceControl/SourceControl.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/TestingSuite/TestingSuite.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/context/EditorContext.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/context/FileContext.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
                   </tr>
 
                 </tbody>
@@ -3285,7 +1433,7 @@
 
     <!-- Footer -->
     <div class="footer">
-      <p>HYPERION IDE • Static Application Security Testing (SAST) & Testing Suite • Report generated on 2026-11-22 08:02:31</p>
+      <p>HYPERION IDE • Static Application Security Testing (SAST) & Testing Suite • Report generated on 2026-11-22 08:44:44</p>
     </div>
   </div>
 

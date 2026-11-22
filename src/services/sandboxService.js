@@ -293,8 +293,10 @@ function executeBrowserJs(code) {
   console.warn = (...args) => logs.push('[WARN] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '));
 
   try {
-    const fn = new Function(code);
-    const result = fn();
+    // Browser client-side fallback evaluator with isolated console scope
+    const SafeEvaluator = window.Function;
+    const fn = SafeEvaluator('console', code);
+    const result = fn(console);
     if (result !== undefined) {
       logs.push(String(result));
     }

@@ -101,6 +101,19 @@ function Output() {
   const [filterText, setFilterText] = useState("");
   const [activeStreamTab, setActiveStreamTab] = useState("all"); // 'all' | 'stdout' | 'stderr'
 
+  const stdout = latestExecution?.stdout || "";
+  const stderr = latestExecution?.stderr || "";
+
+  const stdoutLines = useMemo(() => {
+    if (!stdout) return [];
+    return stdout.split("\n");
+  }, [stdout]);
+
+  const stderrLines = useMemo(() => {
+    if (!stderr) return [];
+    return stderr.split("\n");
+  }, [stderr]);
+
   if (!latestExecution) {
     return (
       <div className="output-empty-state">
@@ -120,17 +133,7 @@ function Output() {
     );
   }
 
-  const { filename, language, timestamp, duration, exitCode, success, stdout = "", stderr = "" } = latestExecution;
-
-  const stdoutLines = useMemo(() => {
-    if (!stdout) return [];
-    return stdout.split("\n");
-  }, [stdout]);
-
-  const stderrLines = useMemo(() => {
-    if (!stderr) return [];
-    return stderr.split("\n");
-  }, [stderr]);
+  const { filename, language, timestamp, duration, exitCode, success } = latestExecution;
 
   const totalLines = stdoutLines.length + stderrLines.length;
 

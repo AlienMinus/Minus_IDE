@@ -69,17 +69,6 @@ function MainLayout() {
     return () => window.removeEventListener("hyperion:open-chat", handleOpenChat);
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "a") {
-        e.preventDefault();
-        handleSidebarClick("architecture");
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [sidebarActive, isSidebarVisible]);
-
   const handleSidebarClick = (id) => {
     if (id === "api-client") {
       openApiClientTab?.();
@@ -94,6 +83,17 @@ function MainLayout() {
       }
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        handleSidebarClick("architecture");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sidebarActive, isSidebarVisible]);
 
   // List of all commands for Command Palette
   const allCommands = [

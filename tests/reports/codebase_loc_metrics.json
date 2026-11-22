@@ -1,51 +1,51 @@
 {
   "summary": {
-    "total_files": 220,
-    "total_lines": 75475,
-    "total_code": 66688,
-    "total_comments": 1749,
-    "total_blanks": 7038
+    "total_files": 212,
+    "total_lines": 68865,
+    "total_code": 60373,
+    "total_comments": 1755,
+    "total_blanks": 6737
   },
   "by_extension": {
     ".js": {
       "files": 57,
-      "lines": 8058,
-      "code": 6504,
-      "comment": 698,
-      "blank": 856,
-      "size_bytes": 278204
+      "lines": 8321,
+      "code": 6723,
+      "comment": 725,
+      "blank": 873,
+      "size_bytes": 286430
     },
     ".html": {
-      "files": 2,
-      "lines": 1743,
-      "code": 1609,
-      "comment": 9,
-      "blank": 125,
-      "size_bytes": 90169
+      "files": 1,
+      "lines": 16,
+      "code": 16,
+      "comment": 0,
+      "blank": 0,
+      "size_bytes": 701
     },
     ".json": {
-      "files": 15,
-      "lines": 9395,
-      "code": 9394,
+      "files": 10,
+      "lines": 5813,
+      "code": 5812,
       "comment": 0,
       "blank": 1,
-      "size_bytes": 1536360
+      "size_bytes": 202103
     },
     ".md": {
-      "files": 8,
-      "lines": 1846,
-      "code": 1483,
+      "files": 7,
+      "lines": 1572,
+      "code": 1261,
       "comment": 0,
-      "blank": 363,
-      "size_bytes": 114014
+      "blank": 311,
+      "size_bytes": 94006
     },
     ".py": {
-      "files": 22,
-      "lines": 6210,
-      "code": 5301,
-      "comment": 162,
-      "blank": 747,
-      "size_bytes": 245289
+      "files": 21,
+      "lines": 4776,
+      "code": 4030,
+      "comment": 147,
+      "blank": 599,
+      "size_bytes": 186492
     },
     ".css": {
       "files": 56,
@@ -57,22 +57,22 @@
     },
     ".jsx": {
       "files": 60,
-      "lines": 28919,
-      "code": 25839,
-      "comment": 576,
-      "blank": 2504,
-      "size_bytes": 1039247
+      "lines": 29063,
+      "code": 25973,
+      "comment": 579,
+      "blank": 2511,
+      "size_bytes": 1045045
     }
   },
   "files": [
     {
       "path": "eslint.config.js",
       "ext": ".js",
-      "lines": 29,
-      "code": 28,
+      "lines": 60,
+      "code": 59,
       "comment": 0,
       "blank": 1,
-      "size_bytes": 787
+      "size_bytes": 1530
     },
     {
       "path": "index.html",
@@ -255,24 +255,6 @@
       "size_bytes": 756
     },
     {
-      "path": "tests/FINAL_STATIC_ANALYSIS_REPORT.html",
-      "ext": ".html",
-      "lines": 1727,
-      "code": 1593,
-      "comment": 9,
-      "blank": 125,
-      "size_bytes": 89468
-    },
-    {
-      "path": "tests/FINAL_STATIC_ANALYSIS_REPORT.md",
-      "ext": ".md",
-      "lines": 274,
-      "code": 222,
-      "comment": 0,
-      "blank": 52,
-      "size_bytes": 20008
-    },
-    {
       "path": "backend/routers/ai.py",
       "ext": ".py",
       "lines": 440,
@@ -374,20 +356,20 @@
     {
       "path": "backend/services/secret_test_engine.py",
       "ext": ".py",
-      "lines": 193,
-      "code": 174,
+      "lines": 197,
+      "code": 177,
       "comment": 4,
-      "blank": 15,
-      "size_bytes": 7443
+      "blank": 16,
+      "size_bytes": 7581
     },
     {
       "path": "backend/services/security_scanner.py",
       "ext": ".py",
-      "lines": 480,
-      "code": 393,
+      "lines": 481,
+      "code": 394,
       "comment": 13,
       "blank": 74,
-      "size_bytes": 23301
+      "size_bytes": 23452
     },
     {
       "path": "backend/services/selenium_engine.py",
@@ -446,11 +428,11 @@
     {
       "path": "src/context/EditorContext.jsx",
       "ext": ".jsx",
-      "lines": 1268,
-      "code": 1142,
+      "lines": 1317,
+      "code": 1189,
       "comment": 14,
-      "blank": 112,
-      "size_bytes": 37407
+      "blank": 114,
+      "size_bytes": 38400
     },
     {
       "path": "src/context/FileContext.jsx",
@@ -468,7 +450,7 @@
       "code": 1212,
       "comment": 61,
       "blank": 121,
-      "size_bytes": 58117
+      "size_bytes": 58113
     },
     {
       "path": "src/context/ThemeContext.jsx",
@@ -707,11 +689,11 @@
     {
       "path": "src/services/elementInspector.js",
       "ext": ".js",
-      "lines": 629,
-      "code": 488,
+      "lines": 630,
+      "code": 489,
       "comment": 58,
       "blank": 83,
-      "size_bytes": 20604
+      "size_bytes": 20659
     },
     {
       "path": "src/services/fileService.js",
@@ -761,38 +743,38 @@
     {
       "path": "src/services/sandboxService.js",
       "ext": ".js",
-      "lines": 501,
-      "code": 398,
-      "comment": 69,
+      "lines": 503,
+      "code": 399,
+      "comment": 70,
       "blank": 34,
-      "size_bytes": 14089
+      "size_bytes": 14227
     },
     {
       "path": "src/services/seleniumAgent.js",
       "ext": ".js",
-      "lines": 623,
-      "code": 484,
+      "lines": 628,
+      "code": 488,
       "comment": 53,
-      "blank": 86,
-      "size_bytes": 27536
+      "blank": 87,
+      "size_bytes": 27682
     },
     {
       "path": "src/services/seleniumEngine.js",
       "ext": ".js",
-      "lines": 1677,
-      "code": 1395,
+      "lines": 1679,
+      "code": 1397,
       "comment": 100,
       "blank": 182,
-      "size_bytes": 59558
+      "size_bytes": 59792
     },
     {
       "path": "src/services/testingService.js",
       "ext": ".js",
-      "lines": 54,
-      "code": 45,
-      "comment": 4,
-      "blank": 5,
-      "size_bytes": 1950
+      "lines": 276,
+      "code": 225,
+      "comment": 30,
+      "blank": 21,
+      "size_bytes": 8860
     },
     {
       "path": "src/services/workspacePersistence.js",
@@ -936,7 +918,7 @@
       "code": 1902,
       "comment": 31,
       "blank": 150,
-      "size_bytes": 77414
+      "size_bytes": 77418
     },
     {
       "path": "src/components/Architecture/ArchitectureCanvas.css",
@@ -1004,11 +986,11 @@
     {
       "path": "src/components/Architecture/MermaidRenderer.jsx",
       "ext": ".jsx",
-      "lines": 375,
-      "code": 338,
+      "lines": 382,
+      "code": 345,
       "comment": 8,
       "blank": 29,
-      "size_bytes": 12802
+      "size_bytes": 13147
     },
     {
       "path": "src/components/Architecture/MongoSchemaERD.css",
@@ -1292,11 +1274,11 @@
     {
       "path": "src/components/Editor/Editor.jsx",
       "ext": ".jsx",
-      "lines": 655,
-      "code": 563,
-      "comment": 29,
-      "blank": 63,
-      "size_bytes": 22145
+      "lines": 680,
+      "code": 584,
+      "comment": 30,
+      "blank": 66,
+      "size_bytes": 22721
     },
     {
       "path": "src/components/Editor/index.js",
@@ -1454,11 +1436,11 @@
     {
       "path": "src/components/Output/Output.jsx",
       "ext": ".jsx",
-      "lines": 316,
-      "code": 273,
+      "lines": 319,
+      "code": 275,
       "comment": 7,
-      "blank": 36,
-      "size_bytes": 10063
+      "blank": 37,
+      "size_bytes": 10134
     },
     {
       "path": "src/components/Preview/index.js",
@@ -1481,11 +1463,11 @@
     {
       "path": "src/components/Preview/Preview.jsx",
       "ext": ".jsx",
-      "lines": 290,
-      "code": 253,
+      "lines": 293,
+      "code": 256,
       "comment": 7,
       "blank": 30,
-      "size_bytes": 9415
+      "size_bytes": 9481
     },
     {
       "path": "src/components/Previews/CsvPreview.css",
@@ -1503,7 +1485,7 @@
       "code": 293,
       "comment": 5,
       "blank": 27,
-      "size_bytes": 10490
+      "size_bytes": 10495
     },
     {
       "path": "src/components/Previews/DocxPreview.css",
@@ -1521,7 +1503,7 @@
       "code": 205,
       "comment": 3,
       "blank": 24,
-      "size_bytes": 7341
+      "size_bytes": 7402
     },
     {
       "path": "src/components/Previews/ImagePreview.css",
@@ -1566,7 +1548,7 @@
       "code": 205,
       "comment": 1,
       "blank": 19,
-      "size_bytes": 6936
+      "size_bytes": 6941
     },
     {
       "path": "src/components/Previews/PptxPreview.css",
@@ -1697,11 +1679,11 @@
     {
       "path": "src/components/Sidebar/Sidebar.jsx",
       "ext": ".jsx",
-      "lines": 598,
-      "code": 540,
+      "lines": 601,
+      "code": 543,
       "comment": 14,
       "blank": 44,
-      "size_bytes": 29054
+      "size_bytes": 29252
     },
     {
       "path": "src/components/SourceControl/SourceControl.css",
@@ -1796,11 +1778,11 @@
     {
       "path": "src/components/Tabs/Tabs.jsx",
       "ext": ".jsx",
-      "lines": 64,
-      "code": 59,
+      "lines": 75,
+      "code": 70,
       "comment": 0,
       "blank": 5,
-      "size_bytes": 2107
+      "size_bytes": 2728
     },
     {
       "path": "src/components/TaskPicker/TaskPicker.css",
@@ -1877,11 +1859,11 @@
     {
       "path": "src/components/TestingSuite/TestingSuite.jsx",
       "ext": ".jsx",
-      "lines": 487,
-      "code": 453,
-      "comment": 4,
-      "blank": 30,
-      "size_bytes": 20923
+      "lines": 530,
+      "code": 493,
+      "comment": 6,
+      "blank": 31,
+      "size_bytes": 23780
     },
     {
       "path": "src/pages/AboutPage/AboutPage.css",
@@ -1990,60 +1972,6 @@
       "comment": 8,
       "blank": 27,
       "size_bytes": 15752
-    },
-    {
-      "path": "tests/reports/codebase_loc_metrics.json",
-      "ext": ".json",
-      "lines": 1932,
-      "code": 1932,
-      "comment": 0,
-      "blank": 0,
-      "size_bytes": 41447
-    },
-    {
-      "path": "tests/reports/eslint_raw.json",
-      "ext": ".json",
-      "lines": 1,
-      "code": 1,
-      "comment": 0,
-      "blank": 0,
-      "size_bytes": 1241820
-    },
-    {
-      "path": "tests/reports/eslint_summary.json",
-      "ext": ".json",
-      "lines": 191,
-      "code": 191,
-      "comment": 0,
-      "blank": 0,
-      "size_bytes": 3588
-    },
-    {
-      "path": "tests/reports/python_ast_analysis.json",
-      "ext": ".json",
-      "lines": 219,
-      "code": 219,
-      "comment": 0,
-      "blank": 0,
-      "size_bytes": 4968
-    },
-    {
-      "path": "tests/reports/sast_security_findings.json",
-      "ext": ".json",
-      "lines": 1239,
-      "code": 1239,
-      "comment": 0,
-      "blank": 0,
-      "size_bytes": 42434
-    },
-    {
-      "path": "tests/static_analysis/run_analysis.py",
-      "ext": ".py",
-      "lines": 1439,
-      "code": 1275,
-      "comment": 15,
-      "blank": 149,
-      "size_bytes": 59086
     }
   ]
 }

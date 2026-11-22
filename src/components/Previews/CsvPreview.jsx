@@ -42,7 +42,7 @@ export function CsvPreview({ file }) {
           const rawFile = await file.handle.getFile();
           textContent = await rawFile.text();
         } else if (file?.rawFile && typeof file.rawFile.text === "function") {
-          textContent = await rawFile.text();
+          textContent = await file.rawFile.text();
         }
 
         if (isCancelled) return;

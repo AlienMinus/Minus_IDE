@@ -1,191 +1,151 @@
 {
   "summary": {
-    "total_files_analyzed": 113,
-    "total_errors": 191,
-    "total_warnings": 32,
-    "total_issues": 223,
-    "clean_files": 65
+    "total_files_analyzed": 115,
+    "total_errors": 0,
+    "total_warnings": 117,
+    "total_issues": 117,
+    "clean_files": 75
   },
   "rule_distribution": [
     [
-      "no-empty",
-      {
-        "errors": 90,
-        "warnings": 0,
-        "total": 90
-      }
-    ],
-    [
       "no-unused-vars",
       {
-        "errors": 49,
-        "warnings": 0,
-        "total": 49
+        "errors": 0,
+        "warnings": 46,
+        "total": 46
       }
     ],
     [
       "react-hooks/exhaustive-deps",
       {
         "errors": 0,
-        "warnings": 32,
-        "total": 32
+        "warnings": 33,
+        "total": 33
       }
     ],
     [
       "no-useless-escape",
       {
-        "errors": 10,
-        "warnings": 0,
+        "errors": 0,
+        "warnings": 10,
         "total": 10
       }
     ],
     [
       "react-hooks/set-state-in-effect",
       {
-        "errors": 10,
-        "warnings": 0,
+        "errors": 0,
+        "warnings": 10,
         "total": 10
       }
     ],
     [
       "react-hooks/refs",
       {
-        "errors": 10,
-        "warnings": 0,
+        "errors": 0,
+        "warnings": 10,
         "total": 10
       }
     ],
     [
       "react-refresh/only-export-components",
       {
-        "errors": 8,
-        "warnings": 0,
+        "errors": 0,
+        "warnings": 8,
         "total": 8
-      }
-    ],
-    [
-      "no-control-regex",
-      {
-        "errors": 7,
-        "warnings": 0,
-        "total": 7
-      }
-    ],
-    [
-      "no-undef",
-      {
-        "errors": 4,
-        "warnings": 0,
-        "total": 4
-      }
-    ],
-    [
-      "react-hooks/rules-of-hooks",
-      {
-        "errors": 2,
-        "warnings": 0,
-        "total": 2
-      }
-    ],
-    [
-      "react-hooks/immutability",
-      {
-        "errors": 1,
-        "warnings": 0,
-        "total": 1
       }
     ]
   ],
   "top_files": [
     {
-      "file": "src/components/Terminal/Terminal.jsx",
-      "errors": 29,
-      "warnings": 2,
-      "total": 31
-    },
-    {
       "file": "src/context/TerminalContext.jsx",
-      "errors": 17,
-      "warnings": 8,
-      "total": 25
+      "errors": 0,
+      "warnings": 15,
+      "total": 15
     },
     {
-      "file": "src/services/seleniumEngine.js",
-      "errors": 24,
-      "warnings": 0,
-      "total": 24
+      "file": "src/components/Terminal/Terminal.jsx",
+      "errors": 0,
+      "warnings": 13,
+      "total": 13
     },
     {
       "file": "src/components/RunDebug/SeleniumRunner.jsx",
-      "errors": 7,
-      "warnings": 3,
-      "total": 10
-    },
-    {
-      "file": "src/services/seleniumAgent.js",
-      "errors": 10,
-      "warnings": 0,
-      "total": 10
-    },
-    {
-      "file": "src/components/Chat/Chat.jsx",
-      "errors": 6,
-      "warnings": 2,
-      "total": 8
+      "errors": 0,
+      "warnings": 6,
+      "total": 6
     },
     {
       "file": "src/components/Navbar/Navbar.jsx",
-      "errors": 7,
-      "warnings": 0,
-      "total": 7
+      "errors": 0,
+      "warnings": 5,
+      "total": 5
     },
     {
-      "file": "src/components/Architecture/ProjectFileTree.jsx",
-      "errors": 5,
-      "warnings": 1,
-      "total": 6
-    },
-    {
-      "file": "src/services/elementInspector.js",
-      "errors": 6,
-      "warnings": 0,
-      "total": 6
+      "file": "src/services/seleniumEngine.js",
+      "errors": 0,
+      "warnings": 5,
+      "total": 5
     },
     {
       "file": "src/components/ApiClient/ApiClient.jsx",
-      "errors": 5,
-      "warnings": 0,
-      "total": 5
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
     },
     {
-      "file": "src/components/BottomPanel/BottomPanel.jsx",
-      "errors": 5,
-      "warnings": 0,
-      "total": 5
+      "file": "src/components/Architecture/ProjectFileTree.jsx",
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
     },
     {
-      "file": "src/context/EditorContext.jsx",
-      "errors": 3,
-      "warnings": 2,
-      "total": 5
-    },
-    {
-      "file": "src/context/FileContext.jsx",
-      "errors": 4,
-      "warnings": 1,
-      "total": 5
-    },
-    {
-      "file": "src/components/Editor/Editor.jsx",
-      "errors": 2,
-      "warnings": 2,
+      "file": "src/components/Chat/Chat.jsx",
+      "errors": 0,
+      "warnings": 4,
       "total": 4
     },
     {
       "file": "src/components/Sidebar/Sidebar.jsx",
-      "errors": 4,
-      "warnings": 0,
+      "errors": 0,
+      "warnings": 4,
       "total": 4
+    },
+    {
+      "file": "src/services/workspacePersistence.js",
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
+    },
+    {
+      "file": "src/components/Editor/Editor.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
+    },
+    {
+      "file": "src/components/SourceControl/SourceControl.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
+    },
+    {
+      "file": "src/components/TestingSuite/TestingSuite.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
+    },
+    {
+      "file": "src/context/EditorContext.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
+    },
+    {
+      "file": "src/context/FileContext.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
     }
   ]
 }

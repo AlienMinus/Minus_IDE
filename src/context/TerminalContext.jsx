@@ -1192,6 +1192,7 @@ export function TerminalProvider({ children }) {
      * Run Build Task (Ctrl+Shift+B)
      */
     const runBuildTask = useCallback(async () => {
+        const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
         appendToTerminal([
             "\x1b[34m[Build Task]\x1b[0m Executing project build task...",
             `PS ${targetCwd || "D:\\Rough\\WebIDE"}> npm run build`
@@ -1201,7 +1202,6 @@ export function TerminalProvider({ children }) {
         lastActionRef.current = { type: 'command', command: 'npm run build' };
 
         try {
-            const targetCwd = activeTerminal?.cwd || currentWorkspacePath;
             const res = await executeShellCommand('npm run build', { cwd: targetCwd, virtualFiles: files });
             const outLines = [];
             if (res.stdout) {
