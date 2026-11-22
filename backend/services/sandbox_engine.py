@@ -431,8 +431,15 @@ def run_process_sync(cmd: str, args: List[str], cwd: str, stdin_data: str = "", 
     timeout_sec = timeout_ms / 1000.0
 
     try:
+        is_windows = platform.system() == "Windows"
+        if is_windows and (cmd.lower().endswith("cmd.exe") or cmd.lower() == "cmd") and args and args[:3] == ["/d", "/s", "/c"]:
+            inner_cmd = " ".join(args[3:]) if len(args) > 3 else (args[3] if len(args) == 4 else (args[-1] if len(args) > 0 else ""))
+            popen_cmd = f'{cmd} /d /s /c "{inner_cmd}"'
+        else:
+            popen_cmd = [cmd, *args] if args else cmd
+
         proc = subprocess.Popen(
-            [cmd, *args],
+            popen_cmd,
             cwd=cwd,
             stdin=subprocess.PIPE if stdin_data else None,
             stdout=subprocess.PIPE,

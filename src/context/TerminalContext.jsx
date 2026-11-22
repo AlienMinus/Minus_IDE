@@ -1125,7 +1125,8 @@ export function TerminalProvider({ children }) {
         }
 
         let runCmd = '';
-        const fileName = fileToRun.name;
+        const rawFileName = fileToRun.name || '';
+        const fileName = rawFileName.replace(/^["']|["']$/g, '');
         if (lang === 'python') {
             runCmd = `python -u "${fileName}"`;
         } else if (lang === 'javascript' || lang === 'node') {

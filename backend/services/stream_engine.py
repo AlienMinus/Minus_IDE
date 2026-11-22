@@ -104,23 +104,36 @@ class StreamEngine:
         if not is_windows and os.path.exists(paths["bash"]):
             runner = paths["bash"]
             runner_args = ["-c", trimmed]
+            spawn_cmd = [runner, *runner_args]
         elif is_windows and is_bash and os.path.exists(paths["bash"]):
             runner = paths["bash"]
             runner_args = ["-c", trimmed]
+            spawn_cmd = [runner, *runner_args]
         elif is_windows and (profile == "powershell" or not profile or profile == "default"):
-            is_ps_cmdlet = any(trimmed.lower().startswith(p) for p in ("get-", "set-", "new-", "remove-", "select-", "where-", "invoke-", "test-", "start-", "stop-", "$"))
-            if is_ps_cmdlet:
+            is_ps_syntax = (
+                any(trimmed.lower().startswith(p) for p in ("get-", "set-", "new-", "remove-", "select-", "where-", "invoke-", "test-", "start-", "stop-", "$"))
+                or "; if" in trimmed or "$?" in trimmed or "$_" in trimmed
+            )
+            if is_ps_syntax:
                 runner = "powershell.exe"
                 runner_args = ["-NoLogo", "-ExecutionPolicy", "Bypass", "-Command", trimmed]
+                spawn_cmd = [runner, *runner_args]
             else:
-                runner = os.environ.get("COMSPEC", "cmd.exe")
-                runner_args = ["/d", "/s", "/c", trimmed]
+                comspec = os.environ.get("COMSPEC", "cmd.exe")
+                # When invoking cmd.exe /d /s /c on Windows, passing a list causes subprocess.Popen
+                # to run list2cmdline which backslash-escapes quotes (\"type.py\").
+                # cmd.exe does not unescape backslashes, passing literal \" to python/gcc/node,
+                # causing [Errno 22] Invalid argument.
+                # Passing the full command as a single string formatted as `cmd.exe /d /s /c "..."`
+                # allows cmd.exe /s /c to strip outer quotes and execute the inner command exactly as intended.
+                spawn_cmd = f'{comspec} /d /s /c "{trimmed}"'
         elif is_windows:
-            runner = os.environ.get("COMSPEC", "cmd.exe")
-            runner_args = ["/d", "/s", "/c", trimmed]
+            comspec = os.environ.get("COMSPEC", "cmd.exe")
+            spawn_cmd = f'{comspec} /d /s /c "{trimmed}"'
         else:
             runner = "/bin/sh"
             runner_args = ["-c", trimmed]
+            spawn_cmd = [runner, *runner_args]
 
         workspace_env = load_workspace_env(work_dir)
         env = {
@@ -132,7 +145,7 @@ class StreamEngine:
         }
 
         proc = subprocess.Popen(
-            [runner, *runner_args],
+            spawn_cmd,
             cwd=work_dir,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
