@@ -65,7 +65,7 @@ SECURITY_RULES = [
         'name': 'Cross-Site Scripting (XSS)',
         'cwe': 'CWE-79',
         'severity': 'HIGH',
-        'pattern': re.compile(r"dangerouslySetInnerHTML(?!\s*=\s*\{\{\s*__html:\s*DOMPurify)|innerHTML\s*=(?!\s*DOMPurify\.sanitize)|document\.write\s*\(|res\.send\s*\(\s*['\"`]<script", re.IGNORECASE),
+        'pattern': re.compile(r"dangerouslySetInnerHTML(?!\s*=\s*\{\s*\{\s*__html:\s*DOMPurify)|(?<!\w)innerHTML\s*=(?!\s*DOMPurify\.sanitize)|document\.write\s*\(|res\.send\s*\(\s*['\"`]<script", re.IGNORECASE),
         'description': 'Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).',
         'remediation': 'Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.'
     },

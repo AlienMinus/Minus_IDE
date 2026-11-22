@@ -220,7 +220,7 @@ export function DocxPreview({ file }) {
           >
             <article
               className={`docx-paper ${isDarkPage ? "docx-paper-dark" : "docx-paper-light"}`}
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }}
             />
           </div>
         )}

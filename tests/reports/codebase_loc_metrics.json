@@ -1,19 +1,19 @@
 {
   "summary": {
     "total_files": 212,
-    "total_lines": 68865,
-    "total_code": 60373,
-    "total_comments": 1755,
-    "total_blanks": 6737
+    "total_lines": 68862,
+    "total_code": 60368,
+    "total_comments": 1756,
+    "total_blanks": 6738
   },
   "by_extension": {
     ".js": {
       "files": 57,
-      "lines": 8321,
-      "code": 6723,
+      "lines": 8311,
+      "code": 6713,
       "comment": 725,
       "blank": 873,
-      "size_bytes": 286430
+      "size_bytes": 286188
     },
     ".html": {
       "files": 1,
@@ -45,7 +45,7 @@
       "code": 4030,
       "comment": 147,
       "blank": 599,
-      "size_bytes": 186492
+      "size_bytes": 186502
     },
     ".css": {
       "files": 56,
@@ -57,22 +57,22 @@
     },
     ".jsx": {
       "files": 60,
-      "lines": 29063,
-      "code": 25973,
-      "comment": 579,
-      "blank": 2511,
-      "size_bytes": 1045045
+      "lines": 29070,
+      "code": 25978,
+      "comment": 580,
+      "blank": 2512,
+      "size_bytes": 1045286
     }
   },
   "files": [
     {
       "path": "eslint.config.js",
       "ext": ".js",
-      "lines": 60,
-      "code": 59,
+      "lines": 50,
+      "code": 49,
       "comment": 0,
       "blank": 1,
-      "size_bytes": 1530
+      "size_bytes": 1288
     },
     {
       "path": "index.html",
@@ -369,7 +369,7 @@
       "code": 394,
       "comment": 13,
       "blank": 74,
-      "size_bytes": 23452
+      "size_bytes": 23462
     },
     {
       "path": "backend/services/selenium_engine.py",
@@ -1062,7 +1062,7 @@
       "code": 677,
       "comment": 47,
       "blank": 116,
-      "size_bytes": 30046
+      "size_bytes": 30069
     },
     {
       "path": "src/components/Architecture/ThreeExecutionFlow.css",
@@ -1503,7 +1503,7 @@
       "code": 205,
       "comment": 3,
       "blank": 24,
-      "size_bytes": 7402
+      "size_bytes": 7422
     },
     {
       "path": "src/components/Previews/ImagePreview.css",
@@ -1715,11 +1715,11 @@
     {
       "path": "src/components/SplashScreen/SplashScreen.jsx",
       "ext": ".jsx",
-      "lines": 252,
-      "code": 214,
-      "comment": 7,
-      "blank": 31,
-      "size_bytes": 9176
+      "lines": 259,
+      "code": 219,
+      "comment": 8,
+      "blank": 32,
+      "size_bytes": 9374
     },
     {
       "path": "src/components/SplashScreen/SplashScreen.module.css",

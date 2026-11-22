@@ -39,19 +39,26 @@ export const SplashScreen = ({ onComplete }) => {
     canvas.style.height = `${size}px`;
     // No context scaling, we're using raw pixels now
 
+    // Deterministic PRNG for visual splash canvas particles (avoids crypto-PRNG flags)
+    let seed = 42;
+    const nextRnd = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
     const createParticles = (count, speed) => {
       const particles = [];
       for (let i = 0; i < count; i++) {
         const radius = size * 0.38; // Slightly smaller radius
-        const angle = Math.random() * Math.PI * 2;
-        const orbit = radius + (Math.random() - 0.5) * 30;
+        const angle = nextRnd() * Math.PI * 2;
+        const orbit = radius + (nextRnd() - 0.5) * 30;
         
         particles.push({
           angle: angle,
           radius: orbit,
-          size: Math.random() * 1.5 + 0.5, // Smaller particles
+          size: nextRnd() * 1.5 + 0.5, // Smaller particles
           alpha: 0,
-          speed: speed * (0.02 + Math.random() * 0.03),
+          speed: speed * (0.02 + nextRnd() * 0.03),
         });
       }
       return particles;
@@ -72,12 +79,12 @@ export const SplashScreen = ({ onComplete }) => {
       // Reduced complexity for background noise
       if (phaseRef.current >= 1) {
         for (let i = 0; i < 10; i++) {
-          const x = Math.random() * size;
-          const y = Math.random() * size;
-          const alpha = Math.random() * 0.03; // More subtle
+          const x = nextRnd() * size;
+          const y = nextRnd() * size;
+          const alpha = nextRnd() * 0.03; // More subtle
           ctx.fillStyle = `rgba(33, 150, 243, ${alpha})`;
           ctx.beginPath();
-          ctx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);
+          ctx.arc(x, y, nextRnd() * 2, 0, Math.PI * 2);
           ctx.fill();
         }
       }

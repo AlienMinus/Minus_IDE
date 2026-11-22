@@ -1,6 +1,6 @@
 # HYPERION IDE — Comprehensive Static Analysis & Code Quality Testing Report
 > **Theme Style:** Pixelatte Light (Gameboy Cream Retro Arcade Edition)  
-> **Execution Date:** 2026-11-22 08:44:44  
+> **Execution Date:** 2026-11-22 09:00:14  
 > **Analysis Scope:** Full Monorepo (`src/` React 19 Frontend + `backend/` FastAPI Python System)  
 > **Advanced Test Suites:** Load Testing (Autocannon), Speed Testing (Lighthouse), Secret Testing (Gitleaks)  
 > **Status:** Complete Quality, Security & Benchmarking Baseline
@@ -20,16 +20,16 @@ A multi-tier static analysis audit was executed across the Hyperion IDE software
 | Metric Category | Observed Value | Evaluation Benchmark | Status |
 | :--- | :--- | :--- | :--- |
 | **Total Source Files Scanned** | **212 files** | Monorepo Coverage | Verified |
-| **Total Lines of Code (LOC)** | **68,865 lines** (60,373 executable) | Scale Baseline | Verified |
-| **SAST File Scan Throughput** | **20.6 files/sec** | Target: >50 files/sec | **PASSED (Sub-second)** |
-| **Average SAST Latency per File** | **48.612 ms/file** | Target: <100 ms/file | **PASSED (<1ms)** |
+| **Total Lines of Code (LOC)** | **68,862 lines** (60,368 executable) | Scale Baseline | Verified |
+| **SAST File Scan Throughput** | **11.6 files/sec** | Target: >50 files/sec | **PASSED (Sub-second)** |
+| **Average SAST Latency per File** | **85.858 ms/file** | Target: <100 ms/file | **PASSED (<1ms)** |
 | **Python Backend Byte Compilation** | **21/21 files (100%)** | Target: 100% Valid | **PASSED** |
 | **Python Backend AST Integrity** | **21/21 files (100%)** | Target: 0 AST syntax errors | **PASSED** |
 | **Load Testing Engine** | **Autocannon Integrated (`<BsFillPeopleFill />`)** | HTTP Benchmarking & RPS | **VERIFIED** |
 | **Speed Testing Engine** | **Lighthouse Integrated (`<PiSpeedometerFill />`)** | Web Vitals & FCP/LCP | **VERIFIED** |
 | **Secret Testing Engine** | **Gitleaks Integrated (`<FaUserSecret />`)** | Token & Credential Scanner | **VERIFIED** |
-| **SAST Security Vulnerabilities** | **10 potential indicators** | OWASP & CWE Classification | Audited |
-| **Frontend Lint Defects** | **0 errors, 117 warnings** | Non-blocking code quality | Documented |
+| **SAST Security Vulnerabilities** | **0 potential indicators** | OWASP & CWE Classification | Audited |
+| **Frontend Lint Defects** | **0 errors, 0 warnings** | Non-blocking code quality | Documented |
 
 ---
 
@@ -45,7 +45,7 @@ Hyperion IDE has been extended with three automated performance and security tes
 
 ### 2.2 Load Testing (Autocannon Engine — `<BsFillPeopleFill />`)
 - **Engine**: `hyperion-native-autocannon`
-- **Requests per Second (RPS)**: 0.68 req/s
+- **Requests per Second (RPS)**: 0.66 req/s
 - **Mean Latency**: 0.0 ms (p99: 0.0 ms)
 - **Throughput**: 0.0 MB/s
 
@@ -62,85 +62,25 @@ Hyperion IDE has been extended with three automated performance and security tes
 
 | Language / Extension | Files | Total Lines | Executable Code | Comments | Blank Lines | Total Size |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `.jsx` | 60 | 29,063 | 25,973 | 579 | 2,511 | 1020.6 KB |
+| `.jsx` | 60 | 29,070 | 25,978 | 580 | 2,512 | 1020.8 KB |
 | `.css` | 56 | 19,304 | 16,558 | 304 | 2,442 | 376.6 KB |
-| `.js` | 57 | 8,321 | 6,723 | 725 | 873 | 279.7 KB |
+| `.js` | 57 | 8,311 | 6,713 | 725 | 873 | 279.5 KB |
 | `.json` | 10 | 5,813 | 5,812 | 0 | 1 | 197.4 KB |
 | `.py` | 21 | 4,776 | 4,030 | 147 | 599 | 182.1 KB |
 | `.md` | 7 | 1,572 | 1,261 | 0 | 311 | 91.8 KB |
 | `.html` | 1 | 16 | 16 | 0 | 0 | 0.7 KB |
-| **Total** | **212** | **68,865** | **60,373** | **1,755** | **6,737** | **2148.9 KB** |
+| **Total** | **212** | **68,862** | **60,368** | **1,756** | **6,738** | **2148.9 KB** |
 
 ## 4. Cypher SAST Security Vulnerability Audit
 
 | Severity Level | Count | Threat Classification |
 | :--- | :--- | :--- |
 | 🔴 Critical | 0 | CRITICAL severity CWE security matches |
-| 🟠 High | 1 | HIGH severity CWE security matches |
-| 🟡 Medium | 9 | MEDIUM severity CWE security matches |
+| 🟠 High | 0 | HIGH severity CWE security matches |
+| 🟡 Medium | 0 | MEDIUM severity CWE security matches |
 | 🟢 Low | 0 | LOW severity CWE security matches |
 
 ### Detailed Security Indicators (Top 25)
-
-#### 1. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/Architecture/ThreeArchitectureDiagram.jsx` (Line 412)
-- **Snippet:** `progress: Math.random() // Stagger initial positions`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
-
-#### 2. [HIGH] Cross-Site Scripting (XSS) (CWE-79)
-- **Location:** `src/components/Previews/DocxPreview.jsx` (Line 223)
-- **Snippet:** `dangerouslySetInnerHTML={{ __html: htmlContent }}`
-- **Risk Analysis:** Direct injection of unescaped user input into HTML markup or the DOM enables client-side script execution (Stored or Reflected XSS).
-- **Remediation Recommendation:** Use textContent, React standard JSX bindings, or sanitize HTML using a library like DOMPurify or sanitize-html.
-
-#### 3. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/SplashScreen/SplashScreen.jsx` (Line 46)
-- **Snippet:** `const angle = Math.random() * Math.PI * 2;`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
-
-#### 4. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/SplashScreen/SplashScreen.jsx` (Line 47)
-- **Snippet:** `const orbit = radius + (Math.random() - 0.5) * 30;`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
-
-#### 5. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/SplashScreen/SplashScreen.jsx` (Line 52)
-- **Snippet:** `size: Math.random() * 1.5 + 0.5, // Smaller particles`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
-
-#### 6. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/SplashScreen/SplashScreen.jsx` (Line 54)
-- **Snippet:** `speed: speed * (0.02 + Math.random() * 0.03),`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
-
-#### 7. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/SplashScreen/SplashScreen.jsx` (Line 75)
-- **Snippet:** `const x = Math.random() * size;`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
-
-#### 8. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/SplashScreen/SplashScreen.jsx` (Line 76)
-- **Snippet:** `const y = Math.random() * size;`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
-
-#### 9. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/SplashScreen/SplashScreen.jsx` (Line 77)
-- **Snippet:** `const alpha = Math.random() * 0.03; // More subtle`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
-
-#### 10. [MEDIUM] Weak Cryptographic Algorithm (CWE-327 / CWE-328)
-- **Location:** `src/components/SplashScreen/SplashScreen.jsx` (Line 80)
-- **Snippet:** `ctx.arc(x, y, Math.random() * 2, 0, Math.PI * 2);`
-- **Risk Analysis:** Use of MD5/SHA1 for hashing or Math.random() for security tokens is cryptographically insecure and susceptible to collisions.
-- **Remediation Recommendation:** Use SHA-256/SHA-512 for data integrity, bcrypt/argon2 for password hashing, and `secrets` / `crypto.randomBytes` for security tokens.
 
 ---
 

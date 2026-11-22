@@ -409,7 +409,7 @@ export default function ThreeArchitectureDiagram({ architectureGraph, onSwitchTo
         pulseParticles.push({
           mesh: packetMesh,
           curve,
-          progress: Math.random() // Stagger initial positions
+          progress: (pulseParticles.length * 0.19) % 1.0 // Stagger initial positions
         });
       }
     });
