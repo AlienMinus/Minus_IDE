@@ -38,10 +38,10 @@
     "engine": "hyperion-native-autocannon",
     "url": "http://localhost:8000/api/health",
     "connections": 5,
-    "duration": 7.55,
+    "duration": 7.51,
     "requests": {
       "total": 5,
-      "average": 0.66,
+      "average": 0.67,
       "sent": 5
     },
     "latency": {
@@ -87,7 +87,7 @@
         "description": "Image formats like WebP and AVIF often provide better compression than PNG or JPEG."
       }
     ],
-    "auditTimeSec": 0.41,
+    "auditTimeSec": 0.36,
     "note": "Executed via high-precision heuristic analyzer (Message: Unable to obtain driver for chrome; For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors/driver_location\n)"
   }
 }

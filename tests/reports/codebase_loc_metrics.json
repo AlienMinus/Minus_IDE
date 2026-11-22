@@ -1,19 +1,19 @@
 {
   "summary": {
     "total_files": 212,
-    "total_lines": 68862,
-    "total_code": 60368,
+    "total_lines": 68872,
+    "total_code": 60378,
     "total_comments": 1756,
     "total_blanks": 6738
   },
   "by_extension": {
     ".js": {
       "files": 57,
-      "lines": 8311,
-      "code": 6713,
+      "lines": 8321,
+      "code": 6723,
       "comment": 725,
       "blank": 873,
-      "size_bytes": 286188
+      "size_bytes": 286431
     },
     ".html": {
       "files": 1,
@@ -68,11 +68,11 @@
     {
       "path": "eslint.config.js",
       "ext": ".js",
-      "lines": 50,
-      "code": 49,
+      "lines": 60,
+      "code": 59,
       "comment": 0,
       "blank": 1,
-      "size_bytes": 1288
+      "size_bytes": 1531
     },
     {
       "path": "index.html",

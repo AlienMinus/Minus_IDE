@@ -2,10 +2,158 @@
   "summary": {
     "total_files_analyzed": 115,
     "total_errors": 0,
-    "total_warnings": 0,
-    "total_issues": 0,
-    "clean_files": 115
+    "total_warnings": 124,
+    "total_issues": 124,
+    "clean_files": 75
   },
-  "rule_distribution": [],
-  "top_files": []
+  "rule_distribution": [
+    [
+      "no-unused-vars",
+      {
+        "errors": 0,
+        "warnings": 46,
+        "total": 46
+      }
+    ],
+    [
+      "react-hooks/exhaustive-deps",
+      {
+        "errors": 0,
+        "warnings": 33,
+        "total": 33
+      }
+    ],
+    [
+      "no-useless-escape",
+      {
+        "errors": 0,
+        "warnings": 10,
+        "total": 10
+      }
+    ],
+    [
+      "react-hooks/set-state-in-effect",
+      {
+        "errors": 0,
+        "warnings": 10,
+        "total": 10
+      }
+    ],
+    [
+      "react-hooks/refs",
+      {
+        "errors": 0,
+        "warnings": 10,
+        "total": 10
+      }
+    ],
+    [
+      "react-refresh/only-export-components",
+      {
+        "errors": 0,
+        "warnings": 8,
+        "total": 8
+      }
+    ],
+    [
+      "no-control-regex",
+      {
+        "errors": 0,
+        "warnings": 7,
+        "total": 7
+      }
+    ]
+  ],
+  "top_files": [
+    {
+      "file": "src/context/TerminalContext.jsx",
+      "errors": 0,
+      "warnings": 20,
+      "total": 20
+    },
+    {
+      "file": "src/components/Terminal/Terminal.jsx",
+      "errors": 0,
+      "warnings": 13,
+      "total": 13
+    },
+    {
+      "file": "src/components/RunDebug/SeleniumRunner.jsx",
+      "errors": 0,
+      "warnings": 6,
+      "total": 6
+    },
+    {
+      "file": "src/components/Navbar/Navbar.jsx",
+      "errors": 0,
+      "warnings": 5,
+      "total": 5
+    },
+    {
+      "file": "src/services/seleniumEngine.js",
+      "errors": 0,
+      "warnings": 5,
+      "total": 5
+    },
+    {
+      "file": "src/components/ApiClient/ApiClient.jsx",
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
+    },
+    {
+      "file": "src/components/Architecture/ProjectFileTree.jsx",
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
+    },
+    {
+      "file": "src/components/BottomPanel/BottomPanel.jsx",
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
+    },
+    {
+      "file": "src/components/Chat/Chat.jsx",
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
+    },
+    {
+      "file": "src/components/Sidebar/Sidebar.jsx",
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
+    },
+    {
+      "file": "src/services/workspacePersistence.js",
+      "errors": 0,
+      "warnings": 4,
+      "total": 4
+    },
+    {
+      "file": "src/components/Editor/Editor.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
+    },
+    {
+      "file": "src/components/SourceControl/SourceControl.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
+    },
+    {
+      "file": "src/components/TestingSuite/TestingSuite.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
+    },
+    {
+      "file": "src/context/EditorContext.jsx",
+      "errors": 0,
+      "warnings": 3,
+      "total": 3
+    }
+  ]
 }

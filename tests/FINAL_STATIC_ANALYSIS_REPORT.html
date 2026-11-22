@@ -414,17 +414,17 @@
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Lines of Code (LOC)</div>
-        <div class="kpi-value">68,862</div>
-        <div class="kpi-sub">60,368 executable code</div>
+        <div class="kpi-value">68,872</div>
+        <div class="kpi-sub">60,378 executable code</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">SAST Scan Latency</div>
-        <div class="kpi-value">85.858 <span style="font-size:16px;">ms/file</span></div>
+        <div class="kpi-value">67.338 <span style="font-size:16px;">ms/file</span></div>
         <div class="kpi-sub green">✔ Target &lt;100ms: PASSED</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Scan Throughput</div>
-        <div class="kpi-value">11.6 <span style="font-size:16px;">files/s</span></div>
+        <div class="kpi-value">14.9 <span style="font-size:16px;">files/s</span></div>
         <div class="kpi-sub green">✔ High-Speed Realtime</div>
       </div>
       <div class="kpi-card">
@@ -472,13 +472,13 @@
               <tr>
                 <td><strong>Analysis Latency</strong></td>
                 <td>&lt; 1.0 second per file scan</td>
-                <td><strong style="color:var(--accent-green);">85.858 ms/file</strong> (11848.45 ms total for 138 files)</td>
+                <td><strong style="color:var(--accent-green);">67.338 ms/file</strong> (9292.58 ms total for 138 files)</td>
                 <td><span class="badge badge-pass">PASSED (EXCEEDED)</span></td>
               </tr>
               <tr>
                 <td><strong>Scan Throughput</strong></td>
                 <td>High-speed IDE continuous scan (&gt;50 files/s)</td>
-                <td><strong style="color:var(--accent-green);">11.6 files/second</strong></td>
+                <td><strong style="color:var(--accent-green);">14.9 files/second</strong></td>
                 <td><span class="badge badge-pass">PASSED</span></td>
               </tr>
               <tr>
@@ -523,7 +523,7 @@
           <p style="font-size:13px; color:var(--text-ink); margin-bottom:14px;">High-throughput HTTP benchmarking measuring requests/second, percentile latencies, and socket throughput.</p>
           <div style="background:var(--bg-surface); border:var(--pixel-border); padding:14px; margin-bottom:14px;">
             <div style="font-size:12px; font-weight:700; color:var(--text-pine);">MEASURED RPS</div>
-            <div style="font-size:24px; font-weight:700; font-family:var(--font-pixel);">0.66 req/s</div>
+            <div style="font-size:24px; font-weight:700; font-family:var(--font-pixel);">0.67 req/s</div>
             <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Average Latency: 0.0 ms | Throughput: 0.0 MB/s</div>
           </div>
           <div style="font-size:12px;">
@@ -671,11 +671,11 @@
               <tr>
                 <td><strong style="color:var(--text-pine);">.js</strong></td>
                 <td>57</td>
-                <td>8,311</td>
-                <td><strong>6,713</strong></td>
+                <td>8,321</td>
+                <td><strong>6,723</strong></td>
                 <td>725</td>
                 <td>873</td>
-                <td>279.5 KB</td>
+                <td>279.7 KB</td>
                 <td>
                   <div style="display:flex; align-items:center; gap:8px;">
                     <div class="progress-bar-bg" style="flex-grow:1;">
@@ -761,11 +761,11 @@
               <tr style="background: #ded9c8; font-weight:700;">
                 <td>TOTAL</td>
                 <td>212</td>
-                <td>68,862</td>
-                <td>60,368</td>
+                <td>68,872</td>
+                <td>60,378</td>
                 <td>1,756</td>
                 <td>6,738</td>
-                <td>2148.9 KB</td>
+                <td>2149.1 KB</td>
                 <td>100.0%</td>
               </tr>
             </tbody>
@@ -1048,7 +1048,7 @@
             <p>Auditing 115 React 19 / JSX / JS files across <code>src/</code></p>
           </div>
           <div>
-            <span class="badge badge-pine">0 errors • 0 warnings</span>
+            <span class="badge badge-pine">0 errors • 124 warnings</span>
           </div>
         </div>
 
@@ -1066,6 +1066,55 @@
                   </tr>
                 </thead>
                 <tbody>
+
+                  <tr>
+                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">no-unused-vars</td>
+                    <td>0</td>
+                    <td>46</td>
+                    <td><strong>46</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-hooks/exhaustive-deps</td>
+                    <td>0</td>
+                    <td>33</td>
+                    <td><strong>33</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">no-useless-escape</td>
+                    <td>0</td>
+                    <td>10</td>
+                    <td><strong>10</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-hooks/set-state-in-effect</td>
+                    <td>0</td>
+                    <td>10</td>
+                    <td><strong>10</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-hooks/refs</td>
+                    <td>0</td>
+                    <td>10</td>
+                    <td><strong>10</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">react-refresh/only-export-components</td>
+                    <td>0</td>
+                    <td>8</td>
+                    <td><strong>8</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="color:var(--text-pine); font-size:12px; font-weight:600;">no-control-regex</td>
+                    <td>0</td>
+                    <td>7</td>
+                    <td><strong>7</strong></td>
+                  </tr>
 
                 </tbody>
               </table>
@@ -1086,6 +1135,111 @@
                 </thead>
                 <tbody>
 
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/context/TerminalContext.jsx</td>
+                    <td>0</td>
+                    <td>20</td>
+                    <td><strong style="color:var(--accent-amber);">20</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/Terminal/Terminal.jsx</td>
+                    <td>0</td>
+                    <td>13</td>
+                    <td><strong style="color:var(--accent-amber);">13</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/RunDebug/SeleniumRunner.jsx</td>
+                    <td>0</td>
+                    <td>6</td>
+                    <td><strong style="color:var(--accent-amber);">6</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/Navbar/Navbar.jsx</td>
+                    <td>0</td>
+                    <td>5</td>
+                    <td><strong style="color:var(--accent-amber);">5</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/services/seleniumEngine.js</td>
+                    <td>0</td>
+                    <td>5</td>
+                    <td><strong style="color:var(--accent-amber);">5</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/ApiClient/ApiClient.jsx</td>
+                    <td>0</td>
+                    <td>4</td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/Architecture/ProjectFileTree.jsx</td>
+                    <td>0</td>
+                    <td>4</td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/BottomPanel/BottomPanel.jsx</td>
+                    <td>0</td>
+                    <td>4</td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/Chat/Chat.jsx</td>
+                    <td>0</td>
+                    <td>4</td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/Sidebar/Sidebar.jsx</td>
+                    <td>0</td>
+                    <td>4</td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/services/workspacePersistence.js</td>
+                    <td>0</td>
+                    <td>4</td>
+                    <td><strong style="color:var(--accent-amber);">4</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/Editor/Editor.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/SourceControl/SourceControl.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/components/TestingSuite/TestingSuite.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
+                  </tr>
+
+                  <tr>
+                    <td style="font-size:11px; font-weight:600;">src/context/EditorContext.jsx</td>
+                    <td>0</td>
+                    <td>3</td>
+                    <td><strong style="color:var(--accent-amber);">3</strong></td>
+                  </tr>
+
                 </tbody>
               </table>
             </div>
@@ -1096,7 +1250,7 @@
 
     <!-- Footer -->
     <div class="footer">
-      <p>HYPERION IDE • Static Application Security Testing (SAST) & Testing Suite • Report generated on 2026-11-22 09:00:14</p>
+      <p>HYPERION IDE • Static Application Security Testing (SAST) & Testing Suite • Report generated on 2026-11-22 09:10:51</p>
     </div>
   </div>
 
